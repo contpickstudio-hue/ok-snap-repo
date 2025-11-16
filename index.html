@@ -2098,18 +2098,35 @@
                 return false;
             }
 
+            // Validate URL format
+            if (!supabaseUrl.startsWith('https://') || !supabaseUrl.includes('.supabase.co')) {
+                console.error('Invalid Supabase URL format. URL should be: https://xxxxx.supabase.co');
+                console.error('Current URL:', supabaseUrl);
+                alert('Invalid Supabase URL format.\n\nPlease check your SUPABASE_URL in the CONFIG.\n\nIt should be: https://xxxxx.supabase.co');
+                return false;
+            }
+
             try {
                 // Initialize Supabase client
                 supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
                 
-                console.log('Supabase initialized successfully');
+                console.log('Supabase client created');
                 console.log('Project URL:', supabaseUrl);
                 
-                // Get initial session and handle OAuth callback
+                // Test connection by trying to get session (this will fail if URL is wrong)
                 supabaseClient.auth.getSession().then(({ data: { session }, error }) => {
                     if (error) {
-                        console.error('Session error:', error);
+                        console.error('Supabase connection error:', error);
+                        if (error.message && error.message.includes('Failed to fetch')) {
+                            console.error('❌ Cannot reach Supabase URL. Please verify:');
+                            console.error('1. The URL is correct: ' + supabaseUrl);
+                            console.error('2. The project exists and is active');
+                            console.error('3. There are no network/firewall issues');
+                            alert('Cannot connect to Supabase.\n\nPlease verify:\n1. Your Supabase URL is correct\n2. Your project exists and is active\n3. Check your internet connection\n\nCurrent URL: ' + supabaseUrl);
+                        }
+                        return;
                     }
+                    
                     currentUser = session?.user || null;
                     updateAuthUI();
                     if (currentUser) {
@@ -2121,6 +2138,13 @@
                         }
                     } else {
                         console.log('No user logged in');
+                    }
+                }).catch((error) => {
+                    console.error('Supabase connection failed:', error);
+                    if (error.message && (error.message.includes('Failed to fetch') || error.message.includes('NetworkError'))) {
+                        console.error('❌ DNS/Network error. The Supabase URL may be incorrect or the project may not exist.');
+                        console.error('Please verify your Supabase URL at: https://app.supabase.com/');
+                        console.error('Go to: Project Settings > API > Project URL');
                     }
                 });
                 
@@ -2143,7 +2167,7 @@
                     }
                 });
                 
-                console.log('✅ Supabase is configured correctly!');
+                console.log('✅ Supabase client initialized!');
                 console.log('You can now test Google authentication.');
                 
                 return true;
