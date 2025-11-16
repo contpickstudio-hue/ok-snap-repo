@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
     <title>Ok Snap - Discover Food Through Your Lens</title>
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1793,20 +1792,9 @@
             
             <!-- Login Form -->
             <div id="loginForm">
-                <form class="auth-form" id="emailLoginForm">
-                    <div class="form-group">
-                        <label class="form-label">Email</label>
-                        <input type="email" class="form-input" id="loginEmail" required placeholder="your@email.com">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Password</label>
-                        <input type="password" class="form-input" id="loginPassword" required placeholder="••••••••">
-                    </div>
-                    <div class="error-text" id="loginError"></div>
-                    <button type="submit" class="btn" id="loginSubmitBtn">Login</button>
-                </form>
-                
-                <div class="auth-divider">or</div>
+                <div class="auth-info" style="text-align: center; margin-bottom: 24px; color: var(--text-secondary);">
+                    <p>Sign in with your Google account to save your favorite dishes</p>
+                </div>
                 
                 <button class="google-btn" id="googleLoginBtn">
                     <svg class="google-icon" viewBox="0 0 24 24">
@@ -1818,31 +1806,14 @@
                     <span id="googleLoginBtnText">Continue with Google</span>
                 </button>
                 
-                <div class="auth-switch">
-                    Don't have an account? <a id="showSignup">Sign up</a>
-                </div>
+                <div class="error-text" id="loginError"></div>
             </div>
 
-            <!-- Signup Form -->
+            <!-- Signup Form (same as login for Google OAuth) -->
             <div id="signupForm" style="display: none;">
-                <form class="auth-form" id="emailSignupForm">
-                    <div class="form-group">
-                        <label class="form-label">Name</label>
-                        <input type="text" class="form-input" id="signupName" required placeholder="Your name">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Email</label>
-                        <input type="email" class="form-input" id="signupEmail" required placeholder="your@email.com">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Password</label>
-                        <input type="password" class="form-input" id="signupPassword" required placeholder="••••••••" minlength="6">
-                    </div>
-                    <div class="error-text" id="signupError"></div>
-                    <button type="submit" class="btn" id="signupSubmitBtn">Sign Up</button>
-                </form>
-                
-                <div class="auth-divider">or</div>
+                <div class="auth-info" style="text-align: center; margin-bottom: 24px; color: var(--text-secondary);">
+                    <p>Sign up with your Google account to save your favorite dishes</p>
+                </div>
                 
                 <button class="google-btn" id="googleSignupBtn">
                     <svg class="google-icon" viewBox="0 0 24 24">
@@ -1854,9 +1825,7 @@
                     <span id="googleSignupBtnText">Continue with Google</span>
                 </button>
                 
-                <div class="auth-switch">
-                    Already have an account? <a id="showLogin">Login</a>
-                </div>
+                <div class="error-text" id="signupError"></div>
             </div>
         </div>
     </div>
@@ -2092,24 +2061,16 @@
             // Recipe links now point directly to recipe websites
             // No API keys needed - using direct website search URLs
 
-            // Firebase Configuration
-            // IMPORTANT: You need the WEB APP config, not the service account JSON!
-            // Steps to get the correct config:
-            // 1. Go to https://console.firebase.google.com/
-            // 2. Select your project: ok-snap-4677f
-            // 3. Click the gear icon > Project Settings
-            // 4. Scroll down to "Your apps" section
-            // 5. If you don't have a web app, click the </> icon to add one
-            // 6. Copy the config object (it should look like: const firebaseConfig = { apiKey: "AIza...", ... })
-            // 7. The apiKey should start with "AIza..." NOT be a private key!
-            FIREBASE_CONFIG: {
-                apiKey: "AIzaSyAVo4jOkM_oqxtY3Olb2GSybqXf3uPr3u0", // Should start with "AIza..." - get from Firebase Console web app config
-                authDomain: "ok-snap-4677f.firebaseapp.com",
-                projectId: "ok-snap-4677f",
-                storageBucket: "ok-snap-4677f.firebasestorage.app",
-                messagingSenderId: "504422705809",
-                appId: "1:504422705809:web:73323caef150f839caed30" // This is different from projectId - get from Firebase Console
-            }
+            // Supabase Configuration
+            // Get your Supabase credentials from: https://app.supabase.com/
+            // Steps to get the credentials:
+            // 1. Go to https://app.supabase.com/ and create a project (or use existing)
+            // 2. Go to Project Settings > API
+            // 3. Copy the "Project URL" (SUPABASE_URL)
+            // 4. Copy the "anon public" key (SUPABASE_ANON_KEY)
+            // 5. Make sure Google OAuth is enabled in Authentication > Providers
+            SUPABASE_URL: 'https://qipyprfzhpjzgemetqueu.supabase.co', // e.g., 'https://xxxxx.supabase.co'
+            SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpeXByZWZ6aHByanpnZW12cWV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MTY0NDgsImV4cCI6MjA3NTA5MjQ0OH0.RZAXhSFG3MOfAJkERaoD8Qv91_lWgkbWUBymtKjjFmU' // e.g., 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
         };
 
         // ============================================
@@ -2117,55 +2078,79 @@
         // ============================================
         let currentImage = null;
         let currentDishData = null;
-        let auth = null;
+        let supabaseClient = null;
         let currentUser = null;
         let cameraStream = null;
         let facingMode = 'environment'; // 'user' for front, 'environment' for back
 
         // ============================================
-        // FIREBASE INITIALIZATION
+        // SUPABASE INITIALIZATION
         // ============================================
-        function initializeFirebase() {
-            // Check if Firebase config is valid
-            const config = CONFIG.FIREBASE_CONFIG;
-            if (!config || !config.apiKey || config.apiKey.includes('YOUR_') || config.apiKey.includes('BEGIN PRIVATE KEY')) {
-                console.warn('Firebase not configured correctly. Login features will not work.');
-                console.warn('Please get your Firebase web app config from: https://console.firebase.google.com/');
-                console.warn('The apiKey should start with "AIza..." not be a private key.');
+        function initializeSupabase() {
+            // Check if Supabase config is valid
+            const supabaseUrl = CONFIG.SUPABASE_URL;
+            const supabaseKey = CONFIG.SUPABASE_ANON_KEY;
+            
+            if (!supabaseUrl || supabaseUrl.includes('YOUR_') || !supabaseKey || supabaseKey.includes('YOUR_')) {
+                console.warn('Supabase not configured correctly. Login features will not work.');
+                console.warn('Please get your Supabase credentials from: https://app.supabase.com/');
+                console.warn('Go to Project Settings > API to get your URL and anon key.');
                 return false;
             }
 
             try {
-                firebase.initializeApp(CONFIG.FIREBASE_CONFIG);
-                auth = firebase.auth();
+                // Initialize Supabase client
+                supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
                 
-                // Test Firebase connection
-                console.log('Firebase initialized successfully');
-                console.log('Project:', config.projectId);
+                console.log('Supabase initialized successfully');
+                console.log('Project URL:', supabaseUrl);
                 
-                // Listen for auth state changes
-                auth.onAuthStateChanged((user) => {
-                    currentUser = user;
+                // Get initial session and handle OAuth callback
+                supabaseClient.auth.getSession().then(({ data: { session }, error }) => {
+                    if (error) {
+                        console.error('Session error:', error);
+                    }
+                    currentUser = session?.user || null;
                     updateAuthUI();
-                    if (user) {
-                        console.log('User logged in:', user.email);
+                    if (currentUser) {
+                        console.log('User logged in:', currentUser.email);
+                        // Close login modal if open
+                        const loginModal = document.getElementById('loginModal');
+                        if (loginModal) {
+                            loginModal.classList.remove('active');
+                        }
                     } else {
                         console.log('No user logged in');
                     }
                 });
                 
-                // Test auth availability
-                if (auth) {
-                    console.log('Firebase Auth is ready');
-                    console.log('✅ Firebase is configured correctly!');
-                    console.log('You can now test login functionality.');
-                }
+                // Listen for auth state changes (including OAuth redirects)
+                supabaseClient.auth.onAuthStateChange((event, session) => {
+                    currentUser = session?.user || null;
+                    updateAuthUI();
+                    
+                    if (event === 'SIGNED_IN' && currentUser) {
+                        console.log('User signed in:', currentUser.email);
+                        // Close login modal if open
+                        const loginModal = document.getElementById('loginModal');
+                        if (loginModal) {
+                            loginModal.classList.remove('active');
+                        }
+                    } else if (event === 'SIGNED_OUT') {
+                        console.log('User signed out');
+                    } else if (event === 'TOKEN_REFRESHED') {
+                        console.log('Token refreshed');
+                    }
+                });
+                
+                console.log('✅ Supabase is configured correctly!');
+                console.log('You can now test Google authentication.');
                 
                 return true;
             } catch (error) {
-                console.error('Firebase initialization error:', error);
+                console.error('Supabase initialization error:', error);
                 console.error('Error details:', error.message);
-                alert('Firebase configuration error. Please check your config values.\n\nError: ' + error.message);
+                alert('Supabase configuration error. Please check your config values.\n\nError: ' + error.message);
                 return false;
             }
         }
@@ -2183,8 +2168,13 @@
             if (currentUser) {
                 loginBtn.style.display = 'none';
                 userProfile.style.display = 'flex';
-                userName.textContent = currentUser.displayName || currentUser.email || 'User';
-                userAvatar.src = currentUser.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(userName.textContent) + '&background=d32f2f&color=fff';
+                // Supabase user object structure is slightly different
+                const userEmail = currentUser.email || currentUser.user_metadata?.email || 'User';
+                const userNameText = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || userEmail;
+                const userPhoto = currentUser.user_metadata?.avatar_url || currentUser.user_metadata?.picture || null;
+                
+                userName.textContent = userNameText;
+                userAvatar.src = userPhoto || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(userNameText) + '&background=7A9163&color=fff';
                 logoutBtn.style.display = 'block';
             } else {
                 loginBtn.style.display = 'block';
@@ -2722,66 +2712,11 @@
                 }
             }
             
-            // Update auth form labels and placeholders
-            const emailLabels = document.querySelectorAll('.form-label');
-            emailLabels.forEach(label => {
-                const input = label.nextElementSibling || label.parentElement.querySelector('input');
-                if (input) {
-                    if (input.type === 'email') {
-                        label.textContent = t.email;
-                        input.placeholder = input.id.includes('login') ? 'your@email.com' : 'your@email.com';
-                    } else if (input.type === 'password') {
-                        label.textContent = t.password;
-                        input.placeholder = '••••••••';
-                    } else if (input.type === 'text' && input.id.includes('Name')) {
-                        label.textContent = t.name;
-                        input.placeholder = t.yourName;
-                    }
-                }
-            });
-            
-            // Update auth buttons and links
-            const showSignup = document.getElementById('showSignup');
-            const showLogin = document.getElementById('showLogin');
-            const loginSubmitBtn = document.getElementById('loginSubmitBtn');
-            const signupSubmitBtn = document.getElementById('signupSubmitBtn');
-            if (showSignup) showSignup.textContent = t.signUp;
-            if (showLogin) showLogin.textContent = t.login;
-            if (loginSubmitBtn) loginSubmitBtn.textContent = t.login;
-            if (signupSubmitBtn) signupSubmitBtn.textContent = t.signUp;
-            
             // Update Google buttons
             const googleLoginBtnText = document.getElementById('googleLoginBtnText');
             const googleSignupBtnText = document.getElementById('googleSignupBtnText');
-            if (googleLoginBtnText) googleLoginBtnText.textContent = t.continueWithGoogle;
-            if (googleSignupBtnText) googleSignupBtnText.textContent = t.continueWithGoogle;
-            
-            // Update auth dividers
-            const authDividers = document.querySelectorAll('.auth-divider');
-            authDividers.forEach(div => {
-                div.textContent = t.or;
-            });
-            
-            // Update auth switch text - preserve links with IDs
-            const authSwitches = document.querySelectorAll('.auth-switch');
-            authSwitches.forEach(switchEl => {
-                const link = switchEl.querySelector('a');
-                if (link && link.id === 'showSignup') {
-                    // Login form switch
-                    const textNode = Array.from(switchEl.childNodes).find(node => node.nodeType === 3);
-                    if (textNode) {
-                        textNode.textContent = t.dontHaveAccount + ' ';
-                    }
-                    link.textContent = t.signUp;
-                } else if (link && link.id === 'showLogin') {
-                    // Signup form switch
-                    const textNode = Array.from(switchEl.childNodes).find(node => node.nodeType === 3);
-                    if (textNode) {
-                        textNode.textContent = t.alreadyHaveAccount + ' ';
-                    }
-                    link.textContent = t.login;
-                }
-            });
+            if (googleLoginBtnText) googleLoginBtnText.textContent = t.continueWithGoogle || 'Continue with Google';
+            if (googleSignupBtnText) googleSignupBtnText.textContent = t.continueWithGoogle || 'Continue with Google';
         }
 
         function applyNightMode(isDark) {
@@ -2801,7 +2736,15 @@
         // INITIALIZATION
         // ============================================
         document.addEventListener('DOMContentLoaded', () => {
-            initializeFirebase();
+            initializeSupabase();
+            
+            // Handle OAuth callback after redirect
+            supabaseClient?.auth.getSession().then(({ data: { session } }) => {
+                if (session) {
+                    currentUser = session.user;
+                    updateAuthUI();
+                }
+            });
             initializeUpload();
             initializeCamera();
             initializeAuth();
@@ -3610,15 +3553,11 @@ All responses must be in ${targetLanguage}.`
             const logoutBtn = document.getElementById('logoutBtn');
             const closeModal = document.getElementById('closeModal');
             const loginModal = document.getElementById('loginModal');
-            const showSignup = document.getElementById('showSignup');
-            const showLogin = document.getElementById('showLogin');
-            const emailLoginForm = document.getElementById('emailLoginForm');
-            const emailSignupForm = document.getElementById('emailSignupForm');
             const googleLoginBtn = document.getElementById('googleLoginBtn');
             const googleSignupBtn = document.getElementById('googleSignupBtn');
             const modalTitle = document.getElementById('modalTitle');
 
-            // Open modal
+            // Open modal (show login form by default)
             loginBtn.addEventListener('click', () => {
                 showLoginForm();
                 loginModal.classList.add('active');
@@ -3637,70 +3576,51 @@ All responses must be in ${targetLanguage}.`
                 }
             });
 
-            // Switch between login and signup
-            showSignup.addEventListener('click', () => {
-                showSignupForm();
-            });
-
-            showLogin.addEventListener('click', () => {
-                showLoginForm();
-            });
-
-            // Email login
-            emailLoginForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const email = document.getElementById('loginEmail').value;
-                const password = document.getElementById('loginPassword').value;
-                const errorDiv = document.getElementById('loginError');
-
-                try {
-                    clearErrors();
-                    await auth.signInWithEmailAndPassword(email, password);
-                    loginModal.classList.remove('active');
-                    emailLoginForm.reset();
-                } catch (error) {
-                    errorDiv.textContent = getErrorMessage(error);
-                }
-            });
-
-            // Email signup
-            emailSignupForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const name = document.getElementById('signupName').value;
-                const email = document.getElementById('signupEmail').value;
-                const password = document.getElementById('signupPassword').value;
-                const errorDiv = document.getElementById('signupError');
-
-                try {
-                    clearErrors();
-                    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                    await userCredential.user.updateProfile({ displayName: name });
-                    loginModal.classList.remove('active');
-                    emailSignupForm.reset();
-                } catch (error) {
-                    errorDiv.textContent = getErrorMessage(error);
-                }
-            });
-
-            // Google login
+            // Google login (Supabase OAuth)
             googleLoginBtn.addEventListener('click', async () => {
                 try {
                     clearErrors();
-                    const provider = new firebase.auth.GoogleAuthProvider();
-                    await auth.signInWithPopup(provider);
-                    loginModal.classList.remove('active');
+                    if (!supabaseClient) {
+                        throw new Error('Supabase not initialized. Please check your configuration.');
+                    }
+                    
+                    const { data, error } = await supabaseClient.auth.signInWithOAuth({
+                        provider: 'google',
+                        options: {
+                            redirectTo: window.location.origin + window.location.pathname
+                        }
+                    });
+                    
+                    if (error) throw error;
+                    
+                    // Note: With OAuth, the user will be redirected to Google
+                    // After authentication, they'll be redirected back
+                    // The onAuthStateChange listener will handle updating the UI
                 } catch (error) {
                     document.getElementById('loginError').textContent = getErrorMessage(error);
                 }
             });
 
-            // Google signup (same as login)
+            // Google signup (same as login - OAuth handles both)
             googleSignupBtn.addEventListener('click', async () => {
                 try {
                     clearErrors();
-                    const provider = new firebase.auth.GoogleAuthProvider();
-                    await auth.signInWithPopup(provider);
-                    loginModal.classList.remove('active');
+                    if (!supabaseClient) {
+                        throw new Error('Supabase not initialized. Please check your configuration.');
+                    }
+                    
+                    const { data, error } = await supabaseClient.auth.signInWithOAuth({
+                        provider: 'google',
+                        options: {
+                            redirectTo: window.location.origin + window.location.pathname
+                        }
+                    });
+                    
+                    if (error) throw error;
+                    
+                    // Note: With OAuth, the user will be redirected to Google
+                    // After authentication, they'll be redirected back
+                    // The onAuthStateChange listener will handle updating the UI
                 } catch (error) {
                     document.getElementById('signupError').textContent = getErrorMessage(error);
                 }
@@ -3709,7 +3629,11 @@ All responses must be in ${targetLanguage}.`
             // Logout
             logoutBtn.addEventListener('click', async () => {
                 try {
-                    await auth.signOut();
+                    if (!supabaseClient) {
+                        throw new Error('Supabase not initialized.');
+                    }
+                    const { error } = await supabaseClient.auth.signOut();
+                    if (error) throw error;
                 } catch (error) {
                     console.error('Logout error:', error);
                 }
@@ -3721,7 +3645,7 @@ All responses must be in ${targetLanguage}.`
             const t = translations[lang] || translations.en;
             document.getElementById('loginForm').style.display = 'block';
             document.getElementById('signupForm').style.display = 'none';
-            document.getElementById('modalTitle').textContent = t.login;
+            document.getElementById('modalTitle').textContent = t.login || 'Login';
             clearErrors();
             // Re-apply translations to update form labels
             applyTranslations(lang);
@@ -3732,7 +3656,7 @@ All responses must be in ${targetLanguage}.`
             const t = translations[lang] || translations.en;
             document.getElementById('loginForm').style.display = 'none';
             document.getElementById('signupForm').style.display = 'block';
-            document.getElementById('modalTitle').textContent = t.signupTitle;
+            document.getElementById('modalTitle').textContent = t.signupTitle || 'Sign Up';
             clearErrors();
             // Re-apply translations to update form labels
             applyTranslations(lang);
@@ -3744,24 +3668,36 @@ All responses must be in ${targetLanguage}.`
         }
 
         function getErrorMessage(error) {
-            switch (error.code) {
-                case 'auth/user-not-found':
-                    return 'No account found with this email.';
-                case 'auth/wrong-password':
-                    return 'Incorrect password.';
-                case 'auth/email-already-in-use':
-                    return 'This email is already registered.';
-                case 'auth/weak-password':
-                    return 'Password should be at least 6 characters.';
-                case 'auth/invalid-email':
-                    return 'Invalid email address.';
-                case 'auth/operation-not-allowed':
-                    return 'This sign-in method is not enabled.';
-                case 'auth/popup-closed-by-user':
-                    return 'Sign-in popup was closed.';
-                default:
-                    return error.message || 'An error occurred. Please try again.';
+            // Supabase error codes are different from Firebase
+            if (!error) return 'An error occurred. Please try again.';
+            
+            const errorMessage = error.message || error.error_description || '';
+            const errorCode = error.code || error.status || '';
+            
+            // Check for common Supabase OAuth errors
+            if (errorMessage.includes('popup_closed_by_user') || errorMessage.includes('user cancelled')) {
+                return 'Sign-in popup was closed.';
             }
+            if (errorMessage.includes('OAuth')) {
+                return 'OAuth authentication failed. Please try again.';
+            }
+            if (errorMessage.includes('Email not confirmed')) {
+                return 'Please confirm your email address.';
+            }
+            if (errorMessage.includes('Invalid login credentials')) {
+                return 'Invalid email or password.';
+            }
+            if (errorMessage.includes('User already registered')) {
+                return 'This email is already registered.';
+            }
+            if (errorCode === 400 || errorMessage.includes('Bad Request')) {
+                return 'Invalid request. Please check your input.';
+            }
+            if (errorCode === 401 || errorMessage.includes('Unauthorized')) {
+                return 'Authentication failed. Please try again.';
+            }
+            
+            return errorMessage || 'An error occurred. Please try again.';
         }
 
         // ============================================
