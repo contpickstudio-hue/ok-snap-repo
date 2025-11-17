@@ -1,6 +1,5 @@
 {
-  "id": "/",
-  "name": "Ok Snap - Discover Food Through Your Lens",
+  "name": "Ok Snap",
   "short_name": "Ok Snap",
   "description": "Discover Food Through Your Lens",
   "start_url": "/",
@@ -8,33 +7,16 @@
   "display": "standalone",
   "background_color": "#FFFFFF",
   "theme_color": "#7A9163",
-  "orientation": "portrait-primary",
-  "dir": "ltr",
-  "lang": "en",
   "icons": [
     {
       "src": "/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
+      "type": "image/png"
     },
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
+      "type": "image/png"
     }
   ],
   "screenshots": [
@@ -52,8 +34,6 @@
       "form_factor": "wide",
       "label": "Ok Snap desktop view"
     }
-  ],
-  "categories": ["food", "lifestyle", "utilities"],
-  "prefer_related_applications": false
+  ]
 }
 
