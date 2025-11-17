@@ -1,0 +1,25 @@
+# Netlify headers file for proper MIME types and CORS
+# This ensures icons and manifest are served correctly
+
+/manifest.json
+  Content-Type: application/manifest+json
+  Access-Control-Allow-Origin: *
+
+/icon-192.png
+  Content-Type: image/png
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=31536000
+
+/icon-512.png
+  Content-Type: image/png
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=31536000
+
+/*.png
+  Content-Type: image/png
+  Access-Control-Allow-Origin: *
+
+/*.json
+  Content-Type: application/json
+  Access-Control-Allow-Origin: *
+
