@@ -34,6 +34,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
+// Trust proxy to get real IP address (important for accurate IP tracking)
+app.set('trust proxy', true);
+
 // ============================================
 // SECURITY MIDDLEWARE
 // ============================================
@@ -114,7 +117,7 @@ function rateLimit(req, res, next) {
 // ============================================
 const scanLimits = {
     guest: 3,      // Not logged in
-    free: 10,      // Logged in, free user
+    free: 5,       // Logged in, free user
     premium: 50   // Premium user
 };
 
@@ -151,10 +154,10 @@ function applyLoginBonus(userId, userIp) {
         const bonusScans = 5; // Additional scans when logging in
         
         // Calculate: if they used X guest scans, they get 5 bonus scans
-        // So remaining = min(10, guestScansUsed + 5) - guestScansUsed = min(5, 10 - guestScansUsed)
-        // Actually simpler: they used X scans as guest, now they have 10 limit, so remaining = 10 - X
-        // But we want to give them 5 bonus, so: remaining = min(10, X + 5) - X = min(5, 10 - X)
-        // Even simpler: remaining = 10 - guestScansUsed (but cap at 5 bonus)
+        // So remaining = min(5, guestScansUsed + 5) - guestScansUsed = min(5, 5 - guestScansUsed)
+        // Actually simpler: they used X scans as guest, now they have 5 limit, so remaining = 5 - X
+        // But we want to give them 5 bonus, so: remaining = min(5, X + 5) - X = min(5, 5 - X)
+        // Even simpler: remaining = 5 - guestScansUsed (but cap at 5 bonus)
         const remainingAfterBonus = Math.min(scanLimits.free, guestScansUsed + bonusScans);
         const newCount = scanLimits.free - remainingAfterBonus;
         
@@ -313,10 +316,20 @@ app.get('/health', (req, res) => {
 // Get remaining scans endpoint
 app.get('/api/scan-limit', (req, res) => {
     const userId = req.query.userId || null;
-    const userIp = req.ip || req.connection.remoteAddress || 'unknown';
+    // Get IP address - try multiple methods for accuracy
+    const userIp = req.ip || 
+                   req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 
+                   req.connection.remoteAddress || 
+                   req.socket.remoteAddress ||
+                   '127.0.0.1'; // Fallback for localhost
     const isPremium = req.query.isPremium === 'true';
     
+    console.log(`[scan-limit] userId: ${userId || 'guest'}, IP: ${userIp}, premium: ${isPremium}`);
+    
     const remainingInfo = getRemainingScans(userId, userIp, isPremium);
+    
+    console.log(`[scan-limit] Returning:`, remainingInfo);
+    
     res.json(remainingInfo);
 });
 
@@ -367,8 +380,12 @@ app.post('/api/analyze-image', rateLimit, async (req, res) => {
     try {
         const { imageData, targetLanguage, userId, isPremium } = req.body;
         
-        // Get user IP for guest users
-        const userIp = req.ip || req.connection.remoteAddress || 'unknown';
+        // Get user IP for guest users - try multiple methods for accuracy
+        const userIp = req.ip || 
+                       req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 
+                       req.connection.remoteAddress || 
+                       req.socket.remoteAddress ||
+                       '127.0.0.1'; // Fallback for localhost
         
         // Check daily scan limit
         const limitCheck = checkDailyScanLimit(userId, userIp, isPremium === true);
@@ -378,7 +395,7 @@ app.post('/api/analyze-image', rateLimit, async (req, res) => {
             let message = '';
             
             if (userLevel === 'guest') {
-                message = "Oops! That's all the scans you get for today. Come back tomorrow, or sign up for a free account to get 10 scans per day! 🍽️";
+                message = "Oops! That's all the scans you get for today. Come back tomorrow, or sign up for a free account to get 5 scans per day! 🍽️";
             } else if (userLevel === 'free') {
                 message = "Oops! That's all your free scans for today. Come back tomorrow, or upgrade to Premium for 50 scans per day! ⭐";
             } else {
