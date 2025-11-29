@@ -2207,7 +2207,7 @@
         }
 
         .loading {
-            display: none;
+            display: none !important;
             position: fixed;
             top: 0;
             left: 0;
@@ -2218,12 +2218,17 @@
             z-index: 1500;
             text-align: center;
             padding: 3rem;
-            display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             padding-top: max(3rem, env(safe-area-inset-top) + 2rem);
             padding-bottom: max(3rem, env(safe-area-inset-bottom) + 2rem);
+            pointer-events: auto;
+        }
+        
+        /* Ensure header and navigation are always clickable */
+        header, .bottom-navigation {
+            pointer-events: auto !important;
         }
 
         [data-theme="dark"] .loading {
@@ -2231,7 +2236,7 @@
         }
 
         .loading.active {
-            display: flex;
+            display: flex !important;
         }
 
         .loading-content {
@@ -2354,20 +2359,34 @@
             position: absolute;
             top: 20px;
             right: 20px;
-            background: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            border: 2px solid var(--border);
+            border: 2px solid var(--status-error);
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 48px;
+            height: 48px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            font-size: 1.5rem;
-            color: var(--text-secondary);
+            font-size: 1.75rem;
+            color: var(--status-error);
             transition: all 0.2s ease;
-            z-index: 10;
+            z-index: 1600;
+            font-weight: 300;
+            line-height: 1;
+            pointer-events: auto !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .loading-close-btn:hover {
+            background: var(--status-error);
+            color: white;
+            transform: scale(1.1);
+        }
+        
+        .loading-close-btn:active {
+            transform: scale(0.95);
         }
 
         .loading-close-btn:hover {
@@ -3889,7 +3908,7 @@
 
             <!-- Loading State -->
             <div class="loading" id="loading">
-                <button class="loading-close-btn" id="cancelLoadingBtn" title="Cancel" onclick="cancelAnalysis()">×</button>
+                <button class="loading-close-btn" id="cancelLoadingBtn" title="Cancel (or press ESC)" onclick="cancelAnalysis()" style="z-index: 1600;">×</button>
                 <div class="loading-content">
                     <div class="loading-animation">
                         <div class="loading-dot"></div>
@@ -6265,6 +6284,31 @@
                     resetUpload();
                 });
             }
+            
+            // Add ESC key handler to close loading screen
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' || e.key === 'Esc') {
+                    const loading = document.getElementById('loading');
+                    if (loading && loading.classList.contains('active')) {
+                        cancelAnalysis();
+                    }
+                }
+            });
+            
+            // Emergency: Force hide loading screen if it's stuck (after 2 minutes)
+            setTimeout(() => {
+                const loading = document.getElementById('loading');
+                if (loading && loading.classList.contains('active')) {
+                    const loadingStartTime = loading.getAttribute('data-start-time');
+                    if (loadingStartTime) {
+                        const elapsed = Date.now() - parseInt(loadingStartTime);
+                        if (elapsed > 120000) { // 2 minutes
+                            console.warn('Loading screen stuck for 2+ minutes, forcing hide');
+                            showLoading(false);
+                        }
+                    }
+                }
+            }, 120000);
         });
 
         // ============================================
@@ -7268,19 +7312,29 @@
             if (loading) {
                 if (show) {
                     loading.classList.add('active');
-                    // Remove any inline display style to let CSS handle it
-                    loading.style.display = '';
+                    loading.style.display = 'flex'; // Force display
+                    loading.style.visibility = 'visible';
+                    loading.style.opacity = '1';
+                    loading.style.pointerEvents = 'auto';
+                    loading.setAttribute('data-start-time', Date.now().toString());
                     
                     // Start rotating fun facts
                     currentFactIndex = 0;
                     displayFunFact(0);
+                    if (funFactInterval) {
+                        clearInterval(funFactInterval);
+                    }
                     funFactInterval = setInterval(() => {
                         currentFactIndex = (currentFactIndex + 1) % koreanFoodFacts.length;
                         displayFunFact(currentFactIndex);
                     }, 4000); // Change fact every 4 seconds
                 } else {
+                    loading.removeAttribute('data-start-time');
                     loading.classList.remove('active');
-                    loading.style.display = 'none';
+                    loading.style.display = 'none'; // Force hide
+                    loading.style.visibility = 'hidden';
+                    loading.style.opacity = '0';
+                    loading.style.pointerEvents = 'none';
                     
                     // Stop rotating fun facts
                     if (funFactInterval) {
@@ -7305,14 +7359,27 @@
         }
 
         function cancelAnalysis() {
+            console.log('Cancelling analysis...');
+            
             // Abort any ongoing API request
             if (currentAbortController) {
                 currentAbortController.abort();
                 currentAbortController = null;
             }
             
-            // Stop loading screen
-            showLoading(false);
+            // Force hide loading screen immediately
+            const loading = document.getElementById('loading');
+            if (loading) {
+                loading.classList.remove('active');
+                loading.style.display = 'none';
+                loading.removeAttribute('data-start-time');
+            }
+            
+            // Stop rotating fun facts
+            if (funFactInterval) {
+                clearInterval(funFactInterval);
+                funFactInterval = null;
+            }
             
             // Reset upload area
             resetUpload();
@@ -7326,7 +7393,24 @@
             // Clear current image
             currentImage = null;
             currentDishData = null;
+            
+            console.log('Analysis cancelled');
         }
+        
+        // Emergency function to force hide loading screen (can be called from console)
+        window.forceHideLoading = function() {
+            const loading = document.getElementById('loading');
+            if (loading) {
+                loading.classList.remove('active');
+                loading.style.display = 'none';
+                loading.removeAttribute('data-start-time');
+            }
+            if (funFactInterval) {
+                clearInterval(funFactInterval);
+                funFactInterval = null;
+            }
+            console.log('Loading screen force-hidden');
+        };
 
         function showError(message) {
             const resultSection = document.getElementById('resultSection');
@@ -8280,10 +8364,11 @@
 
         // Top share button handler
         const shareBtnTop = document.getElementById('shareBtnTop');
-        if (shareBtnTop) {
+        if (shareBtnTop && !shareBtnTop.hasAttribute('data-listener-added')) {
             shareBtnTop.addEventListener('click', async () => {
                 await shareDish();
             });
+            shareBtnTop.setAttribute('data-listener-added', 'true');
         }
 
         async function shareDish() {
@@ -8554,17 +8639,13 @@
             }
         }
 
-        // Top share button handler
-        const shareBtnTop = document.getElementById('shareBtnTop');
-        if (shareBtnTop) {
-            shareBtnTop.addEventListener('click', async () => {
+        // shareBtn event listener (shareBtnTop is already handled above)
+        const shareBtn = document.getElementById('shareBtn');
+        if (shareBtn) {
+            shareBtn.addEventListener('click', async () => {
                 await shareDish();
             });
         }
-
-        document.getElementById('shareBtn').addEventListener('click', async () => {
-            await shareDish();
-        });
 
         // Add to Today's Log button
         document.getElementById('addToLogBtn').addEventListener('click', async () => {
