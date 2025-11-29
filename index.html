@@ -148,7 +148,7 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
             position: sticky;
             top: 0;
-            z-index: 100;
+            z-index: 2000; /* Higher than loading screen to allow navigation */
             transition: all 200ms ease-in-out;
             width: 100%;
             box-sizing: border-box;
@@ -490,7 +490,7 @@
             transform: none;
         }
 
-        /* Camera Modal */
+        /* Camera Modal - Full Screen Mobile */
         .camera-modal {
             display: none;
             position: fixed;
@@ -498,11 +498,15 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.9);
+            background: #000;
             z-index: 2000;
-            align-items: center;
-            justify-content: center;
+            align-items: stretch;
+            justify-content: stretch;
             flex-direction: column;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
         }
 
         .camera-modal.active {
@@ -511,19 +515,64 @@
 
         .camera-container {
             position: relative;
-            width: 90%;
-            max-width: 600px;
+            width: 100%;
+            height: 100%;
             background: #000;
-            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
             overflow: hidden;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
         }
 
         #cameraVideo {
             width: 100%;
+            height: 100%;
+            object-fit: cover;
             display: block;
-            max-height: 80vh;
-            object-fit: contain;
+            flex: 1;
+        }
+
+        .camera-top-controls {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            padding-top: max(16px, env(safe-area-inset-top) + 8px);
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), transparent);
+            z-index: 10;
+        }
+
+        .camera-top-controls button {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+        }
+
+        .camera-top-controls button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .camera-top-controls button:active {
+            transform: scale(0.95);
+        }
+
+        .camera-top-controls button.active {
+            background: rgba(255, 255, 255, 0.9);
+            color: #000;
         }
 
         .camera-controls {
@@ -532,57 +581,159 @@
             left: 0;
             right: 0;
             background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
-            padding: 2rem;
+            padding: 24px;
+            padding-bottom: max(24px, env(safe-area-inset-bottom) + 16px);
             display: flex;
-            justify-content: center;
-            gap: 1rem;
+            justify-content: space-between;
             align-items: center;
+            gap: 16px;
+            z-index: 10;
+        }
+
+        .camera-side-btn {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .camera-side-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .camera-side-btn:active {
+            transform: scale(0.95);
+        }
+
+        .camera-side-btn svg {
+            width: 24px;
+            height: 24px;
+            stroke: currentColor;
         }
 
         .capture-btn {
-            width: 70px;
-            height: 70px;
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
             border: 5px solid white;
             background: white;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 20px rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 20px rgba(255, 255, 255, 0.4);
+            position: relative;
+            flex-shrink: 0;
         }
 
-        .capture-btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 30px rgba(255, 255, 255, 0.5);
-        }
-
-        .capture-btn:active {
-            transform: scale(0.95);
+        .capture-btn::before {
+            content: '';
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: white;
+            position: absolute;
         }
 
         .capture-btn::after {
             content: '';
-            width: 50px;
-            height: 50px;
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
             background: var(--primary);
+            position: relative;
+            z-index: 1;
         }
 
-        .camera-close-btn, .camera-flip-btn {
+        .capture-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 30px rgba(255, 255, 255, 0.6);
+        }
+
+        .capture-btn:active {
+            transform: scale(0.9);
+        }
+
+        .capture-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .camera-close-btn {
             background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
             color: white;
-            border: 2px solid white;
-            padding: 0.8rem 1.2rem;
-            border-radius: 50px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
             cursor: pointer;
-            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             transition: all 0.3s ease;
+            font-size: 1.5rem;
+            font-weight: 300;
+            line-height: 1;
         }
 
-        .camera-close-btn:hover, .camera-flip-btn:hover {
+        .camera-close-btn:hover {
             background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .camera-close-btn:active {
+            transform: scale(0.95);
+        }
+
+        .camera-preview-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #000;
+            display: none;
+            flex-direction: column;
+            z-index: 20;
+        }
+
+        .camera-preview-container.active {
+            display: flex;
+        }
+
+        .camera-preview-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            flex: 1;
+        }
+
+        .camera-preview-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+            padding: 24px;
+            padding-bottom: max(24px, env(safe-area-inset-bottom) + 16px);
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            align-items: center;
         }
 
         .camera-error {
@@ -858,6 +1009,320 @@
             box-shadow: 0 2px 8px rgba(122, 145, 99, 0.15);
         }
 
+        /* Enhanced Result Page Styles */
+        .result-top-actions {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .result-section-divider {
+            margin: 24px 0;
+            height: 1px;
+            background: linear-gradient(to right, transparent, var(--border), transparent);
+            position: relative;
+        }
+
+        .result-section-divider::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+        }
+
+        .result-section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .result-section-icon {
+            width: 24px;
+            height: 24px;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .result-section-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .nutrition-section-enhanced {
+            margin-top: 24px;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--accent) 100%);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .nutrition-grid-enhanced {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .nutrition-item-enhanced {
+            text-align: center;
+            padding: 16px;
+            background: var(--background);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .nutrition-value-enhanced {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 6px;
+        }
+
+        .nutrition-label-enhanced {
+            font-size: 0.813rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .ingredients-section {
+            margin-top: 24px;
+            padding: 20px;
+            background: var(--secondary);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .ingredients-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .ingredient-tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 14px;
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+        }
+
+        .allergens-section {
+            margin-top: 16px;
+            padding: 16px;
+            background: #FFF3E0;
+            border-radius: 12px;
+            border: 1px solid #FFE0B2;
+        }
+
+        .allergens-section[data-theme="dark"] {
+            background: rgba(255, 152, 0, 0.1);
+            border-color: rgba(255, 152, 0, 0.3);
+        }
+
+        .allergens-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #E65100;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .allergens-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .allergen-tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            background: #FFE0B2;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            color: #E65100;
+            font-weight: 600;
+        }
+
+        .cultural-section {
+            margin-top: 24px;
+            padding: 20px;
+            background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+            border-radius: 16px;
+            border: 1px solid #A5D6A7;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cultural-section::before {
+            content: '🇰🇷';
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            font-size: 3rem;
+            opacity: 0.2;
+        }
+
+        .cultural-section[data-theme="dark"] {
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(56, 142, 60, 0.1) 100%);
+            border-color: rgba(76, 175, 80, 0.3);
+        }
+
+        .cultural-text {
+            font-size: 0.938rem;
+            line-height: 1.7;
+            color: var(--text-primary);
+            margin-top: 12px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .recipe-cards {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .recipe-card {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: var(--background);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+
+        .recipe-card:hover {
+            border-color: var(--primary);
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(122, 145, 99, 0.2);
+        }
+
+        .recipe-card-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--primary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .recipe-card-content {
+            flex: 1;
+        }
+
+        .recipe-card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--text-primary);
+        }
+
+        .recipe-card-description {
+            font-size: 0.813rem;
+            color: var(--text-secondary);
+        }
+
+        .recipe-card-arrow {
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .find-restaurants-section {
+            margin-top: 24px;
+            padding: 20px;
+            background: var(--secondary);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .find-restaurants-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: var(--background);
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            margin-top: 12px;
+        }
+
+        .find-restaurants-link:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(122, 145, 99, 0.3);
+        }
+
+        .find-restaurants-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .find-restaurants-link:hover .find-restaurants-icon {
+            background: white;
+            color: var(--primary);
+        }
+
+        .find-restaurants-text {
+            flex: 1;
+        }
+
+        .find-restaurants-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .find-restaurants-subtitle {
+            font-size: 0.813rem;
+            color: var(--text-secondary);
+        }
+
+        .find-restaurants-link:hover .find-restaurants-subtitle {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
         .action-buttons {
             display: flex;
             gap: 0.75rem;
@@ -946,7 +1411,7 @@
             align-items: center;
             padding: 12px 0;
             padding-bottom: max(12px, env(safe-area-inset-bottom));
-            z-index: 100;
+            z-index: 2000; /* Higher than loading screen to allow navigation */
             box-sizing: border-box;
         }
 
@@ -1117,6 +1582,368 @@
             font-weight: 600;
             color: var(--primary);
             margin-left: 16px;
+        }
+
+        .log-item-delete {
+            background: var(--status-error);
+            color: white;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .log-item-delete:hover {
+            transform: scale(1.1);
+            background: #d32f2f;
+        }
+
+        .log-item-edit {
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            margin-right: 8px;
+        }
+
+        .log-item-edit:hover {
+            transform: scale(1.1);
+            background: #6a7d52;
+        }
+
+        /* Calorie Goal Section */
+        .calorie-goal-section {
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--accent) 100%);
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border);
+        }
+
+        .calorie-goal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .calorie-goal-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .calorie-goal-input-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .calorie-goal-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            background: var(--background);
+            color: var(--text-primary);
+            max-width: 150px;
+        }
+
+        .calorie-goal-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .calorie-goal-save-btn {
+            padding: 12px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .calorie-goal-save-btn:hover {
+            background: #6a7d52;
+            transform: translateY(-1px);
+        }
+
+        /* Progress Bar */
+        .calorie-progress-section {
+            margin-top: 16px;
+            padding: 16px;
+            background: var(--background);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 24px;
+            background: var(--secondary);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 8px;
+            position: relative;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, #9AB87A 100%);
+            border-radius: 12px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 600;
+            min-width: 40px;
+        }
+
+        .progress-bar-fill.over-goal {
+            background: linear-gradient(90deg, var(--status-error) 0%, #E97A7A 100%);
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* Summary Sections */
+        .summary-section {
+            background: var(--secondary);
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .summary-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .summary-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .summary-period-toggle {
+            display: flex;
+            gap: 8px;
+            background: var(--background);
+            padding: 4px;
+            border-radius: 8px;
+        }
+
+        .summary-period-btn {
+            padding: 6px 12px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.813rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .summary-period-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .summary-stat {
+            text-align: center;
+            padding: 12px;
+            background: var(--background);
+            border-radius: 8px;
+        }
+
+        .summary-stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .summary-stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Edit Modal */
+        .edit-entry-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .edit-entry-modal.active {
+            display: flex;
+        }
+
+        .edit-entry-content {
+            background: var(--background);
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 400px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .edit-entry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .edit-entry-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .edit-entry-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .edit-entry-close:hover {
+            background: var(--secondary);
+            color: var(--text-primary);
+        }
+
+        .edit-entry-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .edit-entry-field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .edit-entry-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .edit-entry-input {
+            padding: 12px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            background: var(--background);
+            color: var(--text-primary);
+        }
+
+        .edit-entry-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .edit-entry-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .edit-entry-save {
+            flex: 1;
+            padding: 12px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .edit-entry-save:hover {
+            background: #6a7d52;
+        }
+
+        .edit-entry-cancel {
+            flex: 1;
+            padding: 12px;
+            background: var(--secondary);
+            color: var(--text-primary);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .edit-entry-cancel:hover {
+            background: var(--accent);
         }
 
         .log-item-delete {
@@ -1381,26 +2208,177 @@
 
         .loading {
             display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1500;
             text-align: center;
             padding: 3rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding-top: max(3rem, env(safe-area-inset-top) + 2rem);
+            padding-bottom: max(3rem, env(safe-area-inset-bottom) + 2rem);
+        }
+
+        [data-theme="dark"] .loading {
+            background: rgba(30, 30, 30, 0.95);
         }
 
         .loading.active {
-            display: block;
+            display: flex;
         }
 
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid var(--border);
+        .loading-content {
+            max-width: 320px;
+            width: 100%;
+        }
+
+        .loading-animation {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 32px;
+        }
+
+        .loading-dot {
+            width: 12px;
+            height: 12px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: float 1.4s ease-in-out infinite;
+        }
+
+        .loading-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .loading-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .loading-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+                opacity: 0.7;
+            }
+            50% {
+                transform: translateY(-20px);
+                opacity: 1;
+            }
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid var(--border);
             border-top-color: var(--primary);
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin: 0 auto 16px;
+            margin: 0 auto 24px;
+            position: relative;
+        }
+
+        .loading-spinner::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            border: 3px solid transparent;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite reverse;
+            opacity: 0.6;
         }
 
         @keyframes spin {
             to { transform: rotate(360deg); }
+        }
+
+        .fun-fact-container {
+            margin-top: 24px;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fun-fact {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--text-primary);
+            padding: 20px;
+            background: var(--secondary);
+            border-radius: 16px;
+            border: 2px solid var(--border);
+            animation: fadeInUp 0.5s ease-out;
+            max-width: 100%;
+        }
+
+        .fun-fact-icon {
+            font-size: 2rem;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .fun-fact-text {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .loading-close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+            z-index: 10;
+        }
+
+        .loading-close-btn:hover {
+            background: var(--status-error);
+            color: white;
+            border-color: var(--status-error);
+            transform: scale(1.1);
+        }
+
+        [data-theme="dark"] .loading-close-btn {
+            background: rgba(42, 42, 42, 0.8);
         }
 
         .feedback-tooltip {
@@ -2185,9 +3163,352 @@
             height: auto;
             object-fit: contain;
         }
+
+        /* ============================================
+           ONBOARDING STYLES
+           ============================================ */
+        .onboarding-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--background);
+            z-index: 10000;
+            display: none;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .onboarding-overlay.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .onboarding-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 420px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 0;
+            position: relative;
+        }
+
+        .onboarding-screen {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 32px 24px;
+            padding-top: max(32px, env(safe-area-inset-top) + 16px);
+            padding-bottom: max(32px, env(safe-area-inset-bottom) + 16px);
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
+            box-sizing: border-box;
+        }
+
+        .onboarding-screen.active {
+            display: flex;
+        }
+
+        .onboarding-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            gap: 24px;
+            padding: 20px 0;
+        }
+
+        .onboarding-icon {
+            font-size: 5rem;
+            margin-bottom: 8px;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .onboarding-title {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+            line-height: 1.2;
+            animation: fadeInUp 0.6s ease-out 0.1s both;
+        }
+
+        .onboarding-description {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            max-width: 320px;
+            margin: 0;
+            animation: fadeInUp 0.6s ease-out 0.2s both;
+        }
+
+        .onboarding-features {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            width: 100%;
+            max-width: 320px;
+            margin-top: 8px;
+            animation: fadeInUp 0.6s ease-out 0.3s both;
+        }
+
+        .onboarding-feature-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--secondary);
+            border-radius: 12px;
+            text-align: left;
+        }
+
+        .onboarding-feature-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .onboarding-feature-text {
+            flex: 1;
+            font-size: 0.938rem;
+            color: var(--text-primary);
+        }
+
+        .onboarding-progress {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            padding: 20px 0;
+            margin-top: auto;
+        }
+
+        .onboarding-progress-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .onboarding-progress-dot.active {
+            background: var(--primary);
+            width: 24px;
+            border-radius: 4px;
+        }
+
+        .onboarding-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            padding-top: 24px;
+            margin-top: auto;
+        }
+
+        .onboarding-skip {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            padding: 12px;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .onboarding-skip:hover {
+            color: var(--text-primary);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .onboarding-title {
+                font-size: 1.75rem;
+            }
+
+            .onboarding-icon {
+                font-size: 4rem;
+            }
+
+            .onboarding-description {
+                font-size: 0.938rem;
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- Onboarding Overlay -->
+    <div class="onboarding-overlay" id="onboardingOverlay">
+        <div class="onboarding-container">
+            <!-- Screen 1: Welcome -->
+            <div class="onboarding-screen active" id="onboardingScreen1">
+                <div class="onboarding-content">
+                    <div class="onboarding-icon">🍲</div>
+                    <h1 class="onboarding-title">Welcome to OK-Snap</h1>
+                    <p class="onboarding-description">
+                        Discover Korean cuisine and food from around the world through the power of AI. Snap a photo and learn about what you're eating!
+                    </p>
+                </div>
+                <div class="onboarding-progress">
+                    <div class="onboarding-progress-dot active"></div>
+                    <div class="onboarding-progress-dot"></div>
+                    <div class="onboarding-progress-dot"></div>
+                    <div class="onboarding-progress-dot"></div>
+                    <div class="onboarding-progress-dot"></div>
+                </div>
+                <div class="onboarding-actions">
+                    <button class="btn" onclick="nextOnboardingScreen()">Next</button>
+                    <button class="onboarding-skip" onclick="skipOnboarding()">Skip</button>
+                </div>
+            </div>
+
+            <!-- Screen 2: How It Works -->
+            <div class="onboarding-screen" id="onboardingScreen2">
+                <div class="onboarding-content">
+                    <div class="onboarding-icon">📸</div>
+                    <h1 class="onboarding-title">How It Works</h1>
+                    <div class="onboarding-features">
+                        <div class="onboarding-feature-item">
+                            <span class="onboarding-feature-icon">1️⃣</span>
+                            <span class="onboarding-feature-text">Snap a photo of your food</span>
+                        </div>
+                        <div class="onboarding-feature-item">
+                            <span class="onboarding-feature-icon">2️⃣</span>
+                            <span class="onboarding-feature-text">AI identifies the dish instantly</span>
+                        </div>
+                        <div class="onboarding-feature-item">
+                            <span class="onboarding-feature-icon">3️⃣</span>
+                            <span class="onboarding-feature-text">Learn nutrition facts & cultural context</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="onboarding-progress">
+                    <div class="onboarding-progress-dot"></div>
+                    <div class="onboarding-progress-dot active"></div>
+                    <div class="onboarding-progress-dot"></div>
+                    <div class="onboarding-progress-dot"></div>
+                    <div class="onboarding-progress-dot"></div>
+                </div>
+                <div class="onboarding-actions">
+                    <button class="btn" onclick="nextOnboardingScreen()">Next</button>
+                    <button class="onboarding-skip" onclick="skipOnboarding()">Skip</button>
+                </div>
+            </div>
+
+            <!-- Screen 3: Unique Features -->
+            <div class="onboarding-screen" id="onboardingScreen3">
+                <div class="onboarding-content">
+                    <div class="onboarding-icon">✨</div>
+                    <h1 class="onboarding-title">Unique Features</h1>
+                    <div class="onboarding-features">
+                        <div class="onboarding-feature-item">
+                            <span class="onboarding-feature-icon">📊</span>
+                            <span class="onboarding-feature-text">Track daily calories automatically</span>
+                        </div>
+                        <div class="onboarding-feature-item">
+                            <span class="onboarding-feature-icon">🇰🇷</span>
+                            <span class="onboarding-feature-text">Korean cultural context & stories</span>
+                        </div>
+                        <div class="onboarding-feature-item">
+                            <span class="onboarding-feature-icon">💾</span>
+                            <span class="onboarding-feature-text">Save favorites & history</span>
+                        </div>
+                        <div class="onboarding-feature-item">
+                            <span class="onboarding-feature-icon">🌍</span>
+                            <span class="onboarding-feature-text">Works in 5 languages</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="onboarding-progress">
+                    <div class="onboarding-progress-dot"></div>
+                    <div class="onboarding-progress-dot"></div>
+                    <div class="onboarding-progress-dot active"></div>
+                    <div class="onboarding-progress-dot"></div>
+                    <div class="onboarding-progress-dot"></div>
+                </div>
+                <div class="onboarding-actions">
+                    <button class="btn" onclick="nextOnboardingScreen()">Next</button>
+                    <button class="onboarding-skip" onclick="skipOnboarding()">Skip</button>
+                </div>
+            </div>
+
+            <!-- Screen 4: Premium Benefits -->
+            <div class="onboarding-screen" id="onboardingScreen4">
+                <div class="onboarding-content">
+                    <div class="onboarding-icon">⭐</div>
+                    <h1 class="onboarding-title">Unlock Premium</h1>
+                    <p class="onboarding-description">
+                        Get unlimited scans, ad-free experience, and advanced features
+                    </p>
+                    <div class="onboarding-features">
+                        <div class="onboarding-feature-item">
+                            <span class="onboarding-feature-icon">♾️</span>
+                            <span class="onboarding-feature-text">Unlimited scans per day</span>
+                        </div>
+                        <div class="onboarding-feature-item">
+                            <span class="onboarding-feature-icon">🚫</span>
+                            <span class="onboarding-feature-text">Ad-free experience</span>
+                        </div>
+                        <div class="onboarding-feature-item">
+                            <span class="onboarding-feature-icon">⚡</span>
+                            <span class="onboarding-feature-text">Faster analysis mode</span>
+                        </div>
+                        <div class="onboarding-feature-item">
+                            <span class="onboarding-feature-icon">📊</span>
+                            <span class="onboarding-feature-text">Advanced nutritional breakdown</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="onboarding-progress">
+                    <div class="onboarding-progress-dot"></div>
+                    <div class="onboarding-progress-dot"></div>
+                    <div class="onboarding-progress-dot"></div>
+                    <div class="onboarding-progress-dot active"></div>
+                    <div class="onboarding-progress-dot"></div>
+                </div>
+                <div class="onboarding-actions">
+                    <button class="btn" onclick="nextOnboardingScreen()">Next</button>
+                    <button class="onboarding-skip" onclick="skipOnboarding()">Skip</button>
+                </div>
+            </div>
+
+            <!-- Screen 5: Get Started -->
+            <div class="onboarding-screen" id="onboardingScreen5">
+                <div class="onboarding-content">
+                    <div class="onboarding-icon">🚀</div>
+                    <h1 class="onboarding-title">You're All Set!</h1>
+                    <p class="onboarding-description">
+                        Start discovering food and learning about Korean cuisine. Your journey begins now!
+                    </p>
+                </div>
+                <div class="onboarding-progress">
+                    <div class="onboarding-progress-dot"></div>
+                    <div class="onboarding-progress-dot"></div>
+                    <div class="onboarding-progress-dot"></div>
+                    <div class="onboarding-progress-dot"></div>
+                    <div class="onboarding-progress-dot active"></div>
+                </div>
+                <div class="onboarding-actions">
+                    <button class="btn" onclick="completeOnboarding()" style="width: 100%;">Get Started</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <header>
         <div class="header-content">
             <div class="app-logo" id="appLogo" style="cursor: pointer;">
@@ -2195,7 +3516,7 @@
                 <img src="logo-dark.png" alt="Ok Snap" class="logo-image logo-dark" id="logoDark">
             </div>
             <div class="auth-section" id="authSection">
-                <div class="scan-counter-header" id="scanCounterHeader" style="display: flex; align-items: center; margin-right: 12px; padding: 6px 12px; background: var(--secondary); border-radius: 20px; font-size: 0.875rem; font-weight: 500;">
+                <div class="scan-counter-header" id="scanCounterHeader" style="display: flex; align-items: center; margin-right: 12px; padding: 6px 12px; background: var(--secondary); border-radius: 20px; font-size: 0.875rem; font-weight: 500; cursor: pointer;" onclick="document.getElementById('premiumDetailsScreen')?.classList.add('active')">
                     <span id="scanCounterText">3 scans left</span>
                 </div>
                 <div class="user-profile" id="userProfile" style="display: none;">
@@ -2400,6 +3721,133 @@
         </div>
     </div>
 
+    <!-- Premium Details Screen -->
+    <div class="modal-overlay" id="premiumDetailsScreen">
+        <div class="modal" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h2 class="modal-title">⭐ Premium Features</h2>
+                <button class="close-modal" id="closePremiumDetailsScreen">×</button>
+            </div>
+            
+            <div style="padding: 24px;">
+                <!-- Premium Features List -->
+                <div style="margin-bottom: 32px;">
+                    <h3 style="margin-bottom: 20px; color: var(--text-primary); font-size: 1.25rem;">Unlock Everything</h3>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 20px;">
+                        <div style="display: flex; align-items: start; gap: 16px; padding: 16px; background: var(--secondary); border-radius: 12px;">
+                            <span style="font-size: 2rem; flex-shrink: 0;">♾️</span>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; margin-bottom: 6px; font-size: 1.1rem;">Unlimited Scans</div>
+                                <div style="color: var(--text-secondary); font-size: 0.9rem;">Scan as many dishes as you want, every day</div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; align-items: start; gap: 16px; padding: 16px; background: var(--secondary); border-radius: 12px;">
+                            <span style="font-size: 2rem; flex-shrink: 0;">🚫</span>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; margin-bottom: 6px; font-size: 1.1rem;">Remove Ads</div>
+                                <div style="color: var(--text-secondary); font-size: 0.9rem;">Enjoy an ad-free experience</div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; align-items: start; gap: 16px; padding: 16px; background: var(--secondary); border-radius: 12px;">
+                            <span style="font-size: 2rem; flex-shrink: 0;">⚡</span>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; margin-bottom: 6px; font-size: 1.1rem;">Faster Premium Analysis Mode</div>
+                                <div style="color: var(--text-secondary); font-size: 0.9rem;">Get instant results with priority processing</div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; align-items: start; gap: 16px; padding: 16px; background: var(--secondary); border-radius: 12px;">
+                            <span style="font-size: 2rem; flex-shrink: 0;">📊</span>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; margin-bottom: 6px; font-size: 1.1rem;">Advanced Nutritional Breakdown</div>
+                                <div style="color: var(--text-secondary); font-size: 0.9rem;">Detailed macros and ingredients analysis</div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; align-items: start; gap: 16px; padding: 16px; background: var(--secondary); border-radius: 12px;">
+                            <span style="font-size: 2rem; flex-shrink: 0;">🇰🇷</span>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; margin-bottom: 6px; font-size: 1.1rem;">Korean Cultural Context Section</div>
+                                <div style="color: var(--text-secondary); font-size: 0.9rem;">Learn about Korean dishes and their cultural significance</div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; align-items: start; gap: 16px; padding: 16px; background: var(--secondary); border-radius: 12px;">
+                            <span style="font-size: 2rem; flex-shrink: 0;">💾</span>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; margin-bottom: 6px; font-size: 1.1rem;">Unlimited History Saves</div>
+                                <div style="color: var(--text-secondary); font-size: 0.9rem;">Save all your food discoveries without limits</div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; align-items: start; gap: 16px; padding: 16px; background: var(--secondary); border-radius: 12px;">
+                            <span style="font-size: 2rem; flex-shrink: 0;">🎯</span>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; margin-bottom: 6px; font-size: 1.1rem;">Custom Daily Calorie Goals</div>
+                                <div style="color: var(--text-secondary); font-size: 0.9rem;">Set and track personalized calorie targets</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pricing Options -->
+                <div style="margin-bottom: 32px;">
+                    <h3 style="margin-bottom: 20px; color: var(--text-primary); font-size: 1.25rem; text-align: center;">Choose Your Plan</h3>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 16px;">
+                        <!-- Monthly Plan -->
+                        <div style="background: var(--secondary); padding: 24px; border-radius: 12px; border: 2px solid var(--border);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <div>
+                                    <div style="font-weight: 600; font-size: 1.1rem; margin-bottom: 4px;">Monthly</div>
+                                    <div style="color: var(--text-secondary); font-size: 0.9rem;">Billed monthly</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 2rem; font-weight: 700; color: var(--primary);">$9.99</div>
+                                    <div style="color: var(--text-secondary); font-size: 0.875rem;">per month</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Annual Plan -->
+                        <div style="background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%); padding: 24px; border-radius: 12px; border: 2px solid var(--primary); position: relative;">
+                            <div style="position: absolute; top: -12px; right: 16px; background: var(--primary); color: white; padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">
+                                BEST VALUE
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <div>
+                                    <div style="font-weight: 600; font-size: 1.1rem; margin-bottom: 4px;">Annual</div>
+                                    <div style="color: var(--text-secondary); font-size: 0.9rem;">Save 20% - Billed yearly</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 2rem; font-weight: 700; color: var(--primary);">$7.99</div>
+                                    <div style="color: var(--text-secondary); font-size: 0.875rem;">per month</div>
+                                    <div style="color: var(--text-secondary); font-size: 0.75rem; margin-top: 4px;">$95.88/year</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CTA Button -->
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <button class="btn" id="startFreeTrialBtn" style="width: 100%; background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); color: #000; font-weight: 600; padding: 16px; font-size: 1.1rem;">
+                        🎁 Start 3-Day Free Trial
+                    </button>
+                    
+                    <div style="text-align: center; margin-top: 8px;">
+                        <p style="color: var(--text-secondary); font-size: 0.875rem;">
+                            Cancel anytime • No hidden fees
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
 
         <!-- Discover Tab -->
@@ -2441,12 +3889,43 @@
 
             <!-- Loading State -->
             <div class="loading" id="loading">
-                <div class="spinner"></div>
-                <p id="analyzingText" style="color: var(--text-light); font-size: 1.1rem;">Analyzing your photo... This might take a moment.</p>
+                <button class="loading-close-btn" id="cancelLoadingBtn" title="Cancel" onclick="cancelAnalysis()">×</button>
+                <div class="loading-content">
+                    <div class="loading-animation">
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                    </div>
+                    <div class="loading-spinner"></div>
+                    <div class="fun-fact-container">
+                        <div class="fun-fact" id="funFact">
+                            <span class="fun-fact-icon">🍲</span>
+                            <div class="fun-fact-text" id="funFactText">Did you know? Kimchi is Korea's national dish and has over 200 varieties!</div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Result Section -->
             <div class="result-section" id="resultSection">
+                <!-- Top Actions -->
+                <div class="result-top-actions">
+                    <button class="btn" id="favoriteBtnTop" style="flex: 1; background: var(--primary); color: white;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px; vertical-align: middle;">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                        </svg>
+                        Save to Favorites
+                    </button>
+                    <button class="btn-secondary" id="shareBtnTop" style="flex: 1;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px; vertical-align: middle;">
+                            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                            <polyline points="16 6 12 2 8 6"></polyline>
+                            <line x1="12" y1="2" x2="12" y2="15"></line>
+                        </svg>
+                        Share
+                    </button>
+                </div>
+
                 <div class="result-header">
                     <h2 class="result-title" id="dishName"></h2>
                     <span class="confidence-badge" id="confidenceBadge"></span>
@@ -2454,43 +3933,143 @@
                 <img class="dish-image" id="dishImage" alt="Uploaded dish">
                 <div class="dish-description" id="dishDescription"></div>
                 
-                <!-- Nutrition Info Section -->
-                <div class="nutrition-section" id="nutritionSection" style="display: none;">
-                    <h3 id="nutritionTitle" style="margin-bottom: 0.75rem; color: var(--text); font-size: 1.1rem;">Nutrition (per serving)</h3>
-                    <div class="nutrition-grid" id="nutritionGrid">
-                        <div class="nutrition-item">
-                            <div class="nutrition-value" id="nutritionCalories">0</div>
-                            <div class="nutrition-label">Calories</div>
+                <!-- Section Divider -->
+                <div class="result-section-divider"></div>
+
+                <!-- Enhanced Nutrition Info Section -->
+                <div class="nutrition-section-enhanced" id="nutritionSectionEnhanced">
+                    <div class="result-section-header">
+                        <svg class="result-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 3h18v18H3zM9 9h6v6H9z"></path>
+                            <path d="M3 9h18M9 3v18"></path>
+                        </svg>
+                        <h3 class="result-section-title">Nutritional Facts</h3>
+                    </div>
+                    <div class="nutrition-grid-enhanced">
+                        <div class="nutrition-item-enhanced">
+                            <div class="nutrition-value-enhanced" id="nutritionCaloriesEnhanced">250</div>
+                            <div class="nutrition-label-enhanced">Calories</div>
                         </div>
-                        <div class="nutrition-item">
-                            <div class="nutrition-value" id="nutritionProtein">0g</div>
-                            <div class="nutrition-label">Protein</div>
+                        <div class="nutrition-item-enhanced">
+                            <div class="nutrition-value-enhanced" id="nutritionProteinEnhanced">15g</div>
+                            <div class="nutrition-label-enhanced">Protein</div>
                         </div>
-                        <div class="nutrition-item">
-                            <div class="nutrition-value" id="nutritionCarbs">0g</div>
-                            <div class="nutrition-label">Carbs</div>
+                        <div class="nutrition-item-enhanced">
+                            <div class="nutrition-value-enhanced" id="nutritionCarbsEnhanced">30g</div>
+                            <div class="nutrition-label-enhanced">Carbs</div>
                         </div>
-                        <div class="nutrition-item">
-                            <div class="nutrition-value" id="nutritionFat">0g</div>
-                            <div class="nutrition-label">Fat</div>
+                        <div class="nutrition-item-enhanced">
+                            <div class="nutrition-value-enhanced" id="nutritionFatEnhanced">8g</div>
+                            <div class="nutrition-label-enhanced">Fat</div>
                         </div>
                     </div>
+                </div>
+
+                <!-- Section Divider -->
+                <div class="result-section-divider"></div>
+
+                <!-- Ingredients and Allergens Section -->
+                <div class="ingredients-section" id="ingredientsSection">
+                    <div class="result-section-header">
+                        <svg class="result-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <path d="M16 10a4 4 0 0 1-8 0"></path>
+                        </svg>
+                        <h3 class="result-section-title">Ingredients</h3>
+                    </div>
+                    <div class="ingredients-list" id="ingredientsList">
+                        <span class="ingredient-tag">Rice</span>
+                        <span class="ingredient-tag">Soy Sauce</span>
+                        <span class="ingredient-tag">Sesame Oil</span>
+                        <span class="ingredient-tag">Garlic</span>
+                        <span class="ingredient-tag">Ginger</span>
+                        <span class="ingredient-tag">Green Onions</span>
+                    </div>
+                    <div class="allergens-section" id="allergensSection">
+                        <div class="allergens-title">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                <line x1="12" y1="9" x2="12" y2="13"></line>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
+                            Allergens
+                        </div>
+                        <div class="allergens-list" id="allergensList">
+                            <span class="allergen-tag">Soy</span>
+                            <span class="allergen-tag">Gluten</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section Divider -->
+                <div class="result-section-divider"></div>
+
+                <!-- Korean Cultural Description Section -->
+                <div class="cultural-section" id="culturalSection">
+                    <div class="result-section-header">
+                        <svg class="result-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                        <h3 class="result-section-title">Korean Cultural Context</h3>
+                    </div>
+                    <div class="cultural-text" id="culturalText">
+                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. This dish holds significant cultural importance in Korean cuisine, often served during special occasions and family gatherings.
+                    </div>
+                </div>
+
+                <!-- Section Divider -->
+                <div class="result-section-divider"></div>
+
+                <!-- Recipe Links Section -->
+                <div class="recipe-section">
+                    <div class="result-section-header">
+                        <svg class="result-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                        </svg>
+                        <h3 class="result-section-title" id="readyToCook">Recipe Links</h3>
+                    </div>
+                    <div class="recipe-cards" id="recipeLinks">
+                        <!-- Recipe cards will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Find Nearby Restaurants Section -->
+                <div class="find-restaurants-section" id="findRestaurantsSection">
+                    <div class="result-section-header">
+                        <svg class="result-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                        <h3 class="result-section-title">Find Nearby</h3>
+                    </div>
+                    <p style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 8px;">
+                        Discover restaurants serving this dish near you
+                    </p>
+                    <a href="#" class="find-restaurants-link" id="findRestaurantsLink" target="_blank" rel="noopener noreferrer">
+                        <div class="find-restaurants-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                <circle cx="12" cy="10" r="3"></circle>
+                            </svg>
+                        </div>
+                        <div class="find-restaurants-text">
+                            <div class="find-restaurants-title">Find Nearby Restaurants</div>
+                            <div class="find-restaurants-subtitle">Open in Google Maps</div>
+                        </div>
+                        <svg class="recipe-card-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </a>
                 </div>
                 
                 <div class="alternatives" id="alternativesSection" style="display: none;">
                     <div class="alternatives-title" id="couldAlsoBe">Could also be:</div>
                     <div class="alternative-chips" id="alternativeChips"></div>
                 </div>
-                <div class="recipe-section">
-                    <h3 id="readyToCook" style="margin-bottom: 1rem; color: var(--text);">Ready to cook?</h3>
-                    <div class="recipe-links" id="recipeLinks">
-                        <!-- Recipe links will be populated here -->
-                    </div>
-                    <div class="action-buttons">
-                        <button class="btn-secondary" id="favoriteBtn">❤️ Save to Favorites</button>
-                        <button class="btn-secondary" id="shareBtn">📤 Share Discovery</button>
-                        <button class="btn-primary" id="addToLogBtn" style="display: none;">➕ Add to Today's Log</button>
-                    </div>
+                
+                <div class="action-buttons" style="margin-top: 24px;">
+                    <button class="btn-primary" id="addToLogBtn" style="display: none; width: 100%;">➕ Add to Today's Log</button>
                 </div>
             </div>
 
@@ -2562,6 +4141,63 @@
             <div class="calorie-log-section">
                 <h2 class="section-title" id="calorieLogTitle">📊 Today's Calorie Log</h2>
                 
+                <!-- Daily Calorie Goal Section -->
+                <div class="calorie-goal-section">
+                    <div class="calorie-goal-header">
+                        <div class="calorie-goal-title">🎯 Daily Calorie Goal</div>
+                    </div>
+                    <div class="calorie-goal-input-group">
+                        <input type="number" class="calorie-goal-input" id="calorieGoalInput" placeholder="2000" min="0" max="10000">
+                        <span style="color: var(--text-secondary);">calories</span>
+                        <button class="calorie-goal-save-btn" id="saveCalorieGoalBtn">Save</button>
+                    </div>
+                    <div class="calorie-progress-section" id="calorieProgressSection" style="display: none;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-weight: 600; color: var(--text-primary);">Progress</span>
+                            <span id="progressText" style="font-size: 0.875rem; color: var(--text-secondary);">0 / 0 cal</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" id="progressBarFill" style="width: 0%;">0%</div>
+                        </div>
+                        <div class="progress-info">
+                            <span id="progressRemaining">0 calories remaining</span>
+                            <span id="progressStatus" style="color: var(--primary); font-weight: 600;">On track</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary Section -->
+                <div class="summary-section">
+                    <div class="summary-header">
+                        <div class="summary-title">
+                            <span>📈 Summary</span>
+                        </div>
+                        <div class="summary-period-toggle">
+                            <button class="summary-period-btn active" data-period="daily" id="summaryDailyBtn">Daily</button>
+                            <button class="summary-period-btn" data-period="weekly" id="summaryWeeklyBtn">Weekly</button>
+                            <button class="summary-period-btn" data-period="monthly" id="summaryMonthlyBtn">Monthly</button>
+                        </div>
+                    </div>
+                    <div class="summary-stats" id="summaryStats">
+                        <div class="summary-stat">
+                            <div class="summary-stat-value" id="summaryCalories">0</div>
+                            <div class="summary-stat-label">Calories</div>
+                        </div>
+                        <div class="summary-stat">
+                            <div class="summary-stat-value" id="summaryProtein">0g</div>
+                            <div class="summary-stat-label">Protein</div>
+                        </div>
+                        <div class="summary-stat">
+                            <div class="summary-stat-value" id="summaryCarbs">0g</div>
+                            <div class="summary-stat-label">Carbs</div>
+                        </div>
+                        <div class="summary-stat">
+                            <div class="summary-stat-value" id="summaryFat">0g</div>
+                            <div class="summary-stat-label">Fat</div>
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- Daily Totals -->
                 <div class="daily-totals" id="dailyTotals">
                     <div class="total-item">
@@ -2592,6 +4228,42 @@
                             <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
                         </svg>
                         <p id="logEmptyText">No items logged today. Add dishes from the Discover page!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Entry Modal -->
+        <div class="edit-entry-modal" id="editEntryModal">
+            <div class="edit-entry-content">
+                <div class="edit-entry-header">
+                    <h3 class="edit-entry-title">Edit Entry</h3>
+                    <button class="edit-entry-close" id="closeEditModal">×</button>
+                </div>
+                <div class="edit-entry-form" id="editEntryForm">
+                    <div class="edit-entry-field">
+                        <label class="edit-entry-label">Dish Name</label>
+                        <input type="text" class="edit-entry-input" id="editDishName" readonly>
+                    </div>
+                    <div class="edit-entry-field">
+                        <label class="edit-entry-label">Calories</label>
+                        <input type="number" class="edit-entry-input" id="editCalories" min="0" step="1">
+                    </div>
+                    <div class="edit-entry-field">
+                        <label class="edit-entry-label">Protein (g)</label>
+                        <input type="number" class="edit-entry-input" id="editProtein" min="0" step="0.1">
+                    </div>
+                    <div class="edit-entry-field">
+                        <label class="edit-entry-label">Carbs (g)</label>
+                        <input type="number" class="edit-entry-input" id="editCarbs" min="0" step="0.1">
+                    </div>
+                    <div class="edit-entry-field">
+                        <label class="edit-entry-label">Fat (g)</label>
+                        <input type="number" class="edit-entry-input" id="editFat" min="0" step="0.1">
+                    </div>
+                    <div class="edit-entry-actions">
+                        <button class="edit-entry-cancel" id="cancelEditBtn">Cancel</button>
+                        <button class="edit-entry-save" id="saveEditBtn">Save Changes</button>
                     </div>
                 </div>
             </div>
@@ -2675,11 +4347,48 @@
         <div class="camera-modal" id="cameraModal">
             <div class="camera-container">
                 <video id="cameraVideo" autoplay playsinline></video>
-                <div class="camera-controls">
-                    <button class="camera-close-btn" id="closeCameraBtn">Close</button>
-                    <button class="capture-btn" id="captureBtn" title="Capture photo"></button>
-                    <button class="camera-flip-btn" id="flipCameraBtn">Flip</button>
+                
+                <!-- Top Controls -->
+                <div class="camera-top-controls">
+                    <button class="camera-close-btn" id="closeCameraBtn" title="Close">×</button>
+                    <button class="camera-flash-btn" id="flashBtn" title="Flash">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                        </svg>
+                    </button>
                 </div>
+
+                <!-- Bottom Controls -->
+                <div class="camera-controls">
+                    <button class="camera-side-btn" id="retakeBtn" title="Retake" style="display: none;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+                            <path d="M21 3v5h-5"></path>
+                            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+                            <path d="M3 21v-5h5"></path>
+                        </svg>
+                    </button>
+                    <button class="capture-btn" id="captureBtn" title="Capture photo"></button>
+                    <button class="camera-side-btn" id="flipCameraBtn" title="Flip camera">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 1l4 4-4 4"></path>
+                            <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+                            <path d="M7 23l-4-4 4-4"></path>
+                            <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Preview Container -->
+                <div class="camera-preview-container" id="cameraPreviewContainer">
+                    <img id="cameraPreviewImage" class="camera-preview-image" alt="Preview">
+                    <div class="camera-preview-controls">
+                        <button class="btn" id="usePhotoBtn" style="background: var(--primary); color: white;">Use Photo</button>
+                        <button class="btn" id="retakePhotoBtn" style="background: rgba(255, 255, 255, 0.2); color: white; border: 2px solid white;">Retake</button>
+                    </div>
+                </div>
+
+                <!-- Error Message -->
                 <div class="camera-error" id="cameraError" style="display: none;">
                     <h3 id="cameraAccessDeniedTitle">Camera Access Denied</h3>
                     <p id="cameraAccessDeniedMsg">Please allow camera access to use this feature.</p>
@@ -2760,12 +4469,37 @@
         let currentUser = null;
         let userScanInfo = { remaining: 3, limit: 3, level: 'guest' }; // Default for guest
         
+        // Premium features flags (UI state placeholders - backend logic not changed)
+        let premiumFeatures = {
+            unlimitedScans: false,
+            removeAds: false,
+            fasterAnalysis: false,
+            advancedNutritionalBreakdown: false,
+            koreanCulturalContext: false,
+            unlimitedHistorySaves: false,
+            customDailyCalorieGoals: false
+        };
+        
         // Check if user is premium (from user metadata)
         function isPremiumUser() {
             if (!currentUser) return false;
             return currentUser.user_metadata?.premium === true || 
                    currentUser.user_metadata?.is_premium === true ||
                    currentUser.user_metadata?.tier === 'premium';
+        }
+        
+        // Update premium features based on user status
+        function updatePremiumFeatures() {
+            const isPremium = isPremiumUser();
+            premiumFeatures = {
+                unlimitedScans: isPremium,
+                removeAds: isPremium,
+                fasterAnalysis: isPremium,
+                advancedNutritionalBreakdown: isPremium,
+                koreanCulturalContext: isPremium,
+                unlimitedHistorySaves: isPremium,
+                customDailyCalorieGoals: isPremium
+            };
         }
         
         // Get remaining scans from server
@@ -2785,6 +4519,9 @@
         }
         let cameraStream = null;
         let facingMode = 'environment'; // 'user' for front, 'environment' for back
+        let flashMode = 'off'; // 'off', 'on', 'auto'
+        let isCapturing = false; // Prevent double captures
+        let capturedImageBlob = null; // Store captured image
         
         // Navigation state tracking
         let navigationHistory = [];
@@ -3217,25 +4954,35 @@
             
             // Update header counter
             if (scanCounterHeader && scanCounterText) {
-                if (remaining === 0) {
+                if (level === 'premium') {
+                    scanCounterText.textContent = 'Premium active ✔';
+                    scanCounterHeader.style.background = '#E8F5E9';
+                    scanCounterHeader.style.color = '#2E7D32';
+                    scanCounterHeader.style.display = 'flex';
+                    scanCounterHeader.style.cursor = 'pointer'; // Still clickable to view details
+                } else if (remaining === 0) {
                     scanCounterText.textContent = 'No scans left';
                     scanCounterHeader.style.background = '#FFE6E6';
                     scanCounterHeader.style.color = 'var(--status-error)';
+                    scanCounterHeader.style.display = 'flex';
+                    scanCounterHeader.style.cursor = 'pointer';
                 } else if (remaining === 1) {
                     scanCounterText.textContent = '1 scan left';
                     scanCounterHeader.style.background = '#FFF4E6';
                     scanCounterHeader.style.color = '#E67E22';
+                    scanCounterHeader.style.display = 'flex';
+                    scanCounterHeader.style.cursor = 'pointer';
                 } else {
-                    scanCounterText.textContent = `${remaining} scans left`;
-                    if (level === 'premium') {
-                        scanCounterHeader.style.background = '#FFF9E6';
-                        scanCounterHeader.style.color = '#FFD700';
+                    if (level === 'guest') {
+                        scanCounterText.textContent = `${remaining} scans left. Upgrade for full access.`;
                     } else {
-                        scanCounterHeader.style.background = 'var(--secondary)';
-                        scanCounterHeader.style.color = 'var(--text-primary)';
+                        scanCounterText.textContent = `${remaining} scans left`;
                     }
+                    scanCounterHeader.style.background = 'var(--secondary)';
+                    scanCounterHeader.style.color = 'var(--text-primary)';
+                    scanCounterHeader.style.display = 'flex';
+                    scanCounterHeader.style.cursor = 'pointer';
                 }
-                scanCounterHeader.style.display = 'flex';
             }
         }
 
@@ -3311,10 +5058,14 @@
             
             // Update scan limit display
             updateScanLimitDisplay();
+            
+            // Update premium features
+            applyPremiumFeatures();
         }
         
         // Apply premium features (ad-free, etc.)
         function applyPremiumFeatures() {
+            updatePremiumFeatures();
             if (isPremiumUser()) {
                 // Premium users get no ads - add class for styling
                 document.body.classList.add('premium-user');
@@ -3324,6 +5075,15 @@
         }
         
         function removePremiumFeatures() {
+            premiumFeatures = {
+                unlimitedScans: false,
+                removeAds: false,
+                fasterAnalysis: false,
+                advancedNutritionalBreakdown: false,
+                koreanCulturalContext: false,
+                unlimitedHistorySaves: false,
+                customDailyCalorieGoals: false
+            };
             document.body.classList.remove('premium-user');
         }
         
@@ -3453,6 +5213,7 @@
             if (tabName === 'calorieLog') {
                 // Load calorie log when switching to this tab
                 loadCalorieLog();
+                initializeCalorieLogFeatures();
             } else if (tabName === 'discover') {
                 // When switching back to discover tab, show result if it exists
                 if (isShowingResult && currentDishData && resultSection) {
@@ -4378,7 +6139,95 @@
             }
         }
 
+        // ============================================
+        // ONBOARDING FUNCTIONS
+        // ============================================
+        let currentOnboardingScreen = 1;
+        const totalOnboardingScreens = 5;
+
+        function checkOnboardingStatus() {
+            const hasSeenOnboarding = localStorage.getItem('okSnap_hasSeenOnboarding');
+            if (!hasSeenOnboarding || hasSeenOnboarding !== 'true') {
+                showOnboarding();
+                return true; // Show onboarding
+            }
+            return false; // Don't show onboarding
+        }
+
+        function showOnboarding() {
+            const overlay = document.getElementById('onboardingOverlay');
+            if (overlay) {
+                overlay.classList.add('active');
+                // Hide main app content
+                const container = document.querySelector('.container');
+                const header = document.querySelector('header');
+                if (container) container.style.display = 'none';
+                if (header) header.style.display = 'none';
+            }
+            currentOnboardingScreen = 1;
+            updateOnboardingScreen();
+        }
+
+        function hideOnboarding() {
+            const overlay = document.getElementById('onboardingOverlay');
+            if (overlay) {
+                overlay.classList.remove('active');
+                // Show main app content
+                const container = document.querySelector('.container');
+                const header = document.querySelector('header');
+                if (container) container.style.display = '';
+                if (header) header.style.display = '';
+            }
+        }
+
+        function updateOnboardingScreen() {
+            // Hide all screens
+            for (let i = 1; i <= totalOnboardingScreens; i++) {
+                const screen = document.getElementById(`onboardingScreen${i}`);
+                if (screen) {
+                    screen.classList.remove('active');
+                }
+            }
+
+            // Show current screen
+            const currentScreen = document.getElementById(`onboardingScreen${currentOnboardingScreen}`);
+            if (currentScreen) {
+                currentScreen.classList.add('active');
+            }
+
+            // Update progress dots
+            const progressDots = document.querySelectorAll('.onboarding-progress-dot');
+            progressDots.forEach((dot, index) => {
+                if (index === currentOnboardingScreen - 1) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        }
+
+        function nextOnboardingScreen() {
+            if (currentOnboardingScreen < totalOnboardingScreens) {
+                currentOnboardingScreen++;
+                updateOnboardingScreen();
+            } else {
+                completeOnboarding();
+            }
+        }
+
+        function skipOnboarding() {
+            completeOnboarding();
+        }
+
+        function completeOnboarding() {
+            localStorage.setItem('okSnap_hasSeenOnboarding', 'true');
+            hideOnboarding();
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
+            // Check onboarding status first
+            const shouldShowOnboarding = checkOnboardingStatus();
+            
             // Register Service Worker for PWA
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('/service-worker.js')
@@ -4390,6 +6239,7 @@
                     });
             }
             
+            // Initialize app (always initialize, but may be hidden by onboarding)
             initializeSupabase();
             initializeUpload();
             initializeCamera();
@@ -4511,21 +6361,67 @@
             const closeCameraBtn = document.getElementById('closeCameraBtn');
             const captureBtn = document.getElementById('captureBtn');
             const flipCameraBtn = document.getElementById('flipCameraBtn');
+            const flashBtn = document.getElementById('flashBtn');
+            const retakeBtn = document.getElementById('retakeBtn');
+            const usePhotoBtn = document.getElementById('usePhotoBtn');
+            const retakePhotoBtn = document.getElementById('retakePhotoBtn');
             const cameraModal = document.getElementById('cameraModal');
 
             cameraBtn.addEventListener('click', openCamera);
             closeCameraBtn.addEventListener('click', closeCamera);
             captureBtn.addEventListener('click', capturePhoto);
             flipCameraBtn.addEventListener('click', flipCamera);
+            if (flashBtn) flashBtn.addEventListener('click', toggleFlash);
+            if (retakeBtn) retakeBtn.addEventListener('click', retakePhoto);
+            if (usePhotoBtn) usePhotoBtn.addEventListener('click', usePhoto);
+            if (retakePhotoBtn) retakePhotoBtn.addEventListener('click', retakePhoto);
         }
 
         async function openCamera() {
             const cameraModal = document.getElementById('cameraModal');
             const cameraVideo = document.getElementById('cameraVideo');
             const cameraError = document.getElementById('cameraError');
+            const previewContainer = document.getElementById('cameraPreviewContainer');
+            const retakeBtn = document.getElementById('retakeBtn');
+
+            // Reset state
+            isCapturing = false;
+            capturedImageBlob = null;
+            if (previewContainer) previewContainer.classList.remove('active');
+            if (retakeBtn) retakeBtn.style.display = 'none';
 
             cameraModal.classList.add('active');
             cameraError.style.display = 'none';
+
+            // Try Capacitor Camera API first for instant launch
+            try {
+                const { Camera } = await import('@capacitor/camera');
+                const { Capacitor } = await import('@capacitor/core');
+                
+                // Check if running on native platform
+                if (Capacitor.isNativePlatform()) {
+                    // Use Capacitor Camera for native platforms
+                    try {
+                        const permissionStatus = await Camera.checkPermissions();
+                        
+                        if (permissionStatus.camera !== 'granted') {
+                            const requestResult = await Camera.requestPermissions({ permissions: ['camera'] });
+                            if (requestResult.camera !== 'granted') {
+                                throw new Error('Camera permission denied');
+                            }
+                        }
+
+                        // For native, we'll use getUserMedia but with better performance
+                        // The Capacitor Camera.getPhoto() can be used for instant capture
+                        // but we'll use getUserMedia for preview
+                    } catch (permError) {
+                        console.log('Capacitor permission error:', permError);
+                    }
+                }
+            } catch (importError) {
+                // Capacitor not available, continue with browser API
+                console.log('Capacitor not available, using browser API');
+            }
 
             try {
                 // Stop any existing stream
@@ -4533,35 +6429,21 @@
                     cameraStream.getTracks().forEach(track => track.stop());
                 }
 
-                // Request camera permission first (for Android/Capacitor)
-                try {
-                    const { Camera } = await import('@capacitor/camera');
-                    const permissionStatus = await Camera.checkPermissions();
-                    
-                    if (permissionStatus.camera !== 'granted') {
-                        const requestResult = await Camera.requestPermissions({ permissions: ['camera'] });
-                        if (requestResult.camera !== 'granted') {
-                            throw new Error('Camera permission denied');
-                        }
-                    }
-                } catch (permError) {
-                    // If Capacitor Camera plugin is not available (e.g., in browser), 
-                    // fall through to getUserMedia which will handle permission request
-                    console.log('Capacitor Camera plugin not available, using browser API:', permError);
-                }
-
-                // Request camera access
+                // Request camera access with flash support
                 const constraints = {
                     video: {
                         facingMode: facingMode,
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
                     }
                 };
 
                 cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
                 cameraVideo.srcObject = cameraStream;
-                cameraVideo.play();
+                await cameraVideo.play();
+                
+                // Update flash button state
+                updateFlashButton();
             } catch (error) {
                 console.error('Camera error:', error);
                 cameraError.style.display = 'block';
@@ -4575,13 +6457,33 @@
                 } else {
                     errorMessage += error.message;
                 }
-                cameraError.querySelector('p').textContent = errorMessage;
+                const errorMsg = cameraError.querySelector('p');
+                if (errorMsg) errorMsg.textContent = errorMessage;
             }
         }
 
         function closeCamera() {
             const cameraModal = document.getElementById('cameraModal');
+            const previewContainer = document.getElementById('cameraPreviewContainer');
+            const previewImage = document.getElementById('cameraPreviewImage');
+            const retakeBtn = document.getElementById('retakeBtn');
+            
             cameraModal.classList.remove('active');
+
+            // Reset state
+            isCapturing = false;
+            capturedImageBlob = null;
+            flashMode = 'off';
+            
+            // Hide preview
+            if (previewContainer) previewContainer.classList.remove('active');
+            if (retakeBtn) retakeBtn.style.display = 'none';
+
+            // Clean up preview image URL
+            if (previewImage && previewImage.src) {
+                URL.revokeObjectURL(previewImage.src);
+                previewImage.src = '';
+            }
 
             // Stop camera stream
             if (cameraStream) {
@@ -4590,39 +6492,184 @@
             }
 
             const cameraVideo = document.getElementById('cameraVideo');
-            cameraVideo.srcObject = null;
+            if (cameraVideo) {
+                cameraVideo.srcObject = null;
+                cameraVideo.style.display = 'block';
+            }
         }
 
-        function capturePhoto() {
+        async function capturePhoto() {
+            // Prevent double captures
+            if (isCapturing) {
+                return;
+            }
+
             const cameraVideo = document.getElementById('cameraVideo');
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
+            const captureBtn = document.getElementById('captureBtn');
+            const previewContainer = document.getElementById('cameraPreviewContainer');
+            const previewImage = document.getElementById('cameraPreviewImage');
+            const retakeBtn = document.getElementById('retakeBtn');
 
-            // Set canvas dimensions to match video
-            canvas.width = cameraVideo.videoWidth;
-            canvas.height = cameraVideo.videoHeight;
+            if (!cameraVideo || cameraVideo.readyState !== cameraVideo.HAVE_ENOUGH_DATA) {
+                return;
+            }
 
-            // Draw video frame to canvas
-            context.drawImage(cameraVideo, 0, 0, canvas.width, canvas.height);
+            isCapturing = true;
+            if (captureBtn) captureBtn.disabled = true;
 
-            // Convert canvas to blob
-            canvas.toBlob((blob) => {
-                if (blob) {
-                    // Create a File object from the blob
-                    const file = new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' });
-                    
-                    // Use the existing handleFile function
-                    handleFile(file);
-                    
-                    // Close camera
-                    closeCamera();
+            try {
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+
+                // Set canvas dimensions to match video
+                canvas.width = cameraVideo.videoWidth;
+                canvas.height = cameraVideo.videoHeight;
+
+                // Draw video frame to canvas
+                context.drawImage(cameraVideo, 0, 0, canvas.width, canvas.height);
+
+                // Convert canvas to blob
+                canvas.toBlob((blob) => {
+                    if (blob) {
+                        capturedImageBlob = blob;
+                        
+                        // Show preview
+                        if (previewImage) {
+                            previewImage.src = URL.createObjectURL(blob);
+                        }
+                        if (previewContainer) {
+                            previewContainer.classList.add('active');
+                        }
+                        if (retakeBtn) {
+                            retakeBtn.style.display = 'flex';
+                        }
+
+                        // Hide video temporarily
+                        cameraVideo.style.display = 'none';
+
+                        isCapturing = false;
+                        if (captureBtn) captureBtn.disabled = false;
+                    } else {
+                        isCapturing = false;
+                        if (captureBtn) captureBtn.disabled = false;
+                    }
+                }, 'image/jpeg', 0.95);
+            } catch (error) {
+                console.error('Capture error:', error);
+                isCapturing = false;
+                if (captureBtn) captureBtn.disabled = false;
+            }
+        }
+
+        function retakePhoto() {
+            const cameraVideo = document.getElementById('cameraVideo');
+            const previewContainer = document.getElementById('cameraPreviewContainer');
+            const retakeBtn = document.getElementById('retakeBtn');
+            const previewImage = document.getElementById('cameraPreviewImage');
+
+            // Reset state
+            isCapturing = false;
+            capturedImageBlob = null;
+
+            // Hide preview
+            if (previewContainer) previewContainer.classList.remove('active');
+            if (retakeBtn) retakeBtn.style.display = 'none';
+            
+            // Show video again
+            if (cameraVideo) {
+                cameraVideo.style.display = 'block';
+            }
+
+            // Clean up preview image URL
+            if (previewImage && previewImage.src) {
+                URL.revokeObjectURL(previewImage.src);
+                previewImage.src = '';
+            }
+        }
+
+        function usePhoto() {
+            if (!capturedImageBlob) {
+                retakePhoto();
+                return;
+            }
+
+            // Create a File object from the blob
+            const file = new File([capturedImageBlob], 'camera-capture.jpg', { type: 'image/jpeg' });
+            
+            // Use the existing handleFile function
+            handleFile(file);
+            
+            // Close camera
+            closeCamera();
+        }
+
+        function toggleFlash() {
+            const flashBtn = document.getElementById('flashBtn');
+            const videoTrack = cameraStream?.getVideoTracks()[0];
+            
+            if (!videoTrack || !videoTrack.getCapabilities) {
+                // Flash not supported
+                return;
+            }
+
+            const capabilities = videoTrack.getCapabilities();
+            if (!capabilities.torch) {
+                // Flash/torch not supported
+                return;
+            }
+
+            // Cycle through flash modes: off -> on -> auto -> off
+            if (flashMode === 'off') {
+                flashMode = 'on';
+                videoTrack.applyConstraints({ advanced: [{ torch: true }] }).catch(() => {});
+                if (flashBtn) flashBtn.classList.add('active');
+            } else if (flashMode === 'on') {
+                flashMode = 'auto';
+                videoTrack.applyConstraints({ advanced: [{ torch: false }] }).catch(() => {});
+                if (flashBtn) flashBtn.classList.remove('active');
+            } else {
+                flashMode = 'off';
+                videoTrack.applyConstraints({ advanced: [{ torch: false }] }).catch(() => {});
+                if (flashBtn) flashBtn.classList.remove('active');
+            }
+        }
+
+        function updateFlashButton() {
+            const flashBtn = document.getElementById('flashBtn');
+            const videoTrack = cameraStream?.getVideoTracks()[0];
+            
+            if (!videoTrack || !videoTrack.getCapabilities) {
+                if (flashBtn) flashBtn.style.display = 'none';
+                return;
+            }
+
+            const capabilities = videoTrack.getCapabilities();
+            if (!capabilities.torch) {
+                if (flashBtn) flashBtn.style.display = 'none';
+                return;
+            }
+
+            if (flashBtn) {
+                flashBtn.style.display = 'flex';
+                if (flashMode === 'on') {
+                    flashBtn.classList.add('active');
+                } else {
+                    flashBtn.classList.remove('active');
                 }
-            }, 'image/jpeg', 0.95);
+            }
         }
 
         async function flipCamera() {
+            // Don't flip if capturing
+            if (isCapturing) {
+                return;
+            }
+
             // Toggle between front and back camera
             facingMode = facingMode === 'user' ? 'environment' : 'user';
+            
+            // Reset flash (front camera usually doesn't have flash)
+            flashMode = 'off';
             
             // Restart camera with new facing mode
             const cameraVideo = document.getElementById('cameraVideo');
@@ -4633,33 +6680,20 @@
             }
 
             try {
-                // Request camera permission first (for Android/Capacitor)
-                try {
-                    const { Camera } = await import('@capacitor/camera');
-                    const permissionStatus = await Camera.checkPermissions();
-                    
-                    if (permissionStatus.camera !== 'granted') {
-                        const requestResult = await Camera.requestPermissions({ permissions: ['camera'] });
-                        if (requestResult.camera !== 'granted') {
-                            throw new Error('Camera permission denied');
-                        }
-                    }
-                } catch (permError) {
-                    // If Capacitor Camera plugin is not available, fall through to getUserMedia
-                    console.log('Capacitor Camera plugin not available, using browser API:', permError);
-                }
-
                 const constraints = {
                     video: {
                         facingMode: facingMode,
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
                     }
                 };
 
                 cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
                 cameraVideo.srcObject = cameraStream;
-                cameraVideo.play();
+                await cameraVideo.play();
+                
+                // Update flash button (front camera usually doesn't have flash)
+                updateFlashButton();
             } catch (error) {
                 console.error('Camera flip error:', error);
                 // If flip fails, try to revert
@@ -4708,6 +6742,7 @@
                 console.log('Network status:', navigator.onLine ? 'Online' : 'Offline');
                 
                 const controller = new AbortController();
+                currentAbortController = controller; // Store for cancellation
                 const timeoutId = setTimeout(() => {
                     console.error('API request timed out after 60 seconds');
                     controller.abort();
@@ -4732,6 +6767,7 @@
                     });
                 } catch (fetchError) {
                     clearTimeout(timeoutId);
+                    currentAbortController = null; // Clear controller
                     console.error('Fetch error caught:', {
                         name: fetchError.name,
                         message: fetchError.message,
@@ -4739,7 +6775,9 @@
                     });
                     
                     if (fetchError.name === 'AbortError') {
-                        throw new Error('Request timed out');
+                        // Request was cancelled - don't show error, just stop loading
+                        showLoading(false);
+                        return;
                     }
                     
                     // Check if it's a network error
@@ -4757,6 +6795,7 @@
                 }
                 
                 clearTimeout(timeoutId);
+                currentAbortController = null; // Clear after request completes
                 
                 console.log('API response received:', {
                     status: response.status,
@@ -5086,6 +7125,35 @@
             }
             dishDescription.innerHTML = `<strong>${dishData.name}</strong><br><br>${descriptionText}`;
 
+            // Update Google Maps link with dish name
+            const findRestaurantsLink = document.getElementById('findRestaurantsLink');
+            if (findRestaurantsLink) {
+                const dishNameForMaps = dishData.name || dishData.nameKorean || 'food';
+                const encodedDishName = encodeURIComponent(dishNameForMaps);
+                findRestaurantsLink.href = `https://www.google.com/maps/search/${encodedDishName}`;
+            }
+
+            // Update nutrition values if available (using placeholders for now)
+            if (dishData.nutrition) {
+                const caloriesEl = document.getElementById('nutritionCaloriesEnhanced');
+                const proteinEl = document.getElementById('nutritionProteinEnhanced');
+                const carbsEl = document.getElementById('nutritionCarbsEnhanced');
+                const fatEl = document.getElementById('nutritionFatEnhanced');
+                
+                if (caloriesEl && dishData.nutrition.calories) {
+                    caloriesEl.textContent = dishData.nutrition.calories;
+                }
+                if (proteinEl && dishData.nutrition.protein) {
+                    proteinEl.textContent = `${dishData.nutrition.protein}g`;
+                }
+                if (carbsEl && dishData.nutrition.carbs) {
+                    carbsEl.textContent = `${dishData.nutrition.carbs}g`;
+                }
+                if (fatEl && dishData.nutrition.fat) {
+                    fatEl.textContent = `${dishData.nutrition.fat}g`;
+                }
+            }
+
             // Show alternatives if confidence is low
             if (dishData.confidence < 0.5) {
                 // Remove any existing low confidence message
@@ -5173,6 +7241,28 @@
             updateFavoriteButtonState();
         }
 
+        // Korean food fun facts
+        const koreanFoodFacts = [
+            { icon: '🍲', text: 'Did you know? Kimchi is Korea\'s national dish and has over 200 varieties!' },
+            { icon: '🥢', text: 'Bibimbap means "mixed rice" - a colorful bowl of rice, vegetables, and gochujang!' },
+            { icon: '🍜', text: 'Korean ramyeon (ramen) is eaten with rice - it\'s a popular comfort food combo!' },
+            { icon: '🥩', text: 'Korean BBQ (Gogi-gui) is cooked at your table - a social dining experience!' },
+            { icon: '🍚', text: 'Rice is served with every Korean meal, even with noodles or soup!' },
+            { icon: '🌶️', text: 'Gochujang (red chili paste) is a staple Korean condiment used in many dishes!' },
+            { icon: '🥟', text: 'Mandu (Korean dumplings) can be steamed, boiled, pan-fried, or deep-fried!' },
+            { icon: '🍲', text: 'Jjigae (stew) is a Korean comfort food, often served bubbling hot in a stone pot!' },
+            { icon: '🍱', text: 'Banchan are small side dishes - a Korean meal can have 3-12 different banchan!' },
+            { icon: '🍖', text: 'Galbi (marinated short ribs) is one of Korea\'s most popular BBQ dishes!' },
+            { icon: '🥘', text: 'Bulgogi means "fire meat" - thinly sliced marinated beef grilled to perfection!' },
+            { icon: '🍜', text: 'Naengmyeon (cold noodles) is perfect for hot Korean summers!' },
+            { icon: '🍲', text: 'Doenjang (fermented soybean paste) has been made in Korea for over 1,000 years!' },
+            { icon: '🥢', text: 'Korean chopsticks are made of metal - unique among Asian countries!' },
+            { icon: '🍚', text: 'Tteokbokki (spicy rice cakes) is Korea\'s favorite street food snack!' }
+        ];
+
+        let funFactInterval = null;
+        let currentFactIndex = 0;
+
         function showLoading(show) {
             const loading = document.getElementById('loading');
             if (loading) {
@@ -5180,11 +7270,62 @@
                     loading.classList.add('active');
                     // Remove any inline display style to let CSS handle it
                     loading.style.display = '';
+                    
+                    // Start rotating fun facts
+                    currentFactIndex = 0;
+                    displayFunFact(0);
+                    funFactInterval = setInterval(() => {
+                        currentFactIndex = (currentFactIndex + 1) % koreanFoodFacts.length;
+                        displayFunFact(currentFactIndex);
+                    }, 4000); // Change fact every 4 seconds
                 } else {
                     loading.classList.remove('active');
                     loading.style.display = 'none';
+                    
+                    // Stop rotating fun facts
+                    if (funFactInterval) {
+                        clearInterval(funFactInterval);
+                        funFactInterval = null;
+                    }
                 }
             }
+        }
+
+        function displayFunFact(index) {
+            const funFact = document.getElementById('funFact');
+            const funFactText = document.getElementById('funFactText');
+            
+            if (funFact && funFactText && koreanFoodFacts[index]) {
+                const fact = koreanFoodFacts[index];
+                funFact.innerHTML = `
+                    <span class="fun-fact-icon">${fact.icon}</span>
+                    <div class="fun-fact-text">${fact.text}</div>
+                `;
+            }
+        }
+
+        function cancelAnalysis() {
+            // Abort any ongoing API request
+            if (currentAbortController) {
+                currentAbortController.abort();
+                currentAbortController = null;
+            }
+            
+            // Stop loading screen
+            showLoading(false);
+            
+            // Reset upload area
+            resetUpload();
+            
+            // Hide result section
+            const resultSection = document.getElementById('resultSection');
+            if (resultSection) {
+                resultSection.style.display = 'none';
+            }
+            
+            // Clear current image
+            currentImage = null;
+            currentDishData = null;
         }
 
         function showError(message) {
@@ -5307,31 +7448,40 @@
                 {
                     name: 'Maangchi',
                     url: `https://www.maangchi.com/search?q=${encodedTerm}`,
-                    icon: '🍳'
+                    icon: '🍳',
+                    description: 'Authentic Korean recipes'
                 },
                 {
                     name: 'Korean Bapsang',
                     url: `https://www.koreanbapsang.com/?s=${encodedTerm}`,
-                    icon: '🥢'
+                    icon: '🥢',
+                    description: 'Traditional Korean cooking'
                 },
                 {
                     name: 'Serious Eats',
                     url: `https://www.seriouseats.com/search?q=${encodedTerm}`,
-                    icon: '🍽️'
+                    icon: '🍽️',
+                    description: 'Expert cooking techniques'
                 },
                 {
                     name: 'AllRecipes',
                     url: `https://www.allrecipes.com/search?q=${encodedTerm}`,
-                    icon: '📖'
+                    icon: '📖',
+                    description: 'Community recipes'
                 }
             ];
             
-            // Create recipe links
+            // Create recipe cards
             recipeLinksContainer.innerHTML = recipeSites.map(site => `
-                <a href="${site.url}" class="recipe-link" target="_blank" rel="noopener noreferrer">
-                    <span style="margin-right: 0.5rem;">${site.icon}</span>
-                    <span>${site.name}</span>
-                    <span style="margin-left: auto;">→</span>
+                <a href="${site.url}" class="recipe-card" target="_blank" rel="noopener noreferrer">
+                    <div class="recipe-card-icon">${site.icon}</div>
+                    <div class="recipe-card-content">
+                        <div class="recipe-card-title">${site.name}</div>
+                        <div class="recipe-card-description">${site.description}</div>
+                    </div>
+                    <svg class="recipe-card-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
                 </a>
             `).join('');
         }
@@ -5550,6 +7700,82 @@
             loadCalorieLog();
         }
 
+        function initializeCalorieLogFeatures() {
+            // Load calorie goal
+            const savedGoal = localStorage.getItem('calorieGoal');
+            if (savedGoal) {
+                document.getElementById('calorieGoalInput').value = savedGoal;
+            }
+
+            // Save calorie goal button
+            const saveGoalBtn = document.getElementById('saveCalorieGoalBtn');
+            if (saveGoalBtn) {
+                saveGoalBtn.addEventListener('click', () => {
+                    const goal = parseInt(document.getElementById('calorieGoalInput').value);
+                    if (goal && goal > 0) {
+                        localStorage.setItem('calorieGoal', goal.toString());
+                        const today = new Date().toISOString().split('T')[0];
+                        const logs = JSON.parse(localStorage.getItem(`calorieLog_${today}`) || '[]');
+                        const totals = logs.reduce((acc, item) => {
+                            acc.calories += item.nutrition?.calories || 0;
+                            return acc;
+                        }, { calories: 0 });
+                        updateCalorieProgress(totals.calories);
+                        alert('Calorie goal saved!');
+                    } else {
+                        alert('Please enter a valid calorie goal');
+                    }
+                });
+            }
+
+            // Summary period toggle buttons
+            const summaryBtns = document.querySelectorAll('.summary-period-btn');
+            summaryBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // Remove active class from all buttons
+                    summaryBtns.forEach(b => b.classList.remove('active'));
+                    // Add active class to clicked button
+                    btn.classList.add('active');
+                    // Update summary
+                    const period = btn.getAttribute('data-period');
+                    updateSummary(period);
+                });
+            });
+
+            // Edit modal handlers
+            const closeEditModal = document.getElementById('closeEditModal');
+            const cancelEditBtn = document.getElementById('cancelEditBtn');
+            const saveEditBtn = document.getElementById('saveEditBtn');
+            const editModal = document.getElementById('editEntryModal');
+
+            if (closeEditModal) {
+                closeEditModal.addEventListener('click', () => {
+                    editModal.classList.remove('active');
+                    currentEditIndex = null;
+                });
+            }
+
+            if (cancelEditBtn) {
+                cancelEditBtn.addEventListener('click', () => {
+                    editModal.classList.remove('active');
+                    currentEditIndex = null;
+                });
+            }
+
+            if (saveEditBtn) {
+                saveEditBtn.addEventListener('click', saveEditedEntry);
+            }
+
+            if (editModal) {
+                editModal.addEventListener('click', (e) => {
+                    if (e.target === editModal) {
+                        editModal.classList.remove('active');
+                        currentEditIndex = null;
+                    }
+                });
+            }
+        }
+
         async function loadCalorieLog() {
             const today = new Date().toISOString().split('T')[0];
             let logs = [];
@@ -5593,6 +7819,13 @@
 
             // Update UI
             updateCalorieLogUI(logs, totals);
+            
+            // Initialize features if not already done
+            const saveGoalBtn = document.getElementById('saveCalorieGoalBtn');
+            if (saveGoalBtn && !saveGoalBtn.hasAttribute('data-initialized')) {
+                initializeCalorieLogFeatures();
+                saveGoalBtn.setAttribute('data-initialized', 'true');
+            }
         }
 
         function updateCalorieLogUI(logs, totals) {
@@ -5631,9 +7864,202 @@
                         </div>
                     </div>
                     <div class="log-item-calories">${Math.round(item.nutrition?.calories || 0)}</div>
-                    <button class="log-item-delete" onclick="removeFromCalorieLog(${index})" title="Remove">×</button>
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                        <button class="log-item-edit" onclick="editCalorieLogEntry(${index})" title="Edit">✏️</button>
+                        <button class="log-item-delete" onclick="removeFromCalorieLog(${index})" title="Remove">×</button>
+                    </div>
                 </div>
             `).join('');
+            
+            // Update progress bar
+            updateCalorieProgress(totals.calories);
+            
+            // Update summary
+            updateSummary('daily');
+        }
+
+        function updateCalorieProgress(currentCalories) {
+            const goal = parseInt(localStorage.getItem('calorieGoal') || '2000');
+            const progressSection = document.getElementById('calorieProgressSection');
+            const progressBarFill = document.getElementById('progressBarFill');
+            const progressText = document.getElementById('progressText');
+            const progressRemaining = document.getElementById('progressRemaining');
+            const progressStatus = document.getElementById('progressStatus');
+
+            if (!goal || goal === 0) {
+                if (progressSection) progressSection.style.display = 'none';
+                return;
+            }
+
+            if (progressSection) progressSection.style.display = 'block';
+            
+            const percentage = Math.min((currentCalories / goal) * 100, 100);
+            const remaining = Math.max(0, goal - currentCalories);
+            const over = Math.max(0, currentCalories - goal);
+
+            if (progressBarFill) {
+                progressBarFill.style.width = `${percentage}%`;
+                if (percentage > 100) {
+                    progressBarFill.classList.add('over-goal');
+                    progressBarFill.textContent = `${Math.round(percentage)}%`;
+                } else {
+                    progressBarFill.classList.remove('over-goal');
+                    progressBarFill.textContent = `${Math.round(percentage)}%`;
+                }
+            }
+
+            if (progressText) {
+                progressText.textContent = `${Math.round(currentCalories)} / ${goal} cal`;
+            }
+
+            if (progressRemaining) {
+                if (over > 0) {
+                    progressRemaining.textContent = `${Math.round(over)} calories over goal`;
+                    progressRemaining.style.color = 'var(--status-error)';
+                } else {
+                    progressRemaining.textContent = `${Math.round(remaining)} calories remaining`;
+                    progressRemaining.style.color = 'var(--text-secondary)';
+                }
+            }
+
+            if (progressStatus) {
+                if (percentage >= 100) {
+                    progressStatus.textContent = 'Goal reached';
+                    progressStatus.style.color = 'var(--status-error)';
+                } else if (percentage >= 80) {
+                    progressStatus.textContent = 'Almost there';
+                    progressStatus.style.color = 'var(--status-warning)';
+                } else {
+                    progressStatus.textContent = 'On track';
+                    progressStatus.style.color = 'var(--primary)';
+                }
+            }
+        }
+
+        function updateSummary(period) {
+            const today = new Date();
+            let startDate, endDate;
+            
+            if (period === 'daily') {
+                startDate = new Date(today);
+                startDate.setHours(0, 0, 0, 0);
+                endDate = new Date(today);
+                endDate.setHours(23, 59, 59, 999);
+            } else if (period === 'weekly') {
+                startDate = new Date(today);
+                startDate.setDate(today.getDate() - today.getDay()); // Start of week (Sunday)
+                startDate.setHours(0, 0, 0, 0);
+                endDate = new Date(today);
+                endDate.setHours(23, 59, 59, 999);
+            } else if (period === 'monthly') {
+                startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+                startDate.setHours(0, 0, 0, 0);
+                endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                endDate.setHours(23, 59, 59, 999);
+            }
+
+            // Load all logs in the period
+            let allLogs = [];
+            const currentDate = new Date(startDate);
+            
+            while (currentDate <= endDate) {
+                const dateStr = currentDate.toISOString().split('T')[0];
+                const key = `calorieLog_${dateStr}`;
+                const dayLogs = JSON.parse(localStorage.getItem(key) || '[]');
+                allLogs = allLogs.concat(dayLogs);
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+
+            // Calculate totals
+            const totals = allLogs.reduce((acc, item) => {
+                acc.calories += item.nutrition?.calories || 0;
+                acc.protein += item.nutrition?.protein || 0;
+                acc.carbs += item.nutrition?.carbs || 0;
+                acc.fat += item.nutrition?.fat || 0;
+                return acc;
+            }, { calories: 0, protein: 0, carbs: 0, fat: 0 });
+
+            // Update UI
+            const summaryCalories = document.getElementById('summaryCalories');
+            const summaryProtein = document.getElementById('summaryProtein');
+            const summaryCarbs = document.getElementById('summaryCarbs');
+            const summaryFat = document.getElementById('summaryFat');
+
+            if (summaryCalories) summaryCalories.textContent = Math.round(totals.calories);
+            if (summaryProtein) summaryProtein.textContent = Math.round(totals.protein) + 'g';
+            if (summaryCarbs) summaryCarbs.textContent = Math.round(totals.carbs) + 'g';
+            if (summaryFat) summaryFat.textContent = Math.round(totals.fat) + 'g';
+        }
+
+        let currentEditIndex = null;
+
+        function editCalorieLogEntry(index) {
+            const today = new Date().toISOString().split('T')[0];
+            const logs = JSON.parse(localStorage.getItem(`calorieLog_${today}`) || '[]');
+            
+            if (index >= logs.length) return;
+            
+            const item = logs[index];
+            currentEditIndex = index;
+
+            // Populate edit form
+            document.getElementById('editDishName').value = item.name;
+            document.getElementById('editCalories').value = item.nutrition?.calories || 0;
+            document.getElementById('editProtein').value = item.nutrition?.protein || 0;
+            document.getElementById('editCarbs').value = item.nutrition?.carbs || 0;
+            document.getElementById('editFat').value = item.nutrition?.fat || 0;
+
+            // Show modal
+            document.getElementById('editEntryModal').classList.add('active');
+        }
+
+        function saveEditedEntry() {
+            if (currentEditIndex === null) return;
+
+            const today = new Date().toISOString().split('T')[0];
+            let logs = JSON.parse(localStorage.getItem(`calorieLog_${today}`) || '[]');
+            
+            if (currentEditIndex >= logs.length) return;
+
+            // Update entry
+            logs[currentEditIndex].nutrition = {
+                calories: parseFloat(document.getElementById('editCalories').value) || 0,
+                protein: parseFloat(document.getElementById('editProtein').value) || 0,
+                carbs: parseFloat(document.getElementById('editCarbs').value) || 0,
+                fat: parseFloat(document.getElementById('editFat').value) || 0
+            };
+
+            // Save to localStorage
+            localStorage.setItem(`calorieLog_${today}`, JSON.stringify(logs));
+
+            // Save to DB if logged in
+            if (currentUser && supabaseClient) {
+                saveCalorieLogToDB(logs, today);
+            }
+
+            // Close modal and reload
+            document.getElementById('editEntryModal').classList.remove('active');
+            currentEditIndex = null;
+            loadCalorieLog();
+        }
+
+        async function saveCalorieLogToDB(logs, date) {
+            if (!currentUser || !supabaseClient) return;
+            
+            try {
+                await supabaseClient
+                    .from('user_calorie_log')
+                    .upsert({
+                        user_id: currentUser.id,
+                        date: date,
+                        logs: logs,
+                        updated_at: new Date().toISOString()
+                    }, {
+                        onConflict: 'user_id,date'
+                    });
+            } catch (error) {
+                console.error('Error saving calorie log to DB:', error);
+            }
         }
 
         async function removeFromCalorieLog(index) {
@@ -5783,11 +8209,18 @@
             const lang = getCurrentLanguage();
             const t = translations[lang] || translations.en;
             const favoriteBtn = document.getElementById('favoriteBtn');
+            const favoriteBtnTop = document.getElementById('favoriteBtnTop');
             
             if (!currentDishData) {
                 // Reset button if no dish data
-                favoriteBtn.textContent = t.saveToFavorites;
-                favoriteBtn.classList.remove('active');
+                if (favoriteBtn) {
+                    favoriteBtn.textContent = t.saveToFavorites;
+                    favoriteBtn.classList.remove('active');
+                }
+                if (favoriteBtnTop) {
+                    favoriteBtnTop.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px; vertical-align: middle;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>Save to Favorites';
+                    favoriteBtnTop.classList.remove('active');
+                }
                 return;
             }
 
@@ -5795,11 +8228,155 @@
             const exists = favorites.find(f => f.name === currentDishData.name);
             
             if (exists) {
-                favoriteBtn.textContent = t.saved;
-                favoriteBtn.classList.add('active');
+                if (favoriteBtn) {
+                    favoriteBtn.textContent = t.saved;
+                    favoriteBtn.classList.add('active');
+                }
+                if (favoriteBtnTop) {
+                    favoriteBtnTop.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px; vertical-align: middle;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>Saved';
+                    favoriteBtnTop.classList.add('active');
+                }
             } else {
-                favoriteBtn.textContent = t.saveToFavorites;
-                favoriteBtn.classList.remove('active');
+                if (favoriteBtn) {
+                    favoriteBtn.textContent = t.saveToFavorites;
+                    favoriteBtn.classList.remove('active');
+                }
+                if (favoriteBtnTop) {
+                    favoriteBtnTop.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px; vertical-align: middle;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>Save to Favorites';
+                    favoriteBtnTop.classList.remove('active');
+                }
+            }
+        }
+
+        // Top favorite button handler
+        const favoriteBtnTop = document.getElementById('favoriteBtnTop');
+        if (favoriteBtnTop) {
+            favoriteBtnTop.addEventListener('click', async () => {
+                // Check if user is logged in
+                if (!currentUser) {
+                    showSignupPrompt('favorites');
+                    return;
+                }
+                if (!currentDishData) return;
+                
+                const favoriteItem = {
+                    name: currentDishData.name,
+                    nameKorean: currentDishData.nameKorean,
+                    isKorean: currentDishData.isKorean,
+                    cuisine: currentDishData.cuisine,
+                    confidence: currentDishData.confidence,
+                    description: currentDishData.description,
+                    alternatives: currentDishData.alternatives || [],
+                    thumbnail: document.getElementById('dishImage').src,
+                    imageSrc: document.getElementById('dishImage').src,
+                    timestamp: new Date().toISOString()
+                };
+
+                await saveFavoriteItem(favoriteItem);
+                updateFavoriteButtonState();
+                loadFavorites();
+            });
+        }
+
+        // Top share button handler
+        const shareBtnTop = document.getElementById('shareBtnTop');
+        if (shareBtnTop) {
+            shareBtnTop.addEventListener('click', async () => {
+                await shareDish();
+            });
+        }
+
+        async function shareDish() {
+            if (!currentDishData) return;
+            
+            const lang = getCurrentLanguage();
+            const t = translations[lang] || translations.en;
+            const dishName = currentDishData.name || 'This dish';
+            const shareText = `${dishName} - Discovered with OK-Snap! 🍲`;
+            const shareUrl = window.location.href;
+
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: dishName,
+                        text: shareText,
+                        url: shareUrl
+                    });
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        console.error('Share error:', err);
+                        fallbackShare(shareText, shareUrl);
+                    }
+                }
+            } else {
+                fallbackShare(shareText, shareUrl);
+            }
+        }
+
+        function fallbackShare(text, url) {
+            const shareText = `${text}\n${url}`;
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(shareText).then(() => {
+                    alert('Link copied to clipboard!');
+                }).catch(() => {
+                    prompt('Copy this link:', shareText);
+                });
+            } else {
+                prompt('Copy this link:', shareText);
+            }
+        }
+
+        async function saveFavoriteItem(favoriteItem) {
+            // If user is logged in, save to DB
+            if (currentUser && supabaseClient) {
+                try {
+                    const { data: existingData, error: fetchError } = await supabaseClient
+                        .from('user_favorites')
+                        .select('favorites')
+                        .eq('user_id', currentUser.id)
+                        .maybeSingle();
+                    
+                    // If table doesn't exist or other error, fallback to localStorage
+                    if (fetchError && fetchError.code !== 'PGRST116') {
+                        console.warn('Favorites table may not exist. Using localStorage. Error:', fetchError);
+                        saveToLocalFavorites(favoriteItem);
+                        return;
+                    }
+                    
+                    let favorites = existingData?.favorites || [];
+                    const exists = favorites.find(f => f.name === currentDishData.name);
+                    
+                    if (exists) {
+                        favorites = favorites.filter(f => f.name !== currentDishData.name);
+                    } else {
+                        favorites.unshift(favoriteItem);
+                    }
+                    
+                    const { error: upsertError } = await supabaseClient
+                        .from('user_favorites')
+                        .upsert({
+                            user_id: currentUser.id,
+                            favorites: favorites,
+                            updated_at: new Date().toISOString()
+                        }, {
+                            onConflict: 'user_id'
+                        });
+                    
+                    if (upsertError) {
+                        console.error('Error upserting favorites to DB:', upsertError);
+                        // Fallback to localStorage
+                        saveToLocalFavorites(favoriteItem);
+                    } else {
+                        // Also save to localStorage for immediate display
+                        localStorage.setItem('biteSightFavorites', JSON.stringify(favorites));
+                    }
+                } catch (error) {
+                    console.error('Error saving favorite to DB:', error);
+                    // Fallback to localStorage
+                    saveToLocalFavorites(favoriteItem);
+                }
+            } else {
+                saveToLocalFavorites(favoriteItem);
             }
         }
 
@@ -5937,27 +8514,56 @@
         // ============================================
         // SHARE FUNCTIONALITY
         // ============================================
-        document.getElementById('shareBtn').addEventListener('click', async () => {
+        async function shareDish() {
             if (!currentDishData) return;
-
-            const shareData = {
-                title: `I discovered ${currentDishData.name} with Ok Snap! 🍲`,
-                text: `Check out this amazing dish: ${currentDishData.name}${currentDishData.cuisine && currentDishData.cuisine !== 'Unknown' ? ` (${currentDishData.cuisine})` : ''}`,
-                url: window.location.href
-            };
+            
+            const lang = getCurrentLanguage();
+            const t = translations[lang] || translations.en;
+            const dishName = currentDishData.name || 'This dish';
+            const shareText = `${dishName} - Discovered with OK-Snap! 🍲`;
+            const shareUrl = window.location.href;
 
             if (navigator.share) {
                 try {
-                    await navigator.share(shareData);
+                    await navigator.share({
+                        title: dishName,
+                        text: shareText,
+                        url: shareUrl
+                    });
                 } catch (err) {
-                    console.log('Share cancelled');
+                    if (err.name !== 'AbortError') {
+                        console.error('Share error:', err);
+                        fallbackShare(shareText, shareUrl);
+                    }
                 }
             } else {
-                // Fallback: copy to clipboard
-                const text = `${shareData.title}\n${shareData.text}\n${shareData.url}`;
-                await navigator.clipboard.writeText(text);
-                alert('Link copied to clipboard! Share it with your friends.');
+                fallbackShare(shareText, shareUrl);
             }
+        }
+
+        function fallbackShare(text, url) {
+            const shareText = `${text}\n${url}`;
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(shareText).then(() => {
+                    alert('Link copied to clipboard!');
+                }).catch(() => {
+                    prompt('Copy this link:', shareText);
+                });
+            } else {
+                prompt('Copy this link:', shareText);
+            }
+        }
+
+        // Top share button handler
+        const shareBtnTop = document.getElementById('shareBtnTop');
+        if (shareBtnTop) {
+            shareBtnTop.addEventListener('click', async () => {
+                await shareDish();
+            });
+        }
+
+        document.getElementById('shareBtn').addEventListener('click', async () => {
+            await shareDish();
         });
 
         // Add to Today's Log button
@@ -6007,11 +8613,12 @@
             const switchToLogin = document.getElementById('switchToLogin');
             const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
             
-            // Premium button click handler
+            // Premium button click handler - opens PremiumDetailsScreen
             if (premiumBtn) {
                 premiumBtn.addEventListener('click', () => {
-                    if (premiumModal) {
-                        premiumModal.classList.add('active');
+                    const premiumDetailsScreen = document.getElementById('premiumDetailsScreen');
+                    if (premiumDetailsScreen) {
+                        premiumDetailsScreen.classList.add('active');
                     }
                 });
             }
@@ -6019,9 +8626,44 @@
             // Close premium modal
             if (closePremiumModal) {
                 closePremiumModal.addEventListener('click', () => {
+                    const premiumModal = document.getElementById('premiumModal');
                     if (premiumModal) {
                         premiumModal.classList.remove('active');
                     }
+                });
+            }
+            
+            // PremiumDetailsScreen handlers
+            const premiumDetailsScreen = document.getElementById('premiumDetailsScreen');
+            const closePremiumDetailsScreen = document.getElementById('closePremiumDetailsScreen');
+            const startFreeTrialBtn = document.getElementById('startFreeTrialBtn');
+            
+            if (closePremiumDetailsScreen) {
+                closePremiumDetailsScreen.addEventListener('click', () => {
+                    if (premiumDetailsScreen) premiumDetailsScreen.classList.remove('active');
+                });
+            }
+            
+            if (premiumDetailsScreen) {
+                premiumDetailsScreen.addEventListener('click', (e) => {
+                    if (e.target === premiumDetailsScreen) {
+                        premiumDetailsScreen.classList.remove('active');
+                    }
+                });
+            }
+            
+            if (startFreeTrialBtn) {
+                startFreeTrialBtn.addEventListener('click', () => {
+                    // Placeholder for free trial - backend logic not changed yet
+                    if (!currentUser) {
+                        alert('Please sign in first to start your free trial!');
+                        if (premiumDetailsScreen) premiumDetailsScreen.classList.remove('active');
+                        const loginModal = document.getElementById('loginModal');
+                        if (loginModal) loginModal.classList.add('active');
+                        return;
+                    }
+                    alert('3-Day Free Trial coming soon! For now, you can manually upgrade users in Supabase by setting user_metadata.premium = true');
+                    if (premiumDetailsScreen) premiumDetailsScreen.classList.remove('active');
                 });
             }
             
