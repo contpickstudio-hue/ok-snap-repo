@@ -117,8 +117,7 @@ function rateLimit(req, res, next) {
 // ============================================
 const scanLimits = {
     guest: 3,      // Not logged in
-    free: 5,       // Logged in, free user
-    premium: 50   // Premium user
+    free: 5        // Logged in user
 };
 
 const dailyScansStore = new Map(); // key: userId or IP, value: { count, date, level }
@@ -128,9 +127,8 @@ function getTodayDateString() {
     return new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 }
 
-function getUserLevel(userId, isPremium) {
+function getUserLevel(userId) {
     if (!userId) return 'guest';
-    if (isPremium) return 'premium';
     return 'free';
 }
 
@@ -178,9 +176,9 @@ function applyLoginBonus(userId, userIp) {
     return { bonusApplied: false };
 }
 
-function checkDailyScanLimit(userId, userIp, isPremium = false) {
+function checkDailyScanLimit(userId, userIp) {
     const today = getTodayDateString();
-    const userLevel = getUserLevel(userId, isPremium);
+    const userLevel = getUserLevel(userId);
     const limit = scanLimits[userLevel];
     
     // Use userId if logged in, otherwise use IP
@@ -271,9 +269,9 @@ function getMidnightResetTime() {
     return tomorrow.toISOString();
 }
 
-function getRemainingScans(userId, userIp, isPremium = false) {
+function getRemainingScans(userId, userIp) {
     const today = getTodayDateString();
-    const userLevel = getUserLevel(userId, isPremium);
+    const userLevel = getUserLevel(userId);
     const limit = scanLimits[userLevel];
     const key = userId || `ip_${userIp}`;
     
@@ -322,11 +320,10 @@ app.get('/api/scan-limit', (req, res) => {
                    req.connection.remoteAddress || 
                    req.socket.remoteAddress ||
                    '127.0.0.1'; // Fallback for localhost
-    const isPremium = req.query.isPremium === 'true';
     
-    console.log(`[scan-limit] userId: ${userId || 'guest'}, IP: ${userIp}, premium: ${isPremium}`);
+    console.log(`[scan-limit] userId: ${userId || 'guest'}, IP: ${userIp}`);
     
-    const remainingInfo = getRemainingScans(userId, userIp, isPremium);
+    const remainingInfo = getRemainingScans(userId, userIp);
     
     console.log(`[scan-limit] Returning:`, remainingInfo);
     
@@ -378,7 +375,7 @@ function validateLanguage(language) {
 // OpenAI API proxy endpoint with rate limiting and daily scan limits
 app.post('/api/analyze-image', rateLimit, async (req, res) => {
     try {
-        const { imageData, targetLanguage, userId, isPremium } = req.body;
+        const { imageData, targetLanguage, userId } = req.body;
         
         // Get user IP for guest users - try multiple methods for accuracy
         const userIp = req.ip || 
@@ -388,7 +385,7 @@ app.post('/api/analyze-image', rateLimit, async (req, res) => {
                        '127.0.0.1'; // Fallback for localhost
         
         // Check daily scan limit
-        const limitCheck = checkDailyScanLimit(userId, userIp, isPremium === true);
+        const limitCheck = checkDailyScanLimit(userId, userIp);
         
         if (!limitCheck.allowed) {
             const userLevel = limitCheck.level;
@@ -396,8 +393,6 @@ app.post('/api/analyze-image', rateLimit, async (req, res) => {
             
             if (userLevel === 'guest') {
                 message = "Oops! That's all the scans you get for today. Come back tomorrow, or sign up for a free account to get 5 scans per day! 🍽️";
-            } else if (userLevel === 'free') {
-                message = "Oops! That's all your free scans for today. Come back tomorrow, or upgrade to Premium for 50 scans per day! ⭐";
             } else {
                 message = "Oops! That's all your scans for today. Come back tomorrow for more food discoveries! 🌟";
             }
@@ -504,7 +499,7 @@ All responses must be in ${targetLanguage || 'English'}.`
         const data = await response.json();
         
         // Include remaining scans in response
-        const remainingInfo = getRemainingScans(userId, userIp, isPremium === true);
+        const remainingInfo = getRemainingScans(userId, userIp);
         res.json({
             ...data,
             scanInfo: {

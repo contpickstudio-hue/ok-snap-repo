@@ -395,41 +395,6 @@
             }
         }
 
-        .premium-btn {
-            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
-            color: white;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 16px;
-            font-weight: 700;
-            font-size: 0.8125rem;
-            cursor: pointer;
-            transition: all 150ms ease-in-out;
-            box-shadow: 0 2px 6px var(--shadow-interactive);
-            font-family: 'Poppins', 'Inter', sans-serif;
-            letter-spacing: 0.01em;
-            white-space: nowrap;
-            flex-shrink: 0;
-            min-height: 36px;
-        }
-
-        .premium-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 3px 10px var(--shadow-interactive);
-        }
-
-        .premium-btn:active {
-            transform: scale(0.97); /* Tap feedback */
-        }
-        
-        @media (min-width: 420px) {
-            .premium-btn {
-                padding: 10px 20px;
-                font-size: 0.9rem;
-                border-radius: 18px;
-                min-height: 44px;
-            }
-        }
 
         .profile-greeting {
             display: flex;
@@ -703,10 +668,6 @@
             font-weight: 600;
         }
 
-        .scan-limit.premium {
-            color: var(--primary);
-            font-weight: 700;
-        }
 
         .scan-limit.limit-low {
             background: #FFF4E6;
@@ -4086,45 +4047,6 @@
                 </div>
             </div>
 
-            <!-- Screen 4: Premium Benefits -->
-            <div class="onboarding-screen" id="onboardingScreen4">
-                <div class="onboarding-content">
-                    <div class="onboarding-icon">⭐</div>
-                    <h1 class="onboarding-title">Unlock Premium</h1>
-                    <p class="onboarding-description">
-                        Get unlimited scans, ad-free experience, and advanced features
-                    </p>
-                    <div class="onboarding-features">
-                        <div class="onboarding-feature-item">
-                            <span class="onboarding-feature-icon">♾️</span>
-                            <span class="onboarding-feature-text">Unlimited scans per day</span>
-                        </div>
-                        <div class="onboarding-feature-item">
-                            <span class="onboarding-feature-icon">🚫</span>
-                            <span class="onboarding-feature-text">Ad-free experience</span>
-                        </div>
-                        <div class="onboarding-feature-item">
-                            <span class="onboarding-feature-icon">⚡</span>
-                            <span class="onboarding-feature-text">Faster analysis mode</span>
-                        </div>
-                        <div class="onboarding-feature-item">
-                            <span class="onboarding-feature-icon">📊</span>
-                            <span class="onboarding-feature-text">Advanced nutritional breakdown</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="onboarding-progress">
-                    <div class="onboarding-progress-dot"></div>
-                    <div class="onboarding-progress-dot"></div>
-                    <div class="onboarding-progress-dot"></div>
-                    <div class="onboarding-progress-dot active"></div>
-                    <div class="onboarding-progress-dot"></div>
-                </div>
-                <div class="onboarding-actions">
-                    <button class="btn" onclick="nextOnboardingScreen()">Next</button>
-                    <button class="onboarding-skip" onclick="skipOnboarding()">Skip</button>
-                </div>
-            </div>
 
             <!-- Screen 5: Get Started -->
             <div class="onboarding-screen" id="onboardingScreen5">
@@ -4136,7 +4058,6 @@
                     </p>
                 </div>
                 <div class="onboarding-progress">
-                    <div class="onboarding-progress-dot"></div>
                     <div class="onboarding-progress-dot"></div>
                     <div class="onboarding-progress-dot"></div>
                     <div class="onboarding-progress-dot"></div>
@@ -4172,7 +4093,7 @@
                 <span class="logo-text">OK-Snap</span>
             </div>
             <div class="auth-section" id="authSection">
-                <div class="scan-counter-header" id="scanCounterHeader" style="display: flex; align-items: center; background: var(--secondary); border-radius: 16px; font-weight: 500; cursor: pointer;" onclick="document.getElementById('premiumDetailsScreen')?.classList.add('active')">
+                <div class="scan-counter-header" id="scanCounterHeader" style="display: flex; align-items: center; background: var(--secondary); border-radius: 16px; font-weight: 500;">
                     <span id="scanCounterText">3 scans left</span>
                 </div>
                 <div class="user-profile" id="userProfile" style="display: none;">
@@ -4181,7 +4102,6 @@
                     </div>
                     <button class="login-btn" id="logoutBtn" style="display: none;">Logout</button>
                 </div>
-                <button class="premium-btn" id="premiumBtn">⭐ Premium</button>
                 <button class="login-btn" id="loginBtn">Login</button>
             </div>
         </div>
@@ -4281,265 +4201,6 @@
         </div>
     </div>
 
-    <!-- Premium Subscription Modal -->
-    <div class="modal-overlay" id="premiumModal">
-        <div class="modal" style="max-width: 600px;">
-            <div class="modal-header">
-                <h2 class="modal-title">⭐ Upgrade to Premium</h2>
-                <button class="close-modal" id="closePremiumModal">×</button>
-            </div>
-            
-            <div style="padding: 24px;">
-                <!-- Premium Benefits -->
-                <div style="margin-bottom: 32px;">
-                    <h3 style="margin-bottom: 20px; color: var(--text-primary); font-size: 1.25rem; font-weight: 800; font-family: 'Poppins', 'Inter', sans-serif;">Unlock Premium Features</h3>
-                    
-                    <div style="display: flex; flex-direction: column; gap: 16px;">
-                        <div style="display: flex; align-items: start; gap: 12px;">
-                            <span style="font-size: 1.5rem;">📊</span>
-                            <div>
-                                <div style="font-weight: 600; margin-bottom: 4px;">50 Scans Per Day</div>
-                                <div style="color: var(--text-secondary); font-size: 0.9rem;">5x more than free users</div>
-                            </div>
-                        </div>
-                        
-                        <div style="display: flex; align-items: start; gap: 12px;">
-                            <span style="font-size: 1.5rem;">🚫</span>
-                            <div>
-                                <div style="font-weight: 600; margin-bottom: 4px;">Ad-Free Experience</div>
-                                <div style="color: var(--text-secondary); font-size: 0.9rem;">No interruptions, just food discovery</div>
-                            </div>
-                        </div>
-                        
-                        <div style="display: flex; align-items: start; gap: 12px;">
-                            <span style="font-size: 1.5rem;">💾</span>
-                            <div>
-                                <div style="font-weight: 600; margin-bottom: 4px;">Unlimited Favorites</div>
-                                <div style="color: var(--text-secondary); font-size: 0.9rem;">Save all your favorite dishes</div>
-                            </div>
-                        </div>
-                        
-                        <div style="display: flex; align-items: start; gap: 12px;">
-                            <span style="font-size: 1.5rem;">📈</span>
-                            <div>
-                                <div style="font-weight: 600; margin-bottom: 4px;">Advanced Analytics</div>
-                                <div style="color: var(--text-secondary); font-size: 0.9rem;">Track your nutrition trends</div>
-                            </div>
-                        </div>
-                        
-                        <div style="display: flex; align-items: start; gap: 12px;">
-                            <span style="font-size: 1.5rem;">⚡</span>
-                            <div>
-                                <div style="font-weight: 600; margin-bottom: 4px;">Priority Support</div>
-                                <div style="color: var(--text-secondary); font-size: 0.9rem;">Get help when you need it</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Pricing -->
-                <div style="background: linear-gradient(135deg, rgba(255, 122, 48, 0.1) 0%, rgba(255, 202, 40, 0.05) 100%); padding: 24px; border-radius: 18px; margin-bottom: 24px; text-align: center; border: 2px solid var(--accent); box-shadow: 0 2px 8px var(--shadow-interactive);">
-                    <div style="font-size: 2.5rem; font-weight: 800; color: var(--accent); margin-bottom: 8px; font-family: 'Poppins', 'Inter', sans-serif;">
-                        $9.99
-                    </div>
-                    <div style="color: var(--text-secondary); margin-bottom: 16px; font-weight: 500;">per month</div>
-                    <div style="font-size: 0.875rem; color: var(--text-secondary);">
-                        Cancel anytime • No hidden fees
-                    </div>
-                </div>
-
-                <!-- CTA Buttons -->
-                <div style="display: flex; flex-direction: column; gap: 12px;">
-                    <button class="btn" id="subscribePremiumBtn" style="width: 100%; background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%); color: white; font-weight: 700; padding: 16px; font-size: 1.05rem; font-family: 'Poppins', 'Inter', sans-serif; border-radius: 16px; box-shadow: 0 4px 12px var(--shadow-interactive);">
-                        ⭐ Subscribe to Premium
-                    </button>
-                    
-                    <div style="text-align: center; margin-top: 16px;">
-                        <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 8px;">
-                            Already have Premium?
-                        </p>
-                        <button type="button" id="checkPremiumStatusBtn" style="background: none; border: none; color: var(--primary); cursor: pointer; text-decoration: underline; font-size: 0.9rem;">
-                            Check Premium Status
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Free Trial Info -->
-                <div style="margin-top: 24px; padding: 16px; background: #E8F5E9; border-radius: 8px; text-align: center;">
-                    <div style="font-weight: 600; color: #2E7D32; margin-bottom: 4px;">
-                        🎁 7-Day Free Trial
-                    </div>
-                    <div style="font-size: 0.875rem; color: #388E3C;">
-                        Try Premium free for 7 days, then $9.99/month
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Premium Details Screen -->
-    <div class="modal-overlay" id="premiumDetailsScreen">
-        <div class="modal" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
-            <div class="modal-header">
-                <h2 class="modal-title">⭐ Premium Features</h2>
-                <button class="close-modal" id="closePremiumDetailsScreen">×</button>
-            </div>
-            
-            <div style="padding: 24px;">
-                <!-- Premium Features List -->
-                <div style="margin-bottom: 32px;">
-                    <h3 style="margin-bottom: 20px; color: var(--text-primary); font-size: 1.25rem;">Unlock Everything</h3>
-                    
-                    <div style="display: flex; flex-direction: column; gap: 20px;">
-                        <div style="display: flex; align-items: start; gap: 16px; padding: 16px; background: var(--secondary); border-radius: 12px;">
-                            <span style="font-size: 2rem; flex-shrink: 0;">♾️</span>
-                            <div style="flex: 1;">
-                                <div style="font-weight: 600; margin-bottom: 6px; font-size: 1.1rem;">Unlimited Scans</div>
-                                <div style="color: var(--text-secondary); font-size: 0.9rem;">Scan as many dishes as you want, every day</div>
-                            </div>
-                        </div>
-                        
-                        <div style="display: flex; align-items: start; gap: 16px; padding: 16px; background: var(--secondary); border-radius: 12px;">
-                            <span style="font-size: 2rem; flex-shrink: 0;">🚫</span>
-                            <div style="flex: 1;">
-                                <div style="font-weight: 600; margin-bottom: 6px; font-size: 1.1rem;">Remove Ads</div>
-                                <div style="color: var(--text-secondary); font-size: 0.9rem;">Enjoy an ad-free experience</div>
-                            </div>
-                        </div>
-                        
-                        <div style="display: flex; align-items: start; gap: 16px; padding: 16px; background: var(--secondary); border-radius: 12px;">
-                            <span style="font-size: 2rem; flex-shrink: 0;">⚡</span>
-                            <div style="flex: 1;">
-                                <div style="font-weight: 600; margin-bottom: 6px; font-size: 1.1rem;">Faster Premium Analysis Mode</div>
-                                <div style="color: var(--text-secondary); font-size: 0.9rem;">Get instant results with priority processing</div>
-                            </div>
-                        </div>
-                        
-                        <div style="display: flex; align-items: start; gap: 16px; padding: 16px; background: var(--secondary); border-radius: 12px;">
-                            <span style="font-size: 2rem; flex-shrink: 0;">📊</span>
-                            <div style="flex: 1;">
-                                <div style="font-weight: 600; margin-bottom: 6px; font-size: 1.1rem;">Advanced Nutritional Breakdown</div>
-                                <div style="color: var(--text-secondary); font-size: 0.9rem;">Detailed macros and ingredients analysis</div>
-                            </div>
-                        </div>
-                        
-                        <div style="display: flex; align-items: start; gap: 16px; padding: 16px; background: var(--secondary); border-radius: 12px;">
-                            <span style="font-size: 2rem; flex-shrink: 0;">🇰🇷</span>
-                            <div style="flex: 1;">
-                                <div style="font-weight: 600; margin-bottom: 6px; font-size: 1.1rem;">Korean Cultural Context Section</div>
-                                <div style="color: var(--text-secondary); font-size: 0.9rem;">Learn about Korean dishes and their cultural significance</div>
-                            </div>
-                        </div>
-                        
-                        <div style="display: flex; align-items: start; gap: 16px; padding: 16px; background: var(--secondary); border-radius: 12px;">
-                            <span style="font-size: 2rem; flex-shrink: 0;">💾</span>
-                            <div style="flex: 1;">
-                                <div style="font-weight: 600; margin-bottom: 6px; font-size: 1.1rem;">Unlimited History Saves</div>
-                                <div style="color: var(--text-secondary); font-size: 0.9rem;">Save all your food discoveries without limits</div>
-                            </div>
-                        </div>
-                        
-                        <div style="display: flex; align-items: start; gap: 16px; padding: 16px; background: var(--secondary); border-radius: 12px;">
-                            <span style="font-size: 2rem; flex-shrink: 0;">🎯</span>
-                            <div style="flex: 1;">
-                                <div style="font-weight: 600; margin-bottom: 6px; font-size: 1.1rem;">Custom Daily Calorie Goals</div>
-                                <div style="color: var(--text-secondary); font-size: 0.9rem;">Set and track personalized calorie targets</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Guest vs Premium Comparison -->
-                <div style="margin-bottom: 32px; background: var(--secondary); padding: 20px; border-radius: 16px;">
-                    <h3 style="margin-bottom: 20px; color: var(--text-primary); font-size: 1.25rem; text-align: center; font-family: 'Poppins', sans-serif; font-weight: 700;">Guest vs Premium</h3>
-                    
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 0.9rem;">
-                        <div style="text-align: center; padding: 12px; background: var(--background); border-radius: 8px;">
-                            <div style="font-weight: 700; margin-bottom: 8px; color: var(--text-secondary);">Guest</div>
-                            <div style="color: var(--text-primary);">3 scans/day</div>
-                        </div>
-                        <div style="text-align: center; padding: 12px; background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%); border-radius: 14px; color: white; box-shadow: 0 2px 8px var(--shadow-interactive);">
-                            <div style="font-weight: 700; margin-bottom: 8px;">Premium</div>
-                            <div>Unlimited scans</div>
-                        </div>
-                        
-                        <div style="text-align: center; padding: 12px; background: var(--background-alt); border-radius: 14px; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);">
-                            <div style="color: var(--text-primary);">Ads shown</div>
-                        </div>
-                        <div style="text-align: center; padding: 12px; background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%); border-radius: 14px; color: white; box-shadow: 0 2px 8px var(--shadow-interactive);">
-                            <div>Ad-free ✨</div>
-                        </div>
-                        
-                        <div style="text-align: center; padding: 12px; background: var(--background-alt); border-radius: 14px; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);">
-                            <div style="color: var(--text-primary);">Basic nutrition</div>
-                        </div>
-                        <div style="text-align: center; padding: 12px; background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%); border-radius: 14px; color: white; box-shadow: 0 2px 8px var(--shadow-interactive);">
-                            <div>Advanced breakdown</div>
-                        </div>
-                        
-                        <div style="text-align: center; padding: 12px; background: var(--background-alt); border-radius: 14px; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);">
-                            <div style="color: var(--text-primary);">No cultural stories</div>
-                        </div>
-                        <div style="text-align: center; padding: 12px; background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%); border-radius: 14px; color: white; box-shadow: 0 2px 8px var(--shadow-interactive);">
-                            <div>Korean cultural context 🇰🇷</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Pricing Options -->
-                <div style="margin-bottom: 32px;">
-                    <h3 style="margin-bottom: 20px; color: var(--text-primary); font-size: 1.25rem; text-align: center; font-family: 'Poppins', sans-serif; font-weight: 700;">Choose Your Plan</h3>
-                    
-                    <div style="display: flex; flex-direction: column; gap: 16px;">
-                        <!-- Monthly Plan -->
-                        <div class="pricing-option" style="background: var(--background-alt); padding: 24px; border-radius: 18px; border: 2px solid var(--secondary-dark); cursor: pointer; transition: all 150ms ease; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);" onclick="selectPlan('monthly')">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                                <div>
-                                    <div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 4px; font-family: 'Poppins', sans-serif;">Monthly</div>
-                                    <div style="color: var(--text-secondary); font-size: 0.9rem;">Billed monthly</div>
-                                </div>
-                                <div style="text-align: right;">
-                                    <div style="font-size: 2rem; font-weight: 800; color: var(--accent); font-family: 'Poppins', sans-serif;">$9.99</div>
-                                    <div style="color: var(--text-secondary); font-size: 0.875rem;">per month</div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Annual Plan -->
-                        <div class="pricing-option selected" style="background: linear-gradient(135deg, rgba(122, 145, 99, 0.1) 0%, rgba(154, 184, 122, 0.05) 100%); padding: 24px; border-radius: 18px; border: 2px solid var(--primary); position: relative; cursor: pointer; transition: all 150ms ease; box-shadow: 0 4px 12px var(--shadow-interactive);" onclick="selectPlan('annual')">
-                            <div style="position: absolute; top: -12px; right: 16px; background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%); color: white; padding: 6px 14px; border-radius: 14px; font-size: 0.75rem; font-weight: 700; font-family: 'Poppins', sans-serif; box-shadow: 0 2px 6px var(--shadow-interactive);">
-                                BEST VALUE
-                            </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                                <div>
-                                    <div style="font-weight: 700; font-size: 1.1rem; margin-bottom: 4px; font-family: 'Poppins', sans-serif;">Annual</div>
-                                    <div style="color: var(--text-secondary); font-size: 0.9rem;">Save 20% - Billed yearly</div>
-                                </div>
-                                <div style="text-align: right;">
-                                    <div style="font-size: 2rem; font-weight: 800; color: var(--primary); font-family: 'Poppins', sans-serif;">$7.99</div>
-                                    <div style="color: var(--text-secondary); font-size: 0.875rem;">per month</div>
-                                    <div style="color: var(--text-secondary); font-size: 0.75rem; margin-top: 4px;">$95.88/year</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- CTA Button -->
-                <div style="display: flex; flex-direction: column; gap: 12px;">
-                    <button class="btn btn-primary" id="startFreeTrialBtn" style="width: 100%; font-weight: 700; padding: 18px; font-size: 1.15rem; font-family: 'Poppins', sans-serif;">
-                        🎁 Start 3-Day Free Trial
-                    </button>
-                    
-                    <div style="text-align: center; margin-top: 8px;">
-                        <p style="color: var(--text-secondary); font-size: 0.875rem;">
-                            Cancel anytime • No hidden fees • 3-day free trial
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <div class="container">
 
@@ -5265,47 +4926,14 @@
         let currentUser = null;
         let userScanInfo = { remaining: 3, limit: 3, level: 'guest' }; // Default for guest
         
-        // Premium features flags (UI state placeholders - backend logic not changed)
-        let premiumFeatures = {
-            unlimitedScans: false,
-            removeAds: false,
-            fasterAnalysis: false,
-            advancedNutritionalBreakdown: false,
-            koreanCulturalContext: false,
-            unlimitedHistorySaves: false,
-            customDailyCalorieGoals: false
-        };
-        
-        // Check if user is premium (from user metadata)
-        function isPremiumUser() {
-            if (!currentUser) return false;
-            return currentUser.user_metadata?.premium === true || 
-                   currentUser.user_metadata?.is_premium === true ||
-                   currentUser.user_metadata?.tier === 'premium';
-        }
-        
-        // Update premium features based on user status
-        function updatePremiumFeatures() {
-            const isPremium = isPremiumUser();
-            premiumFeatures = {
-                unlimitedScans: isPremium,
-                removeAds: isPremium,
-                fasterAnalysis: isPremium,
-                advancedNutritionalBreakdown: isPremium,
-                koreanCulturalContext: isPremium,
-                unlimitedHistorySaves: isPremium,
-                customDailyCalorieGoals: isPremium
-            };
-        }
         
         // Get remaining scans from server
         async function updateScanLimit() {
             try {
                 const backendUrl = CONFIG.BACKEND_URL || 'http://localhost:3000';
                 const userId = currentUser?.id || null;
-                const premium = isPremiumUser();
                 
-                const response = await fetch(`${backendUrl}/api/scan-limit?userId=${userId || ''}&isPremium=${premium}`, {
+                const response = await fetch(`${backendUrl}/api/scan-limit?userId=${userId || ''}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'
@@ -5762,8 +5390,6 @@
                     levelText = 'Guest';
                 } else if (level === 'free') {
                     levelText = 'Free';
-                } else if (level === 'premium') {
-                    levelText = 'Premium';
                 }
                 
                 scanLimitDisplay.textContent = `${remaining}/${limit} scans (${levelText})`;
@@ -5779,34 +5405,21 @@
             
             // Update header counter
             if (scanCounterHeader && scanCounterText) {
-                if (level === 'premium') {
-                    scanCounterText.textContent = 'Premium active ✔';
-                    scanCounterHeader.style.background = '#E8F5E9';
-                    scanCounterHeader.style.color = '#2E7D32';
-                    scanCounterHeader.style.display = 'flex';
-                    scanCounterHeader.style.cursor = 'pointer'; // Still clickable to view details
-                } else if (remaining === 0) {
+                if (remaining === 0) {
                     scanCounterText.textContent = 'No scans left';
                     scanCounterHeader.style.background = '#FFE6E6';
                     scanCounterHeader.style.color = 'var(--status-error)';
                     scanCounterHeader.style.display = 'flex';
-                    scanCounterHeader.style.cursor = 'pointer';
                 } else if (remaining === 1) {
                     scanCounterText.textContent = '1 scan left';
                     scanCounterHeader.style.background = '#FFF4E6';
                     scanCounterHeader.style.color = '#E67E22';
                     scanCounterHeader.style.display = 'flex';
-                    scanCounterHeader.style.cursor = 'pointer';
                 } else {
-                    if (level === 'guest') {
-                        scanCounterText.textContent = `${remaining} scans left. Upgrade for full access.`;
-                    } else {
-                        scanCounterText.textContent = `${remaining} scans left`;
-                    }
+                    scanCounterText.textContent = `${remaining} scans left`;
                     scanCounterHeader.style.background = 'var(--secondary)';
                     scanCounterHeader.style.color = 'var(--text-primary)';
                     scanCounterHeader.style.display = 'flex';
-                    scanCounterHeader.style.cursor = 'pointer';
                 }
             }
         }
@@ -5832,7 +5445,6 @@
             updateGuestBanner();
             
             const loginBtn = document.getElementById('loginBtn');
-            const premiumBtn = document.getElementById('premiumBtn');
             const userProfile = document.getElementById('userProfile');
             const greetingText = document.getElementById('greetingText');
             const logoutBtn = document.getElementById('logoutBtn');
@@ -5841,18 +5453,6 @@
             if (currentUser) {
                 // User is logged in
                 if (loginBtn) loginBtn.style.display = 'none';
-                if (premiumBtn) {
-                    if (isPremiumUser()) {
-                        premiumBtn.textContent = '⭐ Premium Active';
-                        premiumBtn.style.background = '#4CAF50';
-                        premiumBtn.style.color = '#fff';
-                    } else {
-                        premiumBtn.textContent = '⭐ Premium';
-                        premiumBtn.style.background = 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)';
-                        premiumBtn.style.color = '#000';
-                    }
-                    premiumBtn.style.display = 'block';
-                }
                 if (userProfile) userProfile.style.display = 'flex';
                 
                 const nickname = currentUser.user_metadata?.nickname || currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'User';
@@ -5878,12 +5478,6 @@
             } else {
                 // User is not logged in
                 if (loginBtn) loginBtn.style.display = 'block';
-                if (premiumBtn) {
-                    premiumBtn.style.display = 'block';
-                    premiumBtn.textContent = '⭐ Premium';
-                    premiumBtn.style.background = 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)';
-                    premiumBtn.style.color = '#000';
-                }
                 if (userProfile) userProfile.style.display = 'none';
                 if (logoutBtn) logoutBtn.style.display = 'none';
                 
@@ -5892,83 +5486,10 @@
                 updateScanLimit().then(() => {
                     updateScanLimitDisplay();
                 });
-                
-                // Remove premium features
-                removePremiumFeatures();
             }
             
             // Update scan limit display
             updateScanLimitDisplay();
-            
-            // Update premium features
-            applyPremiumFeatures();
-        }
-        
-        // Apply premium features (ad-free, etc.)
-        function applyPremiumFeatures() {
-            updatePremiumFeatures();
-            if (isPremiumUser()) {
-                // Premium users get no ads - add class for styling
-                document.body.classList.add('premium-user');
-            } else {
-                document.body.classList.remove('premium-user');
-            }
-        }
-        
-        function removePremiumFeatures() {
-            premiumFeatures = {
-                unlimitedScans: false,
-                removeAds: false,
-                fasterAnalysis: false,
-                advancedNutritionalBreakdown: false,
-                koreanCulturalContext: false,
-                unlimitedHistorySaves: false,
-                customDailyCalorieGoals: false
-            };
-            document.body.classList.remove('premium-user');
-        }
-        
-        // Handle premium subscription
-        function handlePremiumSubscribe() {
-            if (!currentUser) {
-                // User not logged in - prompt to login first
-                const premiumModal = document.getElementById('premiumModal');
-                if (premiumModal) premiumModal.classList.remove('active');
-                
-                const loginModal = document.getElementById('loginModal');
-                if (loginModal) {
-                    loginModal.classList.add('active');
-                    showLoginForm();
-                }
-                alert('Please sign in first to subscribe to Premium!');
-                return;
-            }
-            
-            // TODO: Integrate with payment provider (Stripe, PayPal, etc.)
-            // For now, show a message
-            alert('Premium subscription coming soon! For now, you can manually upgrade users in Supabase by setting user_metadata.premium = true');
-            
-            // In production, this would:
-            // 1. Redirect to payment page (Stripe Checkout, PayPal, etc.)
-            // 2. After successful payment, update user metadata in Supabase
-            // 3. Refresh user session
-            // 4. Show success message
-        }
-        
-        // Check premium status
-        function checkPremiumStatus() {
-            if (!currentUser) {
-                alert('Please sign in to check your Premium status.');
-                return;
-            }
-            
-            if (isPremiumUser()) {
-                alert('✅ You are a Premium member! Enjoy all Premium features.');
-            } else {
-                alert('You are currently on the free plan. Upgrade to Premium to unlock all features!');
-                const premiumModal = document.getElementById('premiumModal');
-                if (premiumModal) premiumModal.classList.add('active');
-            }
         }
 
         // ============================================
@@ -7714,7 +7235,6 @@
                             imageData: `data:image/jpeg;base64,${base64Image}`,
                             targetLanguage: targetLanguage,
                             userId: currentUser?.id || null,
-                            isPremium: isPremiumUser()
                         }),
                         signal: controller.signal
                     });
@@ -9707,97 +9227,15 @@
         // ============================================
         function initializeAuth() {
             const loginBtn = document.getElementById('loginBtn');
-            const premiumBtn = document.getElementById('premiumBtn');
             const logoutBtn = document.getElementById('logoutBtn');
             const closeModal = document.getElementById('closeModal');
-            const closePremiumModal = document.getElementById('closePremiumModal');
             const loginModal = document.getElementById('loginModal');
-            const premiumModal = document.getElementById('premiumModal');
             const modalTitle = document.getElementById('modalTitle');
             const emailLoginForm = document.getElementById('emailLoginForm');
             const emailSignupForm = document.getElementById('emailSignupForm');
             const switchToSignup = document.getElementById('switchToSignup');
             const switchToLogin = document.getElementById('switchToLogin');
             const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
-            
-            // Premium button click handler - opens PremiumDetailsScreen
-            if (premiumBtn) {
-                premiumBtn.addEventListener('click', () => {
-                    const premiumDetailsScreen = document.getElementById('premiumDetailsScreen');
-                    if (premiumDetailsScreen) {
-                        premiumDetailsScreen.classList.add('active');
-                    }
-                });
-            }
-            
-            // Close premium modal
-            if (closePremiumModal) {
-                closePremiumModal.addEventListener('click', () => {
-                    const premiumModal = document.getElementById('premiumModal');
-                    if (premiumModal) {
-                        premiumModal.classList.remove('active');
-                    }
-                });
-            }
-            
-            // PremiumDetailsScreen handlers
-            const premiumDetailsScreen = document.getElementById('premiumDetailsScreen');
-            const closePremiumDetailsScreen = document.getElementById('closePremiumDetailsScreen');
-            const startFreeTrialBtn = document.getElementById('startFreeTrialBtn');
-            
-            if (closePremiumDetailsScreen) {
-                closePremiumDetailsScreen.addEventListener('click', () => {
-                    if (premiumDetailsScreen) premiumDetailsScreen.classList.remove('active');
-                });
-            }
-            
-            if (premiumDetailsScreen) {
-                premiumDetailsScreen.addEventListener('click', (e) => {
-                    if (e.target === premiumDetailsScreen) {
-                        premiumDetailsScreen.classList.remove('active');
-                    }
-                });
-            }
-            
-            if (startFreeTrialBtn) {
-                startFreeTrialBtn.addEventListener('click', () => {
-                    // Placeholder for free trial - backend logic not changed yet
-                    if (!currentUser) {
-                        alert('Please sign in first to start your free trial!');
-                        if (premiumDetailsScreen) premiumDetailsScreen.classList.remove('active');
-                        const loginModal = document.getElementById('loginModal');
-                        if (loginModal) loginModal.classList.add('active');
-                        return;
-                    }
-                    alert('3-Day Free Trial coming soon! For now, you can manually upgrade users in Supabase by setting user_metadata.premium = true');
-                    if (premiumDetailsScreen) premiumDetailsScreen.classList.remove('active');
-                });
-            }
-            
-            // Close premium modal on overlay click
-            if (premiumModal) {
-                premiumModal.addEventListener('click', (e) => {
-                    if (e.target === premiumModal) {
-                        premiumModal.classList.remove('active');
-                    }
-                });
-            }
-            
-            // Subscribe button handler
-            const subscribePremiumBtn = document.getElementById('subscribePremiumBtn');
-            if (subscribePremiumBtn) {
-                subscribePremiumBtn.addEventListener('click', () => {
-                    handlePremiumSubscribe();
-                });
-            }
-            
-            // Check premium status button
-            const checkPremiumStatusBtn = document.getElementById('checkPremiumStatusBtn');
-            if (checkPremiumStatusBtn) {
-                checkPremiumStatusBtn.addEventListener('click', () => {
-                    checkPremiumStatus();
-                });
-            }
 
             // Open modal (show login form by default)
             loginBtn.addEventListener('click', () => {
