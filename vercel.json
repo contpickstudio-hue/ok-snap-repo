@@ -1,5 +1,4 @@
 {
-  "buildCommand": "npm run build",
   "outputDirectory": "public",
   "rewrites": [
     {
@@ -8,4 +7,5 @@
     }
   ]
 }
+
 
