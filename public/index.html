@@ -4892,8 +4892,8 @@
         // ============================================
         const CONFIG = {
             // Backend API endpoint - Vercel deployment URL
-            // Change this to your Vercel deployment URL: https://your-app.vercel.app
-            API_BASE: 'https://your-app.vercel.app', // Update with your Vercel URL
+            // Uses current domain automatically, or set to your Vercel URL
+            API_BASE: typeof window !== 'undefined' ? window.location.origin : 'https://your-app.vercel.app',
             
             // Recipe links now point directly to recipe websites
             // No API keys needed - using direct website search URLs
@@ -9014,7 +9014,9 @@
             }
         }
 
-        document.getElementById('favoriteBtn').addEventListener('click', async () => {
+        const favoriteBtn = document.getElementById('favoriteBtn');
+        if (favoriteBtn) {
+            favoriteBtn.addEventListener('click', async () => {
             // Check if user is logged in
             if (!currentUser) {
                 showSignupPrompt('favorites');
@@ -9089,7 +9091,8 @@
             
             updateFavoriteButtonState();
             loadFavorites();
-        });
+            });
+        }
         
         function saveToLocalFavorites(favoriteItem) {
             let favorites = JSON.parse(localStorage.getItem('biteSightFavorites') || '[]');
@@ -9198,6 +9201,7 @@
 
         // Setup "Add to Today's Log" button event listener
         let addToLogButtonListenerAttached = false;
+        
         function setupAddToLogButton() {
             const addToLogBtn = document.getElementById('addToLogBtn');
             if (!addToLogBtn) {
