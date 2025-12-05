@@ -23,9 +23,32 @@ self.addEventListener('fetch', (event) => {
     caches.match(event.request)
       .then((response) => {
         // Return cached version or fetch from network
-        return response || fetch(event.request);
-      }
-    )
+        if (response) {
+          return response;
+        }
+        // Wrap fetch in try/catch to handle network errors gracefully
+        return fetch(event.request).catch((error) => {
+          console.warn('Service worker fetch failed:', error.message);
+          // Return a basic error response instead of throwing
+          return new Response('Network error', {
+            status: 408,
+            statusText: 'Request Timeout',
+            headers: { 'Content-Type': 'text/plain' }
+          });
+        });
+      })
+      .catch((error) => {
+        console.warn('Service worker cache match failed:', error.message);
+        // Try to fetch from network as fallback
+        return fetch(event.request).catch((fetchError) => {
+          console.warn('Service worker fetch fallback failed:', fetchError.message);
+          return new Response('Network error', {
+            status: 408,
+            statusText: 'Request Timeout',
+            headers: { 'Content-Type': 'text/plain' }
+          });
+        });
+      })
   );
 });
 

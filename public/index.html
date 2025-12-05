@@ -4272,11 +4272,6 @@
                         </div>
                     </div>
                     
-                    <!-- Try Sample Dish Button -->
-                    <button class="btn-secondary" id="trySampleBtn" style="width: 100%; margin-bottom: 8px;">
-                        🍲 Try Sample Dish (Bibimbap)
-                    </button>
-                    
                     <div class="scan-limit-info" id="scanLimitDisplay" style="text-align: center; margin-bottom: 8px; font-size: 0.75rem; color: var(--text-secondary);">
                         3/3 scans (Guest)
                     </div>
@@ -4948,7 +4943,7 @@
                     // Keep current userScanInfo or use defaults
                 }
             } catch (error) {
-                console.error('Error fetching scan limit:', error);
+                console.warn('Failed to fetch scan limit (non-blocking):', error.message || error);
                 // On error, if we're a guest, try to get from localStorage as fallback
                 if (!currentUser) {
                     const today = new Date().toISOString().split('T')[0];
@@ -6115,16 +6110,18 @@
             
             // Initialize night mode
             const nightModeToggle = document.getElementById('nightModeToggle');
-            const isNightMode = settings.nightMode || false;
-            nightModeToggle.checked = isNightMode;
-            applyNightMode(isNightMode);
+            if (nightModeToggle) {
+                const isNightMode = settings.nightMode || false;
+                nightModeToggle.checked = isNightMode;
+                applyNightMode(isNightMode);
 
-            nightModeToggle.addEventListener('change', (e) => {
-                const isDark = e.target.checked;
-                applyNightMode(isDark);
-                settings.nightMode = isDark;
-                saveSettings(settings);
-            });
+                nightModeToggle.addEventListener('change', (e) => {
+                    const isDark = e.target.checked;
+                    applyNightMode(isDark);
+                    settings.nightMode = isDark;
+                    saveSettings(settings);
+                });
+            }
 
             // Initialize language
             const languageSelect = document.getElementById('languageSelect');
@@ -6153,7 +6150,10 @@
 
 
             // Set app version
-            document.getElementById('appVersion').textContent = '1.0.13';
+            const appVersionEl = document.getElementById('appVersion');
+            if (appVersionEl) {
+                appVersionEl.textContent = '1.0.13';
+            }
         }
 
         function applyTranslations(lang) {
@@ -6743,6 +6743,11 @@
             const fileInput = document.getElementById('fileInput');
             const analyzeBtn = document.getElementById('analyzeBtn');
 
+            if (!uploadArea || !fileInput || !analyzeBtn) {
+                console.warn('Upload elements not found, skipping upload initialization');
+                return;
+            }
+
             uploadArea.addEventListener('click', () => fileInput.click());
             uploadArea.addEventListener('dragover', handleDragOver);
             uploadArea.addEventListener('dragleave', handleDragLeave);
@@ -6759,14 +6764,6 @@
                 }
                 analyzeImage();
             });
-            
-            // Try Sample Dish button handler
-            const trySampleBtn = document.getElementById('trySampleBtn');
-            if (trySampleBtn) {
-                trySampleBtn.addEventListener('click', () => {
-                    handleSampleDish();
-                });
-            }
         }
 
         function handleDragOver(e) {
@@ -6822,10 +6819,14 @@
         function resetUpload() {
             currentImage = null;
             currentDishData = null;
-            document.getElementById('previewContainer').style.display = 'none';
-            document.getElementById('uploadPlaceholder').style.display = 'flex';
-            document.getElementById('fileInput').value = '';
-            document.getElementById('analyzeBtn').disabled = true;
+            const previewContainer = document.getElementById('previewContainer');
+            const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+            const fileInput = document.getElementById('fileInput');
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            if (previewContainer) previewContainer.style.display = 'none';
+            if (uploadPlaceholder) uploadPlaceholder.style.display = 'flex';
+            if (fileInput) fileInput.value = '';
+            if (analyzeBtn) analyzeBtn.disabled = true;
             hideResult();
         }
 
@@ -6859,6 +6860,11 @@
             const cameraError = document.getElementById('cameraError');
             const previewContainer = document.getElementById('cameraPreviewContainer');
             const retakeBtn = document.getElementById('retakeBtn');
+
+            if (!cameraModal || !cameraVideo || !cameraError) {
+                console.warn('Camera elements not found, cannot open camera');
+                return;
+            }
 
             // Reset state
             isCapturing = false;
@@ -7180,46 +7186,6 @@
         // ============================================
         // IMAGE ANALYSIS WITH OPENAI VISION
         // ============================================
-        // Handle sample dish (Bibimbap) - returns sample data directly
-        function handleSampleDish() {
-            const sampleData = {
-                dish: "Bibimbap",
-                confidence: 0.98,
-                description: "A Korean mixed rice bowl with vegetables, gochujang, and toppings.",
-                origin: "Korea",
-                ingredients: [
-                    "Rice", "Gochujang", "Egg", "Spinach", "Carrot", "Mushroom", "Beef (optional)"
-                ],
-                recommendedRecipeLink: "https://www.maangchi.com/recipe/bibimbap"
-            };
-
-            // Convert to format expected by displayResult
-            currentDishData = {
-                name: sampleData.dish,
-                nameKorean: "비빔밥",
-                isKorean: true,
-                cuisine: sampleData.origin,
-                confidence: sampleData.confidence,
-                description: sampleData.description,
-                alternatives: [],
-                nutrition: {
-                    calories: 550,
-                    protein: 20,
-                    carbs: 75,
-                    fat: 15
-                }
-            };
-
-            // Display result same way as normal results
-            displayResult(currentDishData);
-            
-            // Setup recipe links
-            setupRecipeLinks(currentDishData.name);
-            
-            // Save to history
-            addToHistory(currentDishData);
-        }
-
         async function analyzeImage() {
             if (!currentImage) {
                 const lang = getCurrentLanguage();
@@ -7283,10 +7249,9 @@
                 } catch (fetchError) {
                     clearTimeout(timeoutId);
                     currentAbortController = null; // Clear controller
-                    console.error('Fetch error caught:', {
+                    console.warn('Fetch error caught (non-blocking):', {
                         name: fetchError.name,
-                        message: fetchError.message,
-                        stack: fetchError.stack
+                        message: fetchError.message
                     });
                     
                     if (fetchError.name === 'AbortError') {
@@ -7302,7 +7267,7 @@
                         fetchError.message.includes('Network request failed') ||
                         fetchError.message.includes('Load failed')
                     )) {
-                        console.error('Network error detected - this might be a CORS or connectivity issue');
+                        console.warn('Network error detected (non-blocking) - this might be a CORS or connectivity issue');
                         throw new Error('Network request failed - check internet connection');
                     }
                     
@@ -7329,11 +7294,10 @@
                         errorText = errorText || 'Unknown error';
                     }
                     
-                    console.error('Backend API response error:', {
+                    console.warn('Backend API response error (non-blocking):', {
                         status: response.status,
                         statusText: response.statusText,
-                        errorText: errorText.substring(0, 500),
-                        errorDetails: errorDetails
+                        errorText: errorText.substring(0, 500)
                     });
                     
                     // Handle scan limit exceeded (429 status)
