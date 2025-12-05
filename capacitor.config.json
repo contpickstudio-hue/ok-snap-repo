@@ -1,0 +1,16 @@
+{
+  "appId": "com.oksnap.app",
+  "appName": "ok-snap",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    },
+    "AdMob": {
+      "appId": "ca-app-pub-9493449427784119~2493840936"
+    }
+  }
+}
