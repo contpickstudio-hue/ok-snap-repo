@@ -1,21 +1,32 @@
 // Vercel serverless function for dish identification
 export default async function handler(req, res) {
     // CORS headers - must be set before any response
-    const headers = {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-    };
+    const origin = req.headers.origin;
+    const allowedOrigins = [
+        'https://ok-snap-repo.vercel.app',
+        'http://localhost:3000',
+        'http://localhost:5173',
+        'http://localhost:8080'
+    ];
+    
+    // Allow Vercel preview deployments (pattern: *.vercel.app)
+    const isVercelPreview = origin && origin.endsWith('.vercel.app');
+    const isAllowedOrigin = allowedOrigins.includes(origin) || isVercelPreview;
+    
+    if (isAllowedOrigin) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    } else {
+        // Default to production URL
+        res.setHeader('Access-Control-Allow-Origin', 'https://ok-snap-repo.vercel.app');
+    }
+    
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
     // Handle preflight
     if (req.method === 'OPTIONS') {
-        return res.status(200).json({}).end();
+        return res.status(200).end();
     }
-
-    // Set CORS headers for all responses
-    Object.keys(headers).forEach(key => {
-        res.setHeader(key, headers[key]);
-    });
 
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
@@ -80,8 +91,8 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'Invalid language specified' });
         }
 
-        const apiKey = process.env.OPENAI_API_KEY;
-        if (!apiKey) {
+        const OPENAI_KEY = process.env.OPENAI_API_KEY;
+        if (!OPENAI_KEY) {
             console.error('OPENAI_API_KEY is not set in environment variables');
             return res.status(500).json({ error: 'Server configuration error' });
         }
@@ -91,7 +102,7 @@ export default async function handler(req, res) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
+                'Authorization': `Bearer ${OPENAI_KEY}`
             },
             body: JSON.stringify({
                 model: 'gpt-4o',
