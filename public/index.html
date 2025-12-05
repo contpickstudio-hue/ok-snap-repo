@@ -4275,6 +4275,9 @@
                     <div class="scan-limit-info" id="scanLimitDisplay" style="text-align: center; margin-bottom: 8px; font-size: 0.75rem; color: var(--text-secondary);">
                         3/3 scans (Guest)
                     </div>
+                    <button class="btn-secondary" id="rechargeScanBtn" style="width: 100%; margin-bottom: 8px; font-size: 0.85rem;" onclick="rechargeScanLimitWithAd()">
+                        📺 Watch Ad to Recharge
+                    </button>
                     <button class="btn" id="analyzeBtn" disabled>Discover Your Dish</button>
                         <button class="camera-btn" id="cameraBtn">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5">
@@ -4784,6 +4787,16 @@
                     </div>
                     <div class="version-info" id="appVersion">1.0.13</div>
                 </div>
+
+                <!-- Feedback Button -->
+                <div class="settings-item">
+                    <button class="btn-secondary" id="feedbackBtn" style="width: 100%; margin-top: 16px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        <span id="feedbackBtnText">Feedback</span>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -4915,6 +4928,111 @@
         let currentUser = null;
         let userScanInfo = { remaining: 3, limit: 3, level: 'guest' }; // Default for guest
         
+        // ============================================
+        // ADMOB AD MANAGER (Placeholder - SDK integration done in mobile wrapper)
+        // ============================================
+        const AdManager = {
+            // Show banner ad (placeholder)
+            showBannerAd: function(adUnitId) {
+                console.log('[AdManager] showBannerAd called (placeholder)', adUnitId || 'default');
+                // Real implementation will be provided by mobile wrapper (Capacitor plugin)
+                return Promise.resolve();
+            },
+            
+            // Show interstitial ad (placeholder)
+            showInterstitialAd: function(adUnitId) {
+                console.log('[AdManager] showInterstitialAd called (placeholder)', adUnitId || 'default');
+                // Real implementation will be provided by mobile wrapper (Capacitor plugin)
+                return Promise.resolve();
+            },
+            
+            // Show rewarded ad (placeholder)
+            // Returns a promise that resolves when ad is completed and reward is granted
+            showRewardedAd: function(adUnitId) {
+                console.log('[AdManager] showRewardedAd called (placeholder)', adUnitId || 'default');
+                // Real implementation will be provided by mobile wrapper (Capacitor plugin)
+                // Should return Promise that resolves when user completes ad and gets reward
+                return Promise.resolve({ rewardType: 'scan_limit', rewardAmount: 1 });
+            }
+        };
+        
+        // ============================================
+        // SCAN LIMIT RECHARGE VIA REWARDED AD
+        // ============================================
+        async function rechargeScanLimitWithAd() {
+            try {
+                console.log('[rechargeScanLimitWithAd] Starting rewarded ad flow...');
+                
+                // Show rewarded ad
+                const rewardResult = await AdManager.showRewardedAd();
+                
+                if (!rewardResult) {
+                    console.warn('[rechargeScanLimitWithAd] Ad was not completed or reward not granted');
+                    return;
+                }
+                
+                console.log('[rechargeScanLimitWithAd] Ad completed, reward granted:', rewardResult);
+                
+                // Increment scan limit by 1
+                const incrementAmount = rewardResult.rewardAmount || 1;
+                const newRemaining = Math.min(
+                    (userScanInfo.remaining || 0) + incrementAmount,
+                    userScanInfo.limit || 3
+                );
+                
+                // Update local state
+                userScanInfo.remaining = newRemaining;
+                
+                // Update Supabase if user is logged in
+                if (currentUser && supabaseClient) {
+                    try {
+                        const { error } = await supabaseClient
+                            .from('user_scan_limits')
+                            .upsert({
+                                user_id: currentUser.id,
+                                remaining_scans: newRemaining,
+                                limit: userScanInfo.limit,
+                                level: userScanInfo.level,
+                                updated_at: new Date().toISOString()
+                            }, {
+                                onConflict: 'user_id'
+                            });
+                        
+                        if (error) {
+                            console.warn('[rechargeScanLimitWithAd] Failed to update Supabase:', error);
+                        } else {
+                            console.log('[rechargeScanLimitWithAd] Supabase updated successfully');
+                        }
+                    } catch (dbError) {
+                        console.warn('[rechargeScanLimitWithAd] Error updating database:', dbError);
+                    }
+                } else {
+                    // For guests, store in localStorage
+                    const today = new Date().toISOString().split('T')[0];
+                    const guestScansKey = `guestScans_${today}`;
+                    const currentGuestScans = parseInt(localStorage.getItem(guestScansKey) || '0');
+                    const newGuestScans = Math.max(0, currentGuestScans - incrementAmount);
+                    localStorage.setItem(guestScansKey, newGuestScans.toString());
+                }
+                
+                // Update UI
+                updateScanLimitDisplay();
+                
+                // Show success message
+                const lang = getCurrentLanguage();
+                const t = translations[lang] || translations.en;
+                const successMsg = (t.scanLimitRecharged || 'Scan limit recharged! You now have {remaining} scans remaining.').replace('{remaining}', newRemaining);
+                showSuccess(successMsg);
+                
+                console.log('[rechargeScanLimitWithAd] Recharge completed successfully');
+                
+            } catch (error) {
+                console.error('[rechargeScanLimitWithAd] Error:', error);
+                const lang = getCurrentLanguage();
+                const t = translations[lang] || translations.en;
+                showError(t.rechargeError || 'Failed to recharge scan limit. Please try again.');
+            }
+        }
         
         // Get remaining scans from server
         async function updateScanLimit() {
@@ -5390,6 +5508,17 @@
                 } else if (remaining <= 2) {
                     scanLimitDisplay.classList.add('limit-low');
                 }
+                
+                // Show/hide recharge button based on scan limit
+                const rechargeBtn = document.getElementById('rechargeScanBtn');
+                if (rechargeBtn) {
+                    // Show button when scans are low (0 or 1 remaining) or when at limit
+                    if (remaining <= 1) {
+                        rechargeBtn.style.display = 'block';
+                    } else {
+                        rechargeBtn.style.display = 'none';
+                    }
+                }
             }
             
             // Update header counter
@@ -5565,6 +5694,10 @@
                 // Load calorie log when switching to this tab
                 loadCalorieLog();
                 initializeCalorieLogFeatures();
+            } else if (tabName === 'history') {
+                // Initialize history filters when switching to history tab
+                initializeHistoryFilters();
+                loadHistory();
             } else if (tabName === 'discover') {
                 // When switching back to discover tab, show result if it exists
                 if (isShowingResult && currentDishData && resultSection) {
@@ -5788,6 +5921,11 @@
                 favoriteDishes: "⭐ Your Favorite Dishes",
                 favoritesEmpty: "No favorites yet – discover dishes to add them here",
                 
+                // Ad Recharge
+                watchAdToRecharge: "📺 Watch Ad to Recharge",
+                scanLimitRecharged: "Scan limit recharged! You now have {remaining} scans remaining.",
+                rechargeError: "Failed to recharge scan limit. Please try again.",
+                
                 // Settings
                 settingsTitle: "⚙️ Settings",
                 nightMode: "Night Mode",
@@ -5861,6 +5999,12 @@
                 historyEmpty: "아직 기록이 없습니다 – 요리를 발견하면 여기에 표시됩니다",
                 favoriteDishes: "⭐ 즐겨찾기 요리",
                 favoritesEmpty: "아직 즐겨찾기가 없습니다 – 요리를 발견하여 추가하세요",
+                
+                // Ad Recharge
+                watchAdToRecharge: "📺 광고 시청하여 충전",
+                scanLimitRecharged: "스캔 제한이 충전되었습니다! 이제 {remaining}개의 스캔이 남았습니다.",
+                rechargeError: "스캔 제한 충전에 실패했습니다. 다시 시도해주세요.",
+                
                 settingsTitle: "⚙️ 설정",
                 nightMode: "다크 모드",
                 nightModeDesc: "어두운 환경에서 더 나은 시야를 위해 다크 테마 전환",
@@ -5928,6 +6072,12 @@
                 historyEmpty: "Aún no hay historial – descubre platos para verlos aquí",
                 favoriteDishes: "⭐ Tus Platos Favoritos",
                 favoritesEmpty: "Aún no hay favoritos – descubre platos para agregarlos aquí",
+                
+                // Ad Recharge
+                watchAdToRecharge: "📺 Ver Anuncio para Recargar",
+                scanLimitRecharged: "¡Límite de escaneos recargado! Ahora tienes {remaining} escaneos restantes.",
+                rechargeError: "Error al recargar el límite de escaneos. Por favor, inténtalo de nuevo.",
+                
                 settingsTitle: "⚙️ Configuración",
                 nightMode: "Modo Nocturno",
                 nightModeDesc: "Activa el tema oscuro para una mejor visualización con poca luz",
@@ -5995,6 +6145,12 @@
                 historyEmpty: "Aucun historique pour le moment – découvrez des plats pour les voir ici",
                 favoriteDishes: "⭐ Vos Plats Favoris",
                 favoritesEmpty: "Aucun favori pour le moment – découvrez des plats pour les ajouter ici",
+                
+                // Ad Recharge
+                watchAdToRecharge: "📺 Regarder une Publicité pour Recharger",
+                scanLimitRecharged: "Limite de scans rechargée! Vous avez maintenant {remaining} scans restants.",
+                rechargeError: "Échec du rechargement de la limite de scans. Veuillez réessayer.",
+                
                 settingsTitle: "⚙️ Paramètres",
                 nightMode: "Mode Nuit",
                 nightModeDesc: "Activez le thème sombre pour une meilleure visualisation en basse lumière",
@@ -6062,6 +6218,12 @@
                 historyEmpty: "还没有历史记录 – 发现菜肴后即可在此查看",
                 favoriteDishes: "⭐ 您喜爱的菜肴",
                 favoritesEmpty: "还没有收藏 – 发现菜肴后即可添加",
+                
+                // Ad Recharge
+                watchAdToRecharge: "📺 观看广告充值",
+                scanLimitRecharged: "扫描限制已充值！您现在还有 {remaining} 次扫描。",
+                rechargeError: "充值扫描限制失败。请重试。",
+                
                 settingsTitle: "⚙️ 设置",
                 nightMode: "夜间模式",
                 nightModeDesc: "切换深色主题以便在弱光环境下更好地查看",
@@ -6153,6 +6315,14 @@
             const appVersionEl = document.getElementById('appVersion');
             if (appVersionEl) {
                 appVersionEl.textContent = '1.0.13';
+            }
+
+            // Initialize feedback button
+            const feedbackBtn = document.getElementById('feedbackBtn');
+            if (feedbackBtn) {
+                feedbackBtn.addEventListener('click', () => {
+                    window.location.href = 'mailto:contpickstudio@gmail.com?subject=OK-Snap Feedback';
+                });
             }
         }
 
@@ -6605,6 +6775,7 @@
             initializeBackNavigation();
             initializeHeader();
             initializeProfileCard();
+            initializeHistoryFilters();
             loadHistory();
             loadFavorites();
             
@@ -7869,6 +8040,23 @@
             console.log('Loading screen force-hidden');
         };
 
+        function showSuccess(message) {
+            const resultSection = document.getElementById('resultSection');
+            resultSection.style.display = 'block';
+            resultSection.innerHTML = `
+                <div class="success-message" style="background: var(--status-success); color: white; padding: 1.5rem; border-radius: 12px; text-align: center;">
+                    <h3 style="margin-bottom: 0.5rem; color: white;">✅ Success</h3>
+                    <p style="margin: 0; color: white;">${message}</p>
+                </div>
+            `;
+            // Auto-hide after 3 seconds
+            setTimeout(() => {
+                if (resultSection.innerHTML.includes('success-message')) {
+                    resultSection.style.display = 'none';
+                }
+            }, 3000);
+        }
+
         function showError(message) {
             const resultSection = document.getElementById('resultSection');
             resultSection.style.display = 'block';
@@ -8271,16 +8459,29 @@
             }
         }
 
+        // Track if calorie log features are initialized to prevent duplicate listeners
+        let calorieLogFeaturesInitialized = false;
+
         function initializeCalorieLogFeatures() {
+            // Prevent duplicate initialization
+            if (calorieLogFeaturesInitialized) {
+                return;
+            }
+            calorieLogFeaturesInitialized = true;
+
             // Load calorie goal
             const savedGoal = localStorage.getItem('calorieGoal');
             if (savedGoal) {
-                document.getElementById('calorieGoalInput').value = savedGoal;
+                const goalInput = document.getElementById('calorieGoalInput');
+                if (goalInput) {
+                    goalInput.value = savedGoal;
+                }
             }
 
-            // Save calorie goal button
+            // Save calorie goal button - use one-time handler to prevent duplicates
             const saveGoalBtn = document.getElementById('saveCalorieGoalBtn');
-            if (saveGoalBtn) {
+            if (saveGoalBtn && !saveGoalBtn.hasAttribute('data-listener-attached')) {
+                saveGoalBtn.setAttribute('data-listener-attached', 'true');
                 saveGoalBtn.addEventListener('click', () => {
                     const goal = parseInt(document.getElementById('calorieGoalInput').value);
                     if (goal && goal > 0) {
@@ -8418,11 +8619,9 @@
             // Update widget on home screen
             updateCalorieWidget();
             
-            // Initialize features if not already done
-            const saveGoalBtn = document.getElementById('saveCalorieGoalBtn');
-            if (saveGoalBtn && !saveGoalBtn.hasAttribute('data-initialized')) {
+            // Initialize features if not already done (check flag instead)
+            if (!calorieLogFeaturesInitialized) {
                 initializeCalorieLogFeatures();
-                saveGoalBtn.setAttribute('data-initialized', 'true');
             }
         }
 
@@ -8720,7 +8919,17 @@
             loadCalorieLog();
         }
 
-        async function loadHistory() {
+        // Track current history filter period
+        let currentHistoryPeriod = 'today';
+
+        async function loadHistory(period = null) {
+            // Use current period if not specified
+            if (period === null) {
+                period = currentHistoryPeriod;
+            } else {
+                currentHistoryPeriod = period;
+            }
+
             // Try to load from DB first if logged in
             if (currentUser && supabaseClient) {
                 try {
@@ -8740,42 +8949,121 @@
                 }
             }
             
-            const history = JSON.parse(localStorage.getItem('biteSightHistory') || '[]');
+            let history = JSON.parse(localStorage.getItem('biteSightHistory') || '[]');
+            
+            // Filter history by period
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+            const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+            
+            if (period === 'today') {
+                history = history.filter(item => {
+                    const itemDate = new Date(item.timestamp);
+                    return itemDate >= today;
+                });
+            } else if (period === 'week') {
+                history = history.filter(item => {
+                    const itemDate = new Date(item.timestamp);
+                    return itemDate >= weekAgo;
+                });
+            } else if (period === 'month') {
+                history = history.filter(item => {
+                    const itemDate = new Date(item.timestamp);
+                    return itemDate >= monthAgo;
+                });
+            }
+            
             const historyGrid = document.getElementById('historyGrid');
             const warmMessage = document.getElementById('warmMessage');
             const warmMessageText = document.getElementById('warmMessageText');
             
             if (history.length === 0) {
-                warmMessage.style.display = 'none';
-                historyGrid.innerHTML = `
-                    <div class="empty-state" style="grid-column: 1 / -1;">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="12" y1="8" x2="12" y2="12"></line>
-                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                        </svg>
-                        <p>Your exploration history will appear here</p>
-                    </div>
-                `;
+                if (warmMessage) warmMessage.style.display = 'none';
+                if (historyGrid) {
+                    historyGrid.innerHTML = `
+                        <div class="empty-state" style="grid-column: 1 / -1;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                            <p>Your exploration history will appear here</p>
+                        </div>
+                    `;
+                }
                 return;
             }
 
             // Show warm message with recent dishes
             const recentDishes = history.slice(0, 3).map(item => item.nameKorean || item.name).join(', ');
-            if (history.length >= 2) {
-                warmMessageText.textContent = `You recently explored ${recentDishes} — want to save them for your cooking list?`;
-                warmMessage.style.display = 'block';
-            } else {
-                warmMessage.style.display = 'none';
+            if (warmMessage && warmMessageText) {
+                if (history.length >= 2) {
+                    warmMessageText.textContent = `You recently explored ${recentDishes} — want to save them for your cooking list?`;
+                    warmMessage.style.display = 'block';
+                } else {
+                    warmMessage.style.display = 'none';
+                }
             }
 
-            historyGrid.innerHTML = history.map(item => `
-                <div class="history-item" onclick="loadDishFromHistory('${item.name.replace(/'/g, "\\'")}')">
-                    <img src="${item.thumbnail}" alt="${item.name}" class="item-thumbnail">
-                    <div class="item-name">${item.nameKorean ? `${item.name}<br><small>${item.nameKorean}</small>` : item.name}</div>
-                    <div class="item-time">${formatTime(item.timestamp)}</div>
-                </div>
-            `).join('');
+            // Render history items with descriptions
+            if (historyGrid) {
+                historyGrid.innerHTML = history.map(item => {
+                    // Create description from available fields
+                    let description = '';
+                    if (item.description) {
+                        // Use first sentence or first 60 chars of description
+                        description = item.description.split('.')[0].substring(0, 60);
+                        if (item.description.length > 60) description += '...';
+                    } else if (item.cuisine) {
+                        description = item.cuisine;
+                    } else if (item.ingredients && Array.isArray(item.ingredients) && item.ingredients.length > 0) {
+                        description = item.ingredients.slice(0, 3).join(', ');
+                    }
+                    
+                    const nameDisplay = item.nameKorean ? `${item.name}<br><small>${item.nameKorean}</small>` : item.name;
+                    const descriptionHtml = description ? `<div class="item-description" style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px; line-height: 1.3;">${description}</div>` : '';
+                    
+                    return `
+                        <div class="history-item" onclick="loadDishFromHistory('${item.name.replace(/'/g, "\\'")}')">
+                            <img src="${item.thumbnail}" alt="${item.name}" class="item-thumbnail">
+                            <div class="item-name">${nameDisplay}</div>
+                            ${descriptionHtml}
+                            <div class="item-time">${formatTime(item.timestamp)}</div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        // Initialize history filter buttons
+        function initializeHistoryFilters() {
+            const filterBtns = document.querySelectorAll('.history-filter-btn');
+            filterBtns.forEach(btn => {
+                if (!btn.hasAttribute('data-listener-attached')) {
+                    btn.setAttribute('data-listener-attached', 'true');
+                    btn.addEventListener('click', () => {
+                        // Remove active class from all buttons
+                        filterBtns.forEach(b => {
+                            b.classList.remove('active');
+                            b.style.background = 'var(--background-alt)';
+                            b.style.color = 'var(--text-primary)';
+                            b.style.border = '2px solid var(--secondary-dark)';
+                        });
+                        
+                        // Add active class to clicked button
+                        btn.classList.add('active');
+                        btn.style.background = 'var(--primary)';
+                        btn.style.color = 'white';
+                        btn.style.border = 'none';
+                        
+                        // Load history with selected period
+                        const period = btn.getAttribute('data-period') || 'today';
+                        currentHistoryPeriod = period;
+                        loadHistory(period);
+                    });
+                }
+            });
         }
 
         function getCurrentLanguage() {
