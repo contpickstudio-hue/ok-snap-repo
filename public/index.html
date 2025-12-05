@@ -4889,7 +4889,7 @@
             // Backend API endpoint - Vercel deployment URL
             // Uses current domain automatically, or set to your Vercel URL
             // API keys are stored securely in Vercel environment variables
-            API_BASE: typeof window !== 'undefined' ? window.location.origin : 'https://your-app.vercel.app',
+            API_BASE: typeof window !== 'undefined' ? window.location.origin : 'https://ok-snap-repo.vercel.app',
             
             // Recipe links now point directly to recipe websites
             // No API keys needed - using direct website search URLs
@@ -7406,8 +7406,8 @@
                 displayResult(currentDishData);
                 showLoading(false);
                 
-                // Update scan limits after successful scan
-                await updateScanLimit();
+                // Scan limits are already updated from scanInfo in the response above
+                // No need to call updateScanLimit() again as it uses a separate store
                 updateScanLimitDisplay();
                 
                 // Setup recipe links
