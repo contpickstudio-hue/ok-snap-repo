@@ -4888,11 +4888,12 @@
 
     <script>
         // ============================================
-        // CONFIGURATION - Add your API keys here
+        // CONFIGURATION
         // ============================================
         const CONFIG = {
             // Backend API endpoint - Vercel deployment URL
             // Uses current domain automatically, or set to your Vercel URL
+            // API keys are stored securely in Vercel environment variables
             API_BASE: typeof window !== 'undefined' ? window.location.origin : 'https://your-app.vercel.app',
             
             // Recipe links now point directly to recipe websites
