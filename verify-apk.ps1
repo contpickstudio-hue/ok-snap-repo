@@ -23,12 +23,12 @@ if (Test-Path $metadataPath) {
     Write-Host "  Version Name: $versionName" -ForegroundColor White
     Write-Host "  Version Code: $versionCode" -ForegroundColor White
     
-    if ($versionName -eq "1.0.16" -and $versionCode -eq 17) {
-        Write-Host "Version metadata is correct" -ForegroundColor Green
-    } else {
-        Write-Host "WARNING: Version metadata doesn't match expected values" -ForegroundColor Yellow
-        Write-Host "  Expected: versionName=1.0.16, versionCode=17" -ForegroundColor Yellow
-    }
+            if ($versionName -eq "1.0.17" -and $versionCode -eq 18) {
+                Write-Host "Version metadata is correct" -ForegroundColor Green
+            } else {
+                Write-Host "WARNING: Version metadata doesn't match expected values" -ForegroundColor Yellow
+                Write-Host "  Expected: versionName=1.0.17, versionCode=18" -ForegroundColor Yellow
+            }
 } else {
     Write-Host "WARNING: Metadata file not found" -ForegroundColor Yellow
 }
@@ -75,14 +75,14 @@ if ($jarTool -or $zipTool) {
         $extractedHtml = Join-Path $tempDir "assets\public\index.html"
         if (Test-Path $extractedHtml) {
             $htmlContent = Get-Content $extractedHtml -Raw
-            if ($htmlContent -match '1\.0\.16') {
-                Write-Host "APK contains index.html with version 1.0.16" -ForegroundColor Green
-            } else {
-                Write-Host "ERROR: APK contains old version in index.html" -ForegroundColor Red
-                Write-Host "  The APK needs to be rebuilt after running update-android" -ForegroundColor Yellow
-                Remove-Item $tempDir -Recurse -Force
-                exit 1
-            }
+                    if ($htmlContent -match '1\.0\.17') {
+                        Write-Host "APK contains index.html with version 1.0.17" -ForegroundColor Green
+                    } else {
+                        Write-Host "ERROR: APK contains old version in index.html" -ForegroundColor Red
+                        Write-Host "  The APK needs to be rebuilt after running update-android" -ForegroundColor Yellow
+                        Remove-Item $tempDir -Recurse -Force
+                        exit 1
+                    }
         } else {
             Write-Host "Could not extract index.html from APK for verification" -ForegroundColor Yellow
         }

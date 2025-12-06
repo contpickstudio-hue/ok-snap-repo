@@ -29,11 +29,11 @@ Write-Host "Verifying copied files..." -ForegroundColor Yellow
 $indexHtml = Join-Path $targetDir "index.html"
 if (Test-Path $indexHtml) {
     $content = Get-Content $indexHtml -Raw
-    if ($content -match '1\.0\.16') {
-        Write-Host "index.html contains version 1.0.16" -ForegroundColor Green
-    } else {
-        Write-Host "WARNING: index.html may not contain expected version" -ForegroundColor Yellow
-    }
+            if ($content -match '1\.0\.17') {
+                Write-Host "index.html contains version 1.0.17" -ForegroundColor Green
+            } else {
+                Write-Host "WARNING: index.html may not contain expected version" -ForegroundColor Yellow
+            }
 } else {
     Write-Host "ERROR: index.html not found after copy!" -ForegroundColor Red
     exit 1
