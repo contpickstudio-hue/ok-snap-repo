@@ -5070,7 +5070,7 @@
             // Test ad unit IDs (use these during development, replace with real IDs for production)
             // Android Test: ca-app-pub-3940256099942544/6300978111 (Rewarded)
             // iOS Test: ca-app-pub-3940256099942544/1712485313 (Rewarded)
-            USE_TEST_ADS: false // Set to false for production (you're using real IDs)
+            USE_TEST_ADS: true // Set to true for testing, false for production
         };
         
         // ============================================
@@ -5082,8 +5082,13 @@
         const AdManager = {
             // Show banner ad (appears at bottom of screen)
             showBannerAd: async function(adUnitId) {
-                const adId = adUnitId || ADMOB_CONFIG.BANNER_AD_UNIT_ID;
-                console.log('[AdManager] showBannerAd called', adId);
+                // Use test ad unit ID if testing, otherwise use configured ID
+                let adId = adUnitId || ADMOB_CONFIG.BANNER_AD_UNIT_ID;
+                if (ADMOB_CONFIG.USE_TEST_ADS) {
+                    // Android test banner ad unit ID
+                    adId = 'ca-app-pub-3940256099942544/6300978111';
+                }
+                console.log('[AdManager] showBannerAd called', adId, ADMOB_CONFIG.USE_TEST_ADS ? '(TEST MODE)' : '(PRODUCTION)');
                 
                 try {
                     // Check if running in Capacitor (mobile app)
@@ -5113,8 +5118,13 @@
             
             // Show interstitial ad (full-screen ad between screens)
             showInterstitialAd: async function(adUnitId) {
-                const adId = adUnitId || ADMOB_CONFIG.INTERSTITIAL_AD_UNIT_ID;
-                console.log('[AdManager] showInterstitialAd called', adId);
+                // Use test ad unit ID if testing, otherwise use configured ID
+                let adId = adUnitId || ADMOB_CONFIG.INTERSTITIAL_AD_UNIT_ID;
+                if (ADMOB_CONFIG.USE_TEST_ADS) {
+                    // Android test interstitial ad unit ID
+                    adId = 'ca-app-pub-3940256099942544/1033173712';
+                }
+                console.log('[AdManager] showInterstitialAd called', adId, ADMOB_CONFIG.USE_TEST_ADS ? '(TEST MODE)' : '(PRODUCTION)');
                 
                 try {
                     // Check if running in Capacitor (mobile app)
@@ -5137,8 +5147,13 @@
             // Show rewarded ad (user watches ad to get scan limit recharge)
             // Returns a promise that resolves when ad is completed and reward is granted
             showRewardedAd: async function(adUnitId) {
-                const adId = adUnitId || ADMOB_CONFIG.REWARDED_AD_UNIT_ID;
-                console.log('[AdManager] showRewardedAd called', adId);
+                // Use test ad unit ID if testing, otherwise use configured ID
+                let adId = adUnitId || ADMOB_CONFIG.REWARDED_AD_UNIT_ID;
+                if (ADMOB_CONFIG.USE_TEST_ADS) {
+                    // Android test rewarded ad unit ID
+                    adId = 'ca-app-pub-3940256099942544/5224354917';
+                }
+                console.log('[AdManager] showRewardedAd called', adId, ADMOB_CONFIG.USE_TEST_ADS ? '(TEST MODE)' : '(PRODUCTION)');
                 
                 try {
                     // Check if running in Capacitor (mobile app)
@@ -5284,13 +5299,12 @@
                     const today = new Date().toISOString().split('T')[0];
                     const guestScansKey = `guestScans_${today}`;
                     const guestScans = parseInt(localStorage.getItem(guestScansKey) || '0');
-                    if (guestScans > 0) {
-                        userScanInfo = {
-                            remaining: Math.max(0, 3 - guestScans),
-                            limit: 3,
-                            level: 'guest'
-                        };
-                    }
+                    userScanInfo = {
+                        remaining: Math.max(0, 3 - guestScans),
+                        limit: 3,
+                        level: 'guest'
+                    };
+                    console.log('Guest scan limit loaded from localStorage:', userScanInfo);
                 }
             }
         }
@@ -6878,14 +6892,27 @@
             // Only initialize ads in Capacitor (mobile app), not in web browser
             if (typeof Capacitor !== 'undefined' && Capacitor.Plugins && Capacitor.Plugins.AdMob) {
                 try {
-                    // Show banner ad at bottom of screen
-                    AdManager.showBannerAd().catch(error => {
-                        console.warn('[AdManager] Banner ad initialization failed:', error);
-                    });
+                    const { AdMob } = Capacitor.Plugins;
                     
-                    // Prepare interstitial ad for later use
-                    AdManager.showInterstitialAd().catch(error => {
-                        console.warn('[AdManager] Interstitial ad preparation failed:', error);
+                    // Initialize AdMob SDK first (required before showing ads)
+                    AdMob.initialize({
+                        appId: ADMOB_CONFIG.APP_ID,
+                        initializeForTesting: ADMOB_CONFIG.USE_TEST_ADS
+                    }).then(() => {
+                        console.log('[AdManager] AdMob SDK initialized successfully');
+                        console.log('[AdManager] Test mode:', ADMOB_CONFIG.USE_TEST_ADS ? 'ENABLED' : 'DISABLED');
+                        
+                        // Show banner ad at bottom of screen
+                        AdManager.showBannerAd().catch(error => {
+                            console.warn('[AdManager] Banner ad initialization failed:', error);
+                        });
+                        
+                        // Prepare interstitial ad for later use
+                        AdManager.showInterstitialAd().catch(error => {
+                            console.warn('[AdManager] Interstitial ad preparation failed:', error);
+                        });
+                    }).catch(error => {
+                        console.error('[AdManager] AdMob SDK initialization failed:', error);
                     });
                 } catch (error) {
                     console.warn('[AdManager] Ad initialization error:', error);
@@ -7774,12 +7801,35 @@
                         level: data.scanInfo.level || currentLevel
                     };
                     console.log('Scan limit updated from response scanInfo:', userScanInfo);
+                    // For guest users, also update localStorage to keep it in sync
+                    if (!currentUser && userScanInfo.level === 'guest') {
+                        const today = new Date().toISOString().split('T')[0];
+                        const guestScansKey = `guestScans_${today}`;
+                        const scansUsed = userScanInfo.limit - userScanInfo.remaining;
+                        localStorage.setItem(guestScansKey, scansUsed.toString());
+                        console.log('Guest scan count synced with server:', { scansUsed, remaining: userScanInfo.remaining });
+                    }
                     updateScanLimitDisplay();
                 } else {
-                    // If scanInfo not in response, fetch it from server
-                    console.log('No scanInfo in response, fetching from server...');
-                    await updateScanLimit();
-                    updateScanLimitDisplay();
+                    // If scanInfo not in response, fetch it from server (or update localStorage for guests)
+                    if (!currentUser) {
+                        // For guests, update from localStorage
+                        const today = new Date().toISOString().split('T')[0];
+                        const guestScansKey = `guestScans_${today}`;
+                        const guestScans = parseInt(localStorage.getItem(guestScansKey) || '0');
+                        userScanInfo = {
+                            remaining: Math.max(0, 3 - guestScans),
+                            limit: 3,
+                            level: 'guest'
+                        };
+                        console.log('Guest scan limit updated from localStorage:', userScanInfo);
+                        updateScanLimitDisplay();
+                    } else {
+                        // For logged-in users, fetch from server
+                        console.log('No scanInfo in response, fetching from server...');
+                        await updateScanLimit();
+                        updateScanLimitDisplay();
+                    }
                 }
                 
                 let analysis;
@@ -7849,14 +7899,33 @@
                 displayResult(currentDishData);
                 showLoading(false);
                 
-                // Always refresh scan limit from server after successful scan to ensure accuracy
-                updateScanLimit().then(() => {
+                // Update scan limit after successful scan
+                // For guest users, increment localStorage count
+                if (!currentUser) {
+                    const today = new Date().toISOString().split('T')[0];
+                    const guestScansKey = `guestScans_${today}`;
+                    const currentGuestScans = parseInt(localStorage.getItem(guestScansKey) || '0');
+                    const newGuestScans = currentGuestScans + 1; // Increment scan count
+                    localStorage.setItem(guestScansKey, newGuestScans.toString());
+                    
+                    // Update userScanInfo immediately for guests
+                    userScanInfo = {
+                        remaining: Math.max(0, 3 - newGuestScans),
+                        limit: 3,
+                        level: 'guest'
+                    };
+                    console.log('Guest scan count updated:', { scansUsed: newGuestScans, remaining: userScanInfo.remaining });
                     updateScanLimitDisplay();
-                }).catch(error => {
-                    console.warn('Failed to refresh scan limit after scan:', error);
-                    // Still update display with current info if scanInfo was in response
-                    updateScanLimitDisplay();
-                });
+                } else {
+                    // For logged-in users, refresh from server
+                    updateScanLimit().then(() => {
+                        updateScanLimitDisplay();
+                    }).catch(error => {
+                        console.warn('Failed to refresh scan limit after scan:', error);
+                        // Still update display with current info if scanInfo was in response
+                        updateScanLimitDisplay();
+                    });
+                }
                 
                 // Setup recipe links
                 setupRecipeLinks(currentDishData.name);
