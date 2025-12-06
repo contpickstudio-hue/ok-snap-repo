@@ -1,6 +1,6 @@
 {
   "name": "ok-snap",
-  "version": "1.0.13",
+  "version": "1.0.16",
   "description": "A modern web application that uses OpenAI Vision API to identify dishes from photos, providing detailed information including nutrition facts, descriptions, and recipe links.",
   "main": "service-worker.js",
   "scripts": {
@@ -12,7 +12,10 @@
     "cap:copy": "npx cap copy",
     "cap:copy:android": "npx cap copy android",
     "cap:open:android": "npx cap open android",
-    "update-android": "npx cap sync android && npx cap copy android"
+    "update-android": "powershell -ExecutionPolicy Bypass -File ./update-android.ps1",
+    "build-android": "powershell -ExecutionPolicy Bypass -File ./build-android.ps1",
+    "verify-apk": "powershell -ExecutionPolicy Bypass -File ./verify-apk.ps1",
+    "install-android": "powershell -ExecutionPolicy Bypass -File ./install-android.ps1"
   },
   "keywords": [],
   "author": "",

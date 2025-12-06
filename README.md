@@ -48,27 +48,97 @@ The setup guide has step-by-step instructions with no coding knowledge needed!
 
 ## 📱 Updating Android App
 
-After modifying files in the `/public` folder (which gets copied to `/www`), update the Android app:
+After modifying files in the `/public` folder, update the Android app:
 
-1. **Run the update command:**
+### Quick Workflow (Recommended)
+
+```bash
+# 1. Update assets
+npm run update-android
+
+# 2. Build the app
+npm run build-android
+
+# 3. Verify APK contains latest version
+npm run verify-apk
+
+# 4. Install on device (automatically uninstalls old version)
+npm run install-android
+```
+
+### Detailed Steps
+
+1. **Update assets:**
    ```bash
    npm run update-android
    ```
-   This will:
-   - Sync Capacitor configuration
-   - Clean old assets
-   - Copy latest files from `/www` to Android project
+   - Copies files from `/public` to Android project
+   - Updates Capacitor configuration
+   - Verifies files were copied correctly
 
-2. **Delete the existing app from your device** (if testing on a physical device)
-
-3. **Rebuild and reinstall** via Android Studio or:
+2. **Build the app:**
    ```bash
+   npm run build-android
+   ```
+   Or manually:
+   ```powershell
    cd android
-   ./gradlew assembleDebug
+   .\gradlew clean assembleDebug
+   cd ..
+   ```
+   Or in Android Studio:
+   - **Build > Clean Project**
+   - **File > Invalidate Caches / Restart**
+   - **Build > Rebuild Project**
+
+3. **Verify APK (recommended):**
+   ```bash
+   npm run verify-apk
+   ```
+   - Checks APK version metadata
+   - Verifies `index.html` contains latest version
+   - Shows APK file timestamp and size
+
+4. **Install on device:**
+   ```bash
+   npm run install-android
+   ```
+   - Automatically uninstalls old app
+   - Clears app data cache
+   - Installs new APK
+   - Verifies installation success
+
+### Troubleshooting
+
+**If you still see the old version:**
+
+1. **Force clean build:**
+   ```bash
+   Remove-Item android\app\build -Recurse -Force
+   Remove-Item android\.gradle -Recurse -Force -ErrorAction SilentlyContinue
+   cd android
+   ./gradlew clean assembleDebug
    ```
 
-**Important:** Always delete the old app before reinstalling to ensure WebView cache is cleared and new assets are loaded.
+2. **Verify APK contents:**
+   ```bash
+   npm run verify-apk
+   ```
+   This will tell you if the APK actually contains the new version.
+
+3. **Manual uninstall:**
+   ```bash
+   adb uninstall com.oksnap.app
+   adb shell pm clear com.oksnap.app
+   ```
+
+4. **Check device:**
+   - Settings > Apps > OK-Snap > Check version
+   - If still old, uninstall manually from device settings
+   - Restart device if needed
+
+**Why uninstall?** Android WebView caches files aggressively. Even with cache disabled, completely removing the app ensures no stale files remain.
 
 ## Version
 
-Current version: 1.0.14
+Current version: 1.0.16

@@ -2205,12 +2205,15 @@
         .summary-period-toggle {
             display: flex;
             gap: 8px;
+            flex-wrap: wrap;
             background: var(--background);
             padding: 4px;
             border-radius: 8px;
         }
 
         .summary-period-btn {
+            flex: 1;
+            min-width: 0;
             padding: 6px 12px;
             border: none;
             background: transparent;
@@ -2484,16 +2487,20 @@
             align-items: center;
             padding: 1.5rem 0;
             border-bottom: 1px solid var(--border);
+            gap: 1rem;
+            flex-wrap: wrap;
         }
-
+        
         .settings-item:last-child {
             border-bottom: none;
         }
-
+        
         .settings-label {
             display: flex;
             flex-direction: column;
             gap: 0.3rem;
+            flex: 1;
+            min-width: 0;
         }
 
         .settings-label h3 {
@@ -3498,6 +3505,18 @@
 
             .settings-item {
                 padding: 1.25rem 0;
+                flex-wrap: wrap;
+                gap: 0.75rem;
+            }
+            
+            .settings-item .btn-secondary {
+                width: 100%;
+                margin-top: 0.5rem;
+            }
+
+            .settings-label {
+                flex: 1;
+                min-width: 0;
             }
 
             .settings-label h3 {
@@ -3506,6 +3525,18 @@
 
             .settings-label p {
                 font-size: 0.813rem;
+            }
+            
+            .calorie-goal-input-group {
+                flex-wrap: wrap;
+            }
+            
+            .calorie-goal-input-group input {
+                min-width: 120px;
+            }
+            
+            .calorie-goal-input-group button {
+                flex-shrink: 0;
             }
         }
 
@@ -4097,6 +4128,39 @@
                     <button class="btn" onclick="completeOnboarding()" style="width: 100%;">Get Started</button>
                 </div>
             </div>
+            
+            <!-- Screen 4: Privacy & Permissions (was missing, causing navigation bug) -->
+            <div class="onboarding-screen" id="onboardingScreen4">
+                <div class="onboarding-content">
+                    <div class="onboarding-icon">🔒</div>
+                    <h1 class="onboarding-title">Privacy & Permissions</h1>
+                    <div class="onboarding-features">
+                        <div class="onboarding-feature-item">
+                            <span class="onboarding-feature-icon">📷</span>
+                            <span class="onboarding-feature-text">Camera access for food photos</span>
+                        </div>
+                        <div class="onboarding-feature-item">
+                            <span class="onboarding-feature-icon">💾</span>
+                            <span class="onboarding-feature-text">Local storage for your favorites</span>
+                        </div>
+                        <div class="onboarding-feature-item">
+                            <span class="onboarding-feature-icon">🌐</span>
+                            <span class="onboarding-feature-text">No personal data collected</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="onboarding-progress">
+                    <div class="onboarding-progress-dot"></div>
+                    <div class="onboarding-progress-dot"></div>
+                    <div class="onboarding-progress-dot"></div>
+                    <div class="onboarding-progress-dot active"></div>
+                    <div class="onboarding-progress-dot"></div>
+                </div>
+                <div class="onboarding-actions">
+                    <button class="btn" onclick="nextOnboardingScreen()">Next</button>
+                    <button class="onboarding-skip" onclick="skipOnboarding()">Skip</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -4623,10 +4687,10 @@
                     <div class="calorie-goal-header">
                         <div class="calorie-goal-title" style="font-size: 1.125rem; font-weight: 700; color: var(--text-primary); margin-bottom: 16px;">🎯 Daily Calorie Goal</div>
                     </div>
-                    <div class="calorie-goal-input-group" style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
-                        <input type="number" class="calorie-goal-input" id="calorieGoalInput" placeholder="2000" min="0" max="10000" style="flex: 1; padding: 12px 16px; border-radius: 14px; border: 2px solid var(--secondary-dark); background: var(--background-alt); font-size: 1rem; font-weight: 600; color: var(--text-primary);">
-                        <span style="color: var(--text-secondary); font-weight: 500;">calories</span>
-                        <button class="calorie-goal-save-btn" id="saveCalorieGoalBtn" style="padding: 12px 20px; border-radius: 14px; border: none; background: var(--primary); color: white; font-weight: 700; font-size: 0.9375rem; cursor: pointer; transition: all 150ms ease;">Save</button>
+                    <div class="calorie-goal-input-group" style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+                        <input type="number" class="calorie-goal-input" id="calorieGoalInput" placeholder="2000" min="0" max="10000" style="flex: 1; min-width: 120px; padding: 12px 16px; border-radius: 14px; border: 2px solid var(--secondary-dark); background: var(--background-alt); font-size: 1rem; font-weight: 600; color: var(--text-primary);">
+                        <span style="color: var(--text-secondary); font-weight: 500; white-space: nowrap;">calories</span>
+                        <button class="calorie-goal-save-btn" id="saveCalorieGoalBtn" style="padding: 12px 20px; border-radius: 14px; border: none; background: var(--primary); color: white; font-weight: 700; font-size: 0.9375rem; cursor: pointer; transition: all 150ms ease; white-space: nowrap; flex-shrink: 0;">Save</button>
                     </div>
                     <div class="calorie-progress-section" id="calorieProgressSection" style="display: none;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
@@ -4815,12 +4879,12 @@
                         <h3 id="appVersionLabel">App Version</h3>
                         <p id="appVersionDesc">Current version of BiteSight</p>
                     </div>
-                    <div class="version-info" id="appVersion">1.0.14</div>
+                    <div class="version-info" id="appVersion">1.0.16</div>
                 </div>
 
                 <!-- Feedback Button -->
-                <div class="settings-item">
-                    <button class="btn-secondary" id="feedbackBtn" style="width: 100%; margin-top: 16px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <div class="settings-item" style="flex-direction: column; align-items: stretch; padding-top: 1rem;">
+                    <button class="btn-secondary" id="feedbackBtn" style="width: 100%; margin-top: 0; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 16px;">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                         </svg>
@@ -5025,6 +5089,13 @@
                     // Check if running in Capacitor (mobile app)
                     if (typeof Capacitor !== 'undefined' && Capacitor.Plugins && Capacitor.Plugins.AdMob) {
                         const { AdMob } = Capacitor.Plugins;
+                        // Remove existing banner if any
+                        try {
+                            await AdMob.removeBanner();
+                        } catch (e) {
+                            // Ignore if no banner exists
+                        }
+                        // Show new banner
                         await AdMob.showBanner({
                             adId: adId,
                             adSize: 'BANNER',
@@ -5036,7 +5107,7 @@
                     }
                 } catch (error) {
                     console.error('[AdManager] Error showing banner ad:', error);
-                    throw error;
+                    // Don't throw - allow app to continue even if ad fails
                 }
             },
             
@@ -5049,7 +5120,9 @@
                     // Check if running in Capacitor (mobile app)
                     if (typeof Capacitor !== 'undefined' && Capacitor.Plugins && Capacitor.Plugins.AdMob) {
                         const { AdMob } = Capacitor.Plugins;
+                        // Prepare interstitial ad
                         await AdMob.prepareInterstitial({ adId: adId });
+                        // Show interstitial ad
                         await AdMob.showInterstitial();
                         console.log('[AdManager] Interstitial ad shown successfully');
                     } else {
@@ -5057,7 +5130,7 @@
                     }
                 } catch (error) {
                     console.error('[AdManager] Error showing interstitial ad:', error);
-                    throw error;
+                    // Don't throw - allow app to continue even if ad fails
                 }
             },
             
@@ -5193,12 +5266,13 @@
                 
                 if (response.ok) {
                     const data = await response.json();
+                    // Handle different response formats
                     userScanInfo = {
-                        remaining: data.remaining || 0,
-                        limit: data.limit || 3,
-                        level: data.level || 'guest'
+                        remaining: data.remaining !== undefined ? data.remaining : (data.remaining_scans !== undefined ? data.remaining_scans : (userScanInfo?.remaining !== undefined ? userScanInfo.remaining : 0)),
+                        limit: data.limit !== undefined ? data.limit : (userScanInfo?.limit !== undefined ? userScanInfo.limit : 3),
+                        level: data.level || userScanInfo?.level || 'guest'
                     };
-                    console.log('Scan limit updated:', userScanInfo);
+                    console.log('Scan limit updated from API:', userScanInfo);
                 } else {
                     console.warn('Failed to fetch scan limit:', response.status, response.statusText);
                     // Keep current userScanInfo or use defaults
@@ -5629,9 +5703,16 @@
             const scanCounterHeader = document.getElementById('scanCounterHeader');
             const scanCounterText = document.getElementById('scanCounterText');
             
+            // Ensure userScanInfo is properly initialized
+            if (!userScanInfo || typeof userScanInfo !== 'object') {
+                userScanInfo = { remaining: 3, limit: 3, level: 'guest' };
+            }
+            
             const level = userScanInfo.level || 'guest';
-            const remaining = userScanInfo.remaining || 0;
-            const limit = userScanInfo.limit || 3;
+            const remaining = userScanInfo.remaining !== undefined ? userScanInfo.remaining : 0;
+            const limit = userScanInfo.limit !== undefined ? userScanInfo.limit : 3;
+            
+            console.log('[updateScanLimitDisplay] Updating display:', { remaining, limit, level });
             
             // Update main scan limit display (below upload area)
             if (scanLimitDisplay) {
@@ -5644,6 +5725,9 @@
                 
                 scanLimitDisplay.textContent = `${remaining}/${limit} scans (${levelText})`;
                 scanLimitDisplay.className = `scan-limit ${level}`;
+                
+                // Remove old classes first
+                scanLimitDisplay.classList.remove('limit-exceeded', 'limit-low');
                 
                 // Show warning if low on scans
                 if (remaining === 0) {
@@ -6457,7 +6541,7 @@
             // Set app version
             const appVersionEl = document.getElementById('appVersion');
             if (appVersionEl) {
-                appVersionEl.textContent = '1.0.14';
+                appVersionEl.textContent = '1.0.16';
             }
 
             // Initialize feedback button
@@ -6789,6 +6873,28 @@
         // ============================================
         // HEADER INITIALIZATION
         // ============================================
+        // Initialize AdMob ads
+        function initializeAds() {
+            // Only initialize ads in Capacitor (mobile app), not in web browser
+            if (typeof Capacitor !== 'undefined' && Capacitor.Plugins && Capacitor.Plugins.AdMob) {
+                try {
+                    // Show banner ad at bottom of screen
+                    AdManager.showBannerAd().catch(error => {
+                        console.warn('[AdManager] Banner ad initialization failed:', error);
+                    });
+                    
+                    // Prepare interstitial ad for later use
+                    AdManager.showInterstitialAd().catch(error => {
+                        console.warn('[AdManager] Interstitial ad preparation failed:', error);
+                    });
+                } catch (error) {
+                    console.warn('[AdManager] Ad initialization error:', error);
+                }
+            } else {
+                console.log('[AdManager] Running in web browser - ads disabled');
+            }
+        }
+        
         function initializeHeader() {
             // Logo click handler - navigate to home
             const appLogo = document.getElementById('appLogo');
@@ -6812,7 +6918,7 @@
         // ONBOARDING FUNCTIONS
         // ============================================
         let currentOnboardingScreen = 1;
-        const totalOnboardingScreens = 5;
+        const totalOnboardingScreens = 5; // Fixed: Now includes screen 4
 
         function checkOnboardingStatus() {
             const hasSeenOnboarding = localStorage.getItem('okSnap_hasSeenOnboarding');
@@ -6891,6 +6997,11 @@
         function completeOnboarding() {
             localStorage.setItem('okSnap_hasSeenOnboarding', 'true');
             hideOnboarding();
+            // Ensure main app content is visible after onboarding
+            const container = document.querySelector('.container');
+            const header = document.querySelector('header');
+            if (container) container.style.display = 'block';
+            if (header) header.style.display = 'flex';
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -6939,6 +7050,9 @@
                     console.error('Failed to refresh scan limit:', error);
                 });
             }, 30000);
+            
+            // Initialize AdMob ads
+            initializeAds();
             
             // Initialize widgets and banners
             setTimeout(() => {
@@ -7647,9 +7761,24 @@
 
                 const data = await response.json();
                 
-                // Update scan info from response
+                // Update scan info from response - handle multiple possible formats
                 if (data.scanInfo) {
-                    userScanInfo = data.scanInfo;
+                    // Ensure scanInfo has the correct structure
+                    const currentRemaining = userScanInfo?.remaining !== undefined ? userScanInfo.remaining : 0;
+                    const currentLimit = userScanInfo?.limit !== undefined ? userScanInfo.limit : 3;
+                    const currentLevel = userScanInfo?.level || 'guest';
+                    
+                    userScanInfo = {
+                        remaining: data.scanInfo.remaining !== undefined ? data.scanInfo.remaining : (data.scanInfo.remaining_scans !== undefined ? data.scanInfo.remaining_scans : currentRemaining),
+                        limit: data.scanInfo.limit !== undefined ? data.scanInfo.limit : currentLimit,
+                        level: data.scanInfo.level || currentLevel
+                    };
+                    console.log('Scan limit updated from response scanInfo:', userScanInfo);
+                    updateScanLimitDisplay();
+                } else {
+                    // If scanInfo not in response, fetch it from server
+                    console.log('No scanInfo in response, fetching from server...');
+                    await updateScanLimit();
                     updateScanLimitDisplay();
                 }
                 
@@ -7720,9 +7849,14 @@
                 displayResult(currentDishData);
                 showLoading(false);
                 
-                // Scan limits are already updated from scanInfo in the response above
-                // No need to call updateScanLimit() again as it uses a separate store
-                updateScanLimitDisplay();
+                // Always refresh scan limit from server after successful scan to ensure accuracy
+                updateScanLimit().then(() => {
+                    updateScanLimitDisplay();
+                }).catch(error => {
+                    console.warn('Failed to refresh scan limit after scan:', error);
+                    // Still update display with current info if scanInfo was in response
+                    updateScanLimitDisplay();
+                });
                 
                 // Setup recipe links
                 setupRecipeLinks(currentDishData.name);
@@ -8019,6 +8153,9 @@
 
             // Display nutrition info
             displayNutritionInfo(dishData);
+            
+            // Display ingredients from API response
+            displayIngredients(dishData);
 
             // Show "Add to Today's Log" button
             const addToLogBtn = document.getElementById('addToLogBtn');
@@ -8047,6 +8184,50 @@
                 nutritionSection.style.display = 'block';
             } else if (nutritionSection) {
                 nutritionSection.style.display = 'none';
+            }
+        }
+        
+        function displayIngredients(dishData) {
+            const ingredientsSection = document.getElementById('ingredientsSection');
+            const ingredientsList = document.getElementById('ingredientsList');
+            
+            if (!ingredientsSection || !ingredientsList) return;
+            
+            // Get ingredients from API response - check multiple possible field names
+            let ingredients = [];
+            if (dishData.ingredients && Array.isArray(dishData.ingredients)) {
+                ingredients = dishData.ingredients;
+            } else if (dishData.ingredients && typeof dishData.ingredients === 'string') {
+                // If ingredients is a string, try to parse it
+                try {
+                    ingredients = JSON.parse(dishData.ingredients);
+                    if (!Array.isArray(ingredients)) {
+                        ingredients = dishData.ingredients.split(',').map(i => i.trim());
+                    }
+                } catch (e) {
+                    ingredients = dishData.ingredients.split(',').map(i => i.trim());
+                }
+            } else if (dishData.ingredientList && Array.isArray(dishData.ingredientList)) {
+                ingredients = dishData.ingredientList;
+            }
+            
+            // Clear existing ingredients
+            ingredientsList.innerHTML = '';
+            
+            // Display ingredients if available
+            if (ingredients && ingredients.length > 0) {
+                ingredients.forEach(ingredient => {
+                    if (ingredient && ingredient.trim()) {
+                        const tag = document.createElement('span');
+                        tag.className = 'ingredient-tag';
+                        tag.textContent = ingredient.trim();
+                        ingredientsList.appendChild(tag);
+                    }
+                });
+                ingredientsSection.style.display = 'block';
+            } else {
+                // Hide ingredients section if no ingredients available
+                ingredientsSection.style.display = 'none';
             }
         }
 

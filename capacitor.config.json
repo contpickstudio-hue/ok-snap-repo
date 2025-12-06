@@ -1,7 +1,7 @@
 {
   "appId": "com.oksnap.app",
   "appName": "ok-snap",
-  "webDir": "www",
+  "webDir": "public",
   "server": {
     "androidScheme": "https"
   },
