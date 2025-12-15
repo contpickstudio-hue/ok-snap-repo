@@ -1495,6 +1495,101 @@
             z-index: 1;
         }
 
+        /* Blog Generation Styles */
+        .blog-generation-section {
+            margin-top: 24px;
+            padding: 20px;
+            background: var(--background-alt);
+            border-radius: 18px;
+            border: 2px dashed var(--primary-light);
+        }
+
+        .blog-progress-container {
+            margin-top: 16px;
+        }
+
+        .blog-progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--secondary);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .blog-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.3s ease;
+            animation: progressPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes progressPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .blog-progress-text {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            text-align: center;
+            margin: 0;
+        }
+
+        .blog-display-section {
+            margin-top: 24px;
+            padding: 20px;
+            background: var(--background-alt);
+            border-radius: 18px;
+            border: 1px solid var(--border);
+        }
+
+        .blog-viewer {
+            max-height: 600px;
+            overflow-y: auto;
+            padding: 16px;
+            background: var(--background);
+            border-radius: 12px;
+            margin-top: 16px;
+        }
+
+        .blog-viewer h2 {
+            font-size: 1.5rem;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        .blog-viewer h2:first-child {
+            margin-top: 0;
+        }
+
+        .blog-viewer h3 {
+            font-size: 1.25rem;
+            margin-top: 1.25rem;
+            margin-bottom: 0.75rem;
+            color: var(--primary-dark);
+        }
+
+        .blog-viewer p {
+            margin-bottom: 1rem;
+            line-height: 1.7;
+            color: var(--text-primary);
+        }
+
+        .blog-viewer ul,
+        .blog-viewer ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .blog-viewer li {
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
         .recipe-cards {
             display: grid;
             grid-template-columns: 1fr;
@@ -4502,6 +4597,47 @@
                             <span class="allergen-tag">Gluten</span>
                         </div>
                     </div>
+                </div>
+
+                <!-- Section Divider -->
+                <div class="result-section-divider"></div>
+
+                <!-- Blog Generation Progress Section -->
+                <div class="blog-generation-section" id="blogGenerationSection" style="display: none;">
+                    <div class="result-section-header">
+                        <svg class="result-section-icon" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        <h3 class="result-section-title">Creating Recipe Blog</h3>
+                    </div>
+                    <div class="blog-progress-container">
+                        <div class="blog-progress-bar">
+                            <div class="blog-progress-fill" id="blogProgressFill"></div>
+                        </div>
+                        <p class="blog-progress-text" id="blogProgressText">Generating your personalized recipe blog...</p>
+                    </div>
+                </div>
+
+                <!-- Blog Display Section -->
+                <div class="blog-display-section" id="blogDisplaySection" style="display: none;">
+                    <div class="result-section-header">
+                        <svg class="result-section-icon" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        <h3 class="result-section-title">Full Recipe Blog</h3>
+                    </div>
+                    <div class="blog-viewer" id="blogViewer">
+                        <!-- Blog content will be loaded here -->
+                    </div>
+                    <a href="#" id="blogExternalLink" target="_blank" class="btn btn-primary" style="margin-top: 1rem; display: inline-block;">View Full Blog Post</a>
                 </div>
 
                 <!-- Section Divider -->
@@ -7888,6 +8024,9 @@
                 displayResult(currentDishData);
                 showLoading(false);
                 
+                // Trigger blog generation after showing results
+                generateBlogPost(currentDishData);
+                
                 // Update scan limit after successful scan
                 // Note: If scanInfo was in API response, it was already processed above
                 // Only update if scanInfo was NOT in response (to avoid double-counting)
@@ -8299,6 +8438,133 @@
             document.getElementById('resultSection').style.display = 'none';
             // Reset favorite button when hiding results
             updateFavoriteButtonState();
+            // Hide blog sections
+            const blogGenSection = document.getElementById('blogGenerationSection');
+            const blogDisplaySection = document.getElementById('blogDisplaySection');
+            if (blogGenSection) blogGenSection.style.display = 'none';
+            if (blogDisplaySection) blogDisplaySection.style.display = 'none';
+        }
+
+        // Generate blog post for the dish
+        async function generateBlogPost(dishData) {
+            const blogGenSection = document.getElementById('blogGenerationSection');
+            const blogDisplaySection = document.getElementById('blogDisplaySection');
+            const blogProgressFill = document.getElementById('blogProgressFill');
+            const blogProgressText = document.getElementById('blogProgressText');
+            const blogViewer = document.getElementById('blogViewer');
+            const blogExternalLink = document.getElementById('blogExternalLink');
+
+            if (!blogGenSection || !blogDisplaySection) {
+                console.warn('Blog generation UI elements not found');
+                return;
+            }
+
+            // Show blog generation section
+            blogGenSection.style.display = 'block';
+            blogDisplaySection.style.display = 'none';
+
+            // Simulate progress (will be faster for cached content)
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 90) progress = 90; // Don't complete until API responds
+                if (blogProgressFill) {
+                    blogProgressFill.style.width = `${progress}%`;
+                }
+            }, 300);
+
+            try {
+                const apiBase = CONFIG.API_BASE || 'http://localhost:3000';
+                const response = await fetch(`${apiBase}/api/generate-blog`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        dishData: dishData
+                    })
+                });
+
+                clearInterval(progressInterval);
+                if (blogProgressFill) blogProgressFill.style.width = '100%';
+
+                if (!response.ok) {
+                    throw new Error('Failed to generate blog post');
+                }
+
+                const result = await response.json();
+                
+                // Update progress text based on whether it was cached
+                if (blogProgressText) {
+                    if (result.cached) {
+                        blogProgressText.textContent = 'Loading existing blog post...';
+                    } else {
+                        blogProgressText.textContent = 'Blog generated successfully!';
+                    }
+                }
+
+                // Wait a moment then show the blog
+                setTimeout(() => {
+                    blogGenSection.style.display = 'none';
+                    blogDisplaySection.style.display = 'block';
+
+                    // Load blog content via iframe or fetch
+                    if (result.blogUrl) {
+                        // Use iframe to display the blog
+                        const blogUrl = `${apiBase}${result.blogUrl}`;
+                        if (blogViewer) {
+                            // Fetch and display blog content
+                            fetch(blogUrl)
+                                .then(res => res.text())
+                                .then(html => {
+                                    // Extract content from the HTML
+                                    const parser = new DOMParser();
+                                    const doc = parser.parseFromString(html, 'text/html');
+                                    
+                                    // Get featured image if available
+                                    const featuredImage = doc.querySelector('.blog-featured-image');
+                                    const blogContent = doc.querySelector('.blog-post-content');
+                                    
+                                    let viewerContent = '';
+                                    if (featuredImage) {
+                                        viewerContent += featuredImage.outerHTML;
+                                    }
+                                    if (blogContent) {
+                                        viewerContent += blogContent.innerHTML;
+                                    } else {
+                                        viewerContent = '<p>Blog content loaded successfully!</p>';
+                                    }
+                                    
+                                    blogViewer.innerHTML = viewerContent;
+                                })
+                                .catch(err => {
+                                    console.error('Error loading blog content:', err);
+                                    blogViewer.innerHTML = '<p>Blog generated! Click the link below to view it.</p>';
+                                });
+                        }
+
+                        // Set external link - use full URL from API response if available
+                        if (blogExternalLink) {
+                            // Use the full domain URL from API response, or fallback to constructed URL
+                            blogExternalLink.href = result.url || blogUrl;
+                            blogExternalLink.textContent = 'View Full Blog Post';
+                        }
+                    }
+                }, result.cached ? 200 : 500); // Faster for cached content
+
+            } catch (error) {
+                clearInterval(progressInterval);
+                console.error('Error generating blog:', error);
+                
+                // Hide progress section on error
+                blogGenSection.style.display = 'none';
+                
+                // Show error message (non-blocking)
+                if (blogProgressText) {
+                    blogProgressText.textContent = 'Blog generation failed. You can still view the recipe information above.';
+                    blogProgressText.style.color = 'var(--status-error)';
+                }
+            }
         }
 
         // Korean food fun facts

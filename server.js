@@ -306,6 +306,12 @@ setInterval(() => {
 // Serve static files from www directory
 app.use(express.static(path.join(__dirname, 'www')));
 
+// Serve public-site static files
+app.use('/public-site', express.static(path.join(__dirname, 'public-site')));
+
+// Serve blog images
+app.use('/public-site/images', express.static(path.join(__dirname, 'public-site', 'images')));
+
 // Health check endpoint
 app.get('/health', (req, res) => {
     res.json({ status: 'ok' });
@@ -372,8 +378,8 @@ function validateLanguage(language) {
 // API ENDPOINTS
 // ============================================
 
-// OpenAI API proxy endpoint with rate limiting and daily scan limits
-app.post('/api/analyze-image', rateLimit, async (req, res) => {
+// Extract the analyze-image handler logic into a reusable function
+async function handleImageAnalysis(req, res) {
     try {
         const { imageData, targetLanguage, userId } = req.body;
         
@@ -399,7 +405,7 @@ app.post('/api/analyze-image', rateLimit, async (req, res) => {
             
             return res.status(429).json({ 
                 error: message,
-                message: message, // Also include as 'message' for frontend display
+                message: message,
                 limitExceeded: true,
                 limit: limitCheck.limit,
                 remaining: 0,
@@ -451,16 +457,16 @@ Respond in valid JSON format only. Structure:
     "dish_detected": true/false,
     "is_korean": true/false,
     "dish_name": "Dish name in ${targetLanguage || 'English'}",
-    "dish_name_korean": "한글 name" or "",  // Always include if is_korean is true, otherwise empty string
+    "dish_name_korean": "한글 name" or "",
     "cuisine": "Cuisine name in ${targetLanguage || 'English'}",
     "confidence": 0.0-1.0,
     "description": "Beautiful, warm description in ${targetLanguage || 'English'} with colors, textures, plating, cultural context. For Korean dishes, include cultural significance. Write like a friendly food guide, not robotic.",
-    "alternatives": ["alt1 in ${targetLanguage || 'English'}", "alt2 in ${targetLanguage || 'English'}", "alt3 in ${targetLanguage || 'English'}"], // only if confidence < 0.8
+    "alternatives": ["alt1 in ${targetLanguage || 'English'}", "alt2 in ${targetLanguage || 'English'}", "alt3 in ${targetLanguage || 'English'}"],
     "nutrition": {
-        "calories": 250,  // Estimated calories per serving (number)
-        "protein": 15,    // Grams of protein (number)
-        "carbs": 30,     // Grams of carbohydrates (number)
-        "fat": 8         // Grams of fat (number)
+        "calories": 250,
+        "protein": 15,
+        "carbs": 30,
+        "fat": 8
     }
 }
 
@@ -511,14 +517,17 @@ All responses must be in ${targetLanguage || 'English'}.`
     } catch (error) {
         console.error('Error calling OpenAI API:', error);
         
-        // Don't expose internal error details in production
         const errorMessage = NODE_ENV === 'production' 
             ? 'An error occurred while processing your request. Please try again.'
             : error.message;
             
         res.status(500).json({ error: errorMessage });
     }
-});
+};
+
+// OpenAI API proxy endpoint with rate limiting and daily scan limits
+app.post('/api/analyze-image', rateLimit, handleImageAnalysis);
+app.post('/api/identify', rateLimit, handleImageAnalysis); // Alias for compatibility
 
 // ============================================
 // ERROR HANDLING MIDDLEWARE
@@ -530,6 +539,78 @@ app.use((err, req, res, next) => {
             ? 'An unexpected error occurred'
             : err.message 
     });
+});
+
+// Blog generation endpoint
+const blogGenerator = require('./api/generate-blog');
+
+app.post('/api/generate-blog', rateLimit, async (req, res) => {
+    try {
+        const { dishData } = req.body;
+
+        if (!dishData || !dishData.name) {
+            return res.status(400).json({ error: 'Dish data is required' });
+        }
+
+        // Check if blog post already exists (caching)
+        const existingBlog = blogGenerator.checkBlogExists(dishData.name);
+        
+        if (existingBlog) {
+            console.log(`Blog post already exists for ${dishData.name}, reusing existing post`);
+            
+            // Update recipes.json metadata (in case it's missing)
+            const recipeEntry = blogGenerator.updateRecipesJson(dishData, existingBlog.slug);
+            
+            return res.json({
+                success: true,
+                slug: existingBlog.slug,
+                url: recipeEntry.url,
+                blogUrl: existingBlog.blogUrl,
+                imageUrl: existingBlog.imagePath,
+                cached: true // Indicate this is a cached result
+            });
+        }
+
+        // Generate new blog post and image
+        console.log(`Generating new blog post for ${dishData.name}`);
+        
+        // Generate image first (in parallel with blog content for efficiency)
+        const [blogContent, imagePath] = await Promise.all([
+            blogGenerator.generateBlogPost(dishData),
+            blogGenerator.generateBlogImage(dishData).catch(err => {
+                console.warn('Image generation failed, continuing without image:', err);
+                return null;
+            })
+        ]);
+        
+        // Save blog post to file with image
+        const slug = blogGenerator.saveBlogPost(dishData, blogContent, imagePath);
+        
+        // Update recipes.json
+        const recipeEntry = blogGenerator.updateRecipesJson(dishData, slug);
+        
+        res.json({
+            success: true,
+            slug: slug,
+            url: recipeEntry.url,
+            blogUrl: `/public-site/blogs/${slug}.html`,
+            imageUrl: imagePath,
+            cached: false
+        });
+    } catch (error) {
+        console.error('Error generating blog:', error);
+        res.status(500).json({ 
+            error: NODE_ENV === 'production' 
+                ? 'Failed to generate blog post'
+                : error.message 
+        });
+    }
+});
+
+// Serve recipes.json
+app.get('/public-site/recipes.json', (req, res) => {
+    const recipesPath = path.join(__dirname, 'public-site', 'recipes.json');
+    res.sendFile(recipesPath);
 });
 
 // 404 handler
