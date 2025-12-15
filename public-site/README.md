@@ -59,13 +59,13 @@ The `recipes.json` file is automatically updated when new blog posts are generat
   {
     "name": "Dish Name",
     "slug": "dish-name",
-    "url": "https://yourdomain.com/blogs/dish-name.html",
+    "url": "https://ok-snap-repo-git-site-alexs-projects-0fd7f102.vercel.app/blogs/dish-name.html",
     "createdAt": "2025-01-01T00:00:00.000Z"
   }
 ]
 ```
 
-## Customization
+## Domain Configuration
 
-To customize the domain URL in recipes.json, update the `updateRecipesJson` function in `api/generate-blog.js`.
+The domain URL is configured in `api/generate-blog.js`. Current domain: `ok-snap-repo-git-site-alexs-projects-0fd7f102.vercel.app`
 
