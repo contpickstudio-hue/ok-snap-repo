@@ -274,7 +274,7 @@ function updateRecipesJson(dishData, slug) {
     const recipeEntry = {
         name: dishData.name,
         slug: slug,
-        url: `https://ok-snap-repo-git-site-alexs-projects-0fd7f102.vercel.app/blogs/${slug}.html`,
+        url: `https://ok-snap-identifier.vercel.app/public-site/blogs/${slug}.html`,
         createdAt: new Date().toISOString()
     };
 

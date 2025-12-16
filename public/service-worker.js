@@ -1,5 +1,5 @@
 // Service Worker for Ok Snap PWA
-const CACHE_NAME = 'ok-snap-v1';
+const CACHE_NAME = 'ok-snap-v1.0.19';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -58,12 +58,16 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
+          // Delete all old caches (including v1, v1.0.17, etc.)
           if (cacheName !== CACHE_NAME) {
             console.log('Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
+    }).then(() => {
+      // Force clients to reload to get new version
+      return self.clients.claim();
     })
   );
 });

@@ -561,11 +561,12 @@ app.post('/api/generate-blog', rateLimit, async (req, res) => {
             // Update recipes.json metadata (in case it's missing)
             const recipeEntry = blogGenerator.updateRecipesJson(dishData, existingBlog.slug);
             
+            const blogUrl = `https://ok-snap-identifier.vercel.app/public-site/blogs/${existingBlog.slug}.html`;
             return res.json({
                 success: true,
                 slug: existingBlog.slug,
                 url: recipeEntry.url,
-                blogUrl: existingBlog.blogUrl,
+                blogUrl: blogUrl,
                 imageUrl: existingBlog.imagePath,
                 cached: true // Indicate this is a cached result
             });
@@ -589,11 +590,12 @@ app.post('/api/generate-blog', rateLimit, async (req, res) => {
         // Update recipes.json
         const recipeEntry = blogGenerator.updateRecipesJson(dishData, slug);
         
+        const blogUrl = `https://ok-snap-identifier.vercel.app/public-site/blogs/${slug}.html`;
         res.json({
             success: true,
             slug: slug,
             url: recipeEntry.url,
-            blogUrl: `/public-site/blogs/${slug}.html`,
+            blogUrl: blogUrl,
             imageUrl: imagePath,
             cached: false
         });
@@ -603,6 +605,28 @@ app.post('/api/generate-blog', rateLimit, async (req, res) => {
             error: NODE_ENV === 'production' 
                 ? 'Failed to generate blog post'
                 : error.message 
+        });
+    }
+});
+
+// Check if blog post exists
+app.get('/api/blog-exists/:slug', (req, res) => {
+    try {
+        const { slug } = req.params;
+        const blogPath = path.join(__dirname, 'public-site', 'blogs', `${slug}.html`);
+        const exists = fs.existsSync(blogPath);
+        const blogUrl = `https://ok-snap-identifier.vercel.app/public-site/blogs/${slug}.html`;
+        
+        res.json({
+            exists: exists,
+            url: blogUrl,
+            slug: slug
+        });
+    } catch (error) {
+        console.error('Error checking blog existence:', error);
+        res.status(500).json({ 
+            error: 'Failed to check blog existence',
+            exists: false
         });
     }
 });

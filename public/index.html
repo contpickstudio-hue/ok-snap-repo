@@ -710,6 +710,15 @@
             font-family: 'Poppins', 'Inter', sans-serif;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
+        
+        /* Camera button icon alignment */
+        .camera-btn svg {
+            width: 22px;
+            height: 22px;
+            display: block;
+            flex-shrink: 0;
+            margin: 0;
+        }
 
         .camera-btn:hover {
             background: var(--primary-light);
@@ -1495,6 +1504,70 @@
             z-index: 1;
         }
 
+        /* Browse Blog Cards Styles */
+        .blog-card {
+            background: var(--background-alt);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        
+        .blog-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+            border-color: var(--primary-light);
+        }
+        
+        .blog-card:active {
+            transform: translateY(0);
+        }
+        
+        .blog-card-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: var(--secondary);
+        }
+        
+        .blog-card-content {
+            padding: 16px;
+        }
+        
+        .blog-card-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+        
+        .blog-card-title-native {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        
+        .blog-card-excerpt {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 8px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .blog-card-date {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            margin-top: 8px;
+        }
+
         /* Blog Generation Styles */
         .blog-generation-section {
             margin-top: 24px;
@@ -1835,7 +1908,7 @@
         /* Bottom Navigation */
         .bottom-navigation {
             position: fixed;
-            bottom: 0;
+            bottom: 50px; /* Position above banner ad (banner is ~50px tall) */
             left: 50%;
             transform: translateX(-50%);
             width: 100%;
@@ -1848,7 +1921,7 @@
             align-items: center;
             padding: 10px 0;
             padding-bottom: max(10px, env(safe-area-inset-bottom));
-            z-index: 2000;
+            z-index: 3000; /* Higher than banner ads to ensure footer is always visible */
             box-sizing: border-box;
         }
         
@@ -1857,6 +1930,7 @@
                 max-width: 420px;
                 padding: 12px 0;
                 padding-bottom: max(12px, env(safe-area-inset-bottom));
+                bottom: 50px; /* Keep above banner ad on larger screens too */
             }
         }
 
@@ -1908,6 +1982,9 @@
             stroke-width: 2;
             fill: none; /* Line icons by default */
             stroke: currentColor;
+            display: block;
+            margin: 0 auto;
+            flex-shrink: 0;
         }
         
         /* Special handling for Favorites, Discover, and Settings icons - keep filled style */
@@ -1942,11 +2019,18 @@
 
         .tab-content {
             display: none;
-            padding-bottom: calc(80px + env(safe-area-inset-bottom)); /* Space for bottom navigation + safe area */
+            /* Space for bottom navigation (60px) + banner ad (50px) + safe area */
+            padding-bottom: calc(110px + env(safe-area-inset-bottom));
         }
 
         .tab-content.active {
             display: block;
+        }
+        
+        /* Discover tab uses flex layout to position feature-row at bottom */
+        #discoverTab.active {
+            display: flex;
+            flex-direction: column;
         }
 
         /* Feature Row */
@@ -1958,6 +2042,8 @@
             padding: 16px;
             font-size: 0.875rem;
             color: var(--text-secondary);
+            margin-top: 24px; /* Add spacing from content above */
+            order: 999; /* Ensure it appears at the bottom of flex container */
         }
 
         .feature-item {
@@ -1972,7 +2058,7 @@
             color: var(--primary);
         }
 
-        .history-section, .favorites-section, .settings-section, .calorie-log-section {
+        .history-section, .favorites-section, .settings-section, .browse-section {
             background: var(--background-alt);
             border-radius: 18px; /* Modern rounded corners */
             padding: 20px;
@@ -1981,7 +2067,7 @@
         }
         
         @media (min-width: 420px) {
-            .history-section, .favorites-section, .settings-section, .calorie-log-section {
+            .history-section, .favorites-section, .settings-section, .browse-section {
                 padding: 24px;
                 border-radius: 20px;
                 margin-bottom: 28px;
@@ -2562,6 +2648,8 @@
         .profile-picture-placeholder svg {
             width: 60px;
             height: 60px;
+            display: block;
+            margin: 0 auto;
         }
         
         .profile-form-section {
@@ -2602,11 +2690,15 @@
             font-size: 1.1rem;
             color: var(--text);
             font-weight: 600;
+            margin: 0;
+            line-height: 1.3;
         }
 
         .settings-label p {
             font-size: 0.85rem;
             color: var(--text-light);
+            margin: 4px 0 0 0;
+            line-height: 1.4;
         }
 
         .toggle-switch {
@@ -2617,6 +2709,8 @@
             flex-shrink: 0;
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
+            display: inline-flex;
+            align-items: center;
         }
 
         .toggle-switch input {
@@ -2644,7 +2738,8 @@
             height: 24px;
             width: 24px;
             left: 2px;
-            bottom: 2px;
+            top: 50%;
+            transform: translateY(-50%);
             background-color: white;
             transition: 0.3s;
             border-radius: 50%;
@@ -2657,7 +2752,7 @@
         }
 
         .toggle-switch input:checked + .toggle-slider:before {
-            transform: translateX(22px);
+            transform: translate(22px, -50%);
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
         }
         
@@ -2896,6 +2991,21 @@
         header, .bottom-navigation {
             pointer-events: auto !important;
             transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        
+        /* Prevent banner ads from overlapping footer navigation */
+        /* AdMob banner is positioned at bottom (0px), footer is positioned above it (50px) */
+        /* Banner ad height is ~50px, footer navigation height is ~60px */
+        /* Total space needed: 50px (banner) + 60px (footer) = 110px */
+        
+        /* Ensure content has enough space for banner + footer */
+        main, .main-content, .tab-content {
+            padding-bottom: calc(110px + env(safe-area-inset-bottom)) !important;
+        }
+        
+        /* Result section needs extra space when showing */
+        .result-section {
+            margin-bottom: calc(110px + env(safe-area-inset-bottom));
         }
         
         /* Hide header and footer when any modal is active */
@@ -4394,7 +4504,7 @@
     <div class="container">
 
         <!-- Discover Tab -->
-        <div class="tab-content active" id="discoverTab">
+        <div class="tab-content active" id="discoverTab" style="display: flex; flex-direction: column;">
             <!-- Hero Card -->
             <div class="hero-card">
                 <div class="upload-section">
@@ -4431,7 +4541,7 @@
                 </div>
                 <div class="upload-options">
                     <!-- Calorie Log Summary Widget -->
-                    <div id="calorieLogWidget" style="display: none; background: linear-gradient(135deg, var(--secondary) 0%, rgba(122, 145, 99, 0.1) 100%); padding: 12px 16px; border-radius: 12px; margin-bottom: 12px; cursor: pointer; border: none; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);" onclick="switchTab('calorieLog')">
+                    <!-- Calorie Log Widget REMOVED - replaced with Browse tab -->
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <span style="font-size: 1.25rem;">📊</span>
@@ -4518,6 +4628,18 @@
                             <line x1="12" y1="2" x2="12" y2="15" stroke="white" stroke-width="2"></line>
                         </svg>
                         Share
+                    </button>
+                </div>
+                <!-- View Blog Button -->
+                <div style="margin: 1rem 0; text-align: center;">
+                    <button class="btn" id="viewBlogBtn" style="background: var(--accent); color: white; padding: 0.75rem 1.5rem;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px; vertical-align: middle;">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                        </svg>
+                        View Full Blog
                     </button>
                 </div>
 
@@ -4634,6 +4756,11 @@
                         </svg>
                         <h3 class="result-section-title">Full Recipe Blog</h3>
                     </div>
+                    <div style="margin-bottom: 1rem; text-align: center;">
+                        <button class="btn btn-secondary" id="backToResultsBtn" style="padding: 0.5rem 1rem;">
+                            ← Back to Results
+                        </button>
+                    </div>
                     <div class="blog-viewer" id="blogViewer">
                         <!-- Blog content will be loaded here -->
                     </div>
@@ -4743,8 +4870,8 @@
                 <p id="warmMessageText"></p>
             </div>
             
-            <!-- Feature Row -->
-            <div class="feature-row">
+            <!-- Feature Row - Positioned at bottom of discover tab using flex -->
+            <div class="feature-row" style="margin-top: auto; padding: 24px 16px;">
                 <div class="feature-item">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
@@ -4811,104 +4938,40 @@
             </div>
         </div>
 
-        <!-- Calorie Log Tab -->
-        <div class="tab-content" id="calorieLogTab">
-            <div class="calorie-log-section">
-                <h2 class="section-title" id="calorieLogTitle" style="margin-bottom: 8px;">📊 Calorie Log</h2>
-                <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 20px;">Track your Korean meals & daily progress</p>
+        <!-- Browse Tab -->
+        <div class="tab-content" id="browseTab">
+            <div class="browse-section">
+                <h2 class="section-title" id="browseTitle" style="margin-bottom: 8px;">🍽️ Browse Recipes</h2>
+                <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 20px;">Discover delicious recipes from our blog</p>
                 
-                
-                <!-- Daily Calorie Goal Section -->
-                <div class="calorie-goal-section" style="background: linear-gradient(135deg, var(--secondary) 0%, rgba(122, 145, 99, 0.1) 100%); padding: 20px; border-radius: 18px; margin-bottom: 24px; border: none; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);">
-                    <div class="calorie-goal-header">
-                        <div class="calorie-goal-title" style="font-size: 1.125rem; font-weight: 700; color: var(--text-primary); margin-bottom: 16px;">🎯 Daily Calorie Goal</div>
-                    </div>
-                    <div class="calorie-goal-input-group" style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
-                        <input type="number" class="calorie-goal-input" id="calorieGoalInput" placeholder="2000" min="0" max="10000" style="flex: 1; min-width: 120px; padding: 12px 16px; border-radius: 14px; border: 2px solid var(--secondary-dark); background: var(--background-alt); font-size: 1rem; font-weight: 600; color: var(--text-primary);">
-                        <span style="color: var(--text-secondary); font-weight: 500; white-space: nowrap;">calories</span>
-                        <button class="calorie-goal-save-btn" id="saveCalorieGoalBtn" style="padding: 12px 20px; border-radius: 14px; border: none; background: var(--primary); color: white; font-weight: 700; font-size: 0.9375rem; cursor: pointer; transition: all 150ms ease; white-space: nowrap; flex-shrink: 0;">Save</button>
-                    </div>
-                    <div class="calorie-progress-section" id="calorieProgressSection" style="display: none;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                            <span style="font-weight: 700; color: var(--text-primary); font-size: 0.9375rem;">Progress</span>
-                            <span id="progressText" style="font-size: 0.9375rem; color: var(--text-secondary); font-weight: 600;">0 / 0 cal</span>
-                        </div>
-                        <div class="progress-bar-container" style="width: 100%; height: 12px; background: var(--secondary-dark); border-radius: 6px; overflow: hidden; margin-bottom: 12px;">
-                            <div class="progress-bar-fill" id="progressBarFill" style="height: 100%; background: linear-gradient(90deg, var(--primary) 0%, var(--primary-dark) 100%); border-radius: 6px; transition: width 0.3s ease; width: 0%; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.75rem; font-weight: 700;"></div>
-                        </div>
-                        <div class="progress-info" style="display: flex; justify-content: space-between; align-items: center;">
-                            <span id="progressRemaining" style="font-size: 0.875rem; color: var(--text-secondary);">0 calories remaining</span>
-                            <span id="progressStatus" style="color: var(--primary); font-weight: 700; font-size: 0.875rem;">On track</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Summary Section -->
-                <div class="summary-section">
-                    <div class="summary-header">
-                        <div class="summary-title">
-                            <span>📈 Summary</span>
-                        </div>
-                        <div class="summary-period-toggle">
-                            <button class="summary-period-btn active" data-period="daily" id="summaryDailyBtn">Daily</button>
-                            <button class="summary-period-btn" data-period="weekly" id="summaryWeeklyBtn">Weekly</button>
-                            <button class="summary-period-btn" data-period="monthly" id="summaryMonthlyBtn">Monthly</button>
-                        </div>
-                    </div>
-                    <div class="summary-stats" id="summaryStats">
-                        <div class="summary-stat">
-                            <div class="summary-stat-value" id="summaryCalories">0</div>
-                            <div class="summary-stat-label">Calories</div>
-                        </div>
-                        <div class="summary-stat">
-                            <div class="summary-stat-value" id="summaryProtein">0g</div>
-                            <div class="summary-stat-label">Protein</div>
-                        </div>
-                        <div class="summary-stat">
-                            <div class="summary-stat-value" id="summaryCarbs">0g</div>
-                            <div class="summary-stat-label">Carbs</div>
-                        </div>
-                        <div class="summary-stat">
-                            <div class="summary-stat-value" id="summaryFat">0g</div>
-                            <div class="summary-stat-label">Fat</div>
-                        </div>
-                    </div>
+                <!-- Loading State -->
+                <div id="browseLoading" style="display: none; text-align: center; padding: 40px 20px;">
+                    <div style="font-size: 1.5rem; margin-bottom: 12px;">⏳</div>
+                    <p style="color: var(--text-secondary);">Loading recipes...</p>
                 </div>
                 
-                <!-- Daily Totals -->
-                <div class="daily-totals" id="dailyTotals">
-                    <div class="total-item">
-                        <div class="total-value" id="totalCalories">0</div>
-                        <div class="total-label">Total Calories</div>
-                    </div>
-                    <div class="nutrition-breakdown">
-                        <div class="breakdown-item">
-                            <span class="breakdown-label">Protein:</span>
-                            <span class="breakdown-value" id="totalProtein">0g</span>
-                        </div>
-                        <div class="breakdown-item">
-                            <span class="breakdown-label">Carbs:</span>
-                            <span class="breakdown-value" id="totalCarbs">0g</span>
-                        </div>
-                        <div class="breakdown-item">
-                            <span class="breakdown-label">Fat:</span>
-                            <span class="breakdown-value" id="totalFat">0g</span>
-                        </div>
-                    </div>
+                <!-- Error State -->
+                <div id="browseError" style="display: none; text-align: center; padding: 40px 20px;">
+                    <div style="font-size: 1.5rem; margin-bottom: 12px;">⚠️</div>
+                    <p style="color: var(--text-secondary); margin-bottom: 16px;" id="browseErrorText">Failed to load recipes</p>
+                    <button class="btn" onclick="loadBrowseRecipes()" style="padding: 0.75rem 1.5rem;">Try Again</button>
                 </div>
-
-                <!-- Log Items List -->
-                <div class="log-items" id="logItems">
-                    <div class="empty-state" id="logEmpty">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M9 11l3 3L22 4"></path>
-                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-                        </svg>
-                        <p id="logEmptyText">No items logged today. Add dishes from the Discover page!</p>
-                    </div>
+                
+                <!-- Blog Cards Container -->
+                <div id="browseRecipesContainer" style="display: grid; gap: 16px; padding-bottom: 20px;">
+                    <!-- Blog cards will be inserted here -->
+                </div>
+                
+                <!-- Empty State -->
+                <div id="browseEmpty" style="display: none; text-align: center; padding: 40px 20px;">
+                    <div style="font-size: 1.5rem; margin-bottom: 12px;">📚</div>
+                    <p style="color: var(--text-secondary);">No recipes available yet. Check back soon!</p>
                 </div>
             </div>
         </div>
+        
+        <!-- OLD CALORIE LOG TAB - REMOVED -->
+        <!-- Calorie Log functionality has been replaced with Browse tab -->
 
         <!-- Edit Entry Modal -->
         <div class="edit-entry-modal" id="editEntryModal">
@@ -5015,7 +5078,7 @@
                         <h3 id="appVersionLabel">App Version</h3>
                         <p id="appVersionDesc">Current version of BiteSight</p>
                     </div>
-                    <div class="version-info" id="appVersion">1.0.17</div>
+                    <div class="version-info" id="appVersion">1.0.19</div>
                 </div>
 
                 <!-- Feedback Button -->
@@ -5087,11 +5150,9 @@
     <!-- Bottom Navigation -->
     <nav class="bottom-navigation">
         <button class="nav-item active" data-tab="discover" id="navDiscover">
-            <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5">
-                <rect x="2" y="6" width="20" height="14" rx="2" fill="currentColor"></rect>
-                <rect x="6" y="3" width="12" height="3" rx="1" fill="currentColor"></rect>
-                <circle cx="12" cy="13" r="4" fill="white"></circle>
-                <circle cx="12" cy="13" r="2" fill="currentColor"></circle>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
             </svg>
             <span id="navDiscoverText">Discover</span>
         </button>
@@ -5108,20 +5169,19 @@
             </svg>
             <span id="navFavoritesText">Favorites</span>
         </button>
-        <button class="nav-item" data-tab="calorieLog" id="navCalorieLog">
+        <button class="nav-item" data-tab="browse" id="navBrowse">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-                <line x1="16" y1="13" x2="8" y2="13"></line>
-                <line x1="16" y1="17" x2="8" y2="17"></line>
-                <polyline points="10 9 9 9 8 9"></polyline>
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
             </svg>
-            <span id="navCalorieLogText">Log</span>
+            <span id="navBrowseText">Browse</span>
         </button>
         <button class="nav-item" data-tab="settings" id="navSettings">
-            <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5">
-                <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" fill="currentColor"></path>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" fill="currentColor"></path>
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 15.5C10.07 15.5 8.5 13.93 8.5 12C8.5 10.07 10.07 8.5 12 8.5C13.93 8.5 15.5 10.07 15.5 12C15.5 13.93 13.93 15.5 12 15.5ZM12 10C10.9 10 10 10.9 10 12C10 13.1 10.9 14 12 14C13.1 14 14 13.1 14 12C14 10.9 13.1 10 12 10Z" fill="currentColor"></path>
+                <path d="M19.43 12.97C19.47 12.65 19.5 12.33 19.5 12C19.5 11.67 19.47 11.35 19.43 11.03L21.54 9.37C21.73 9.22 21.78 8.95 21.66 8.73L19.66 5.27C19.54 5.05 19.27 4.96 19.05 5.05L16.56 6.05C16.04 5.65 15.5 5.32 14.87 5.07L14.5 2.42C14.46 2.18 14.25 2 14 2H10C9.75 2 9.54 2.18 9.5 2.42L9.13 5.07C8.5 5.32 7.96 5.66 7.44 6.05L4.95 5.05C4.73 4.96 4.46 5.05 4.34 5.27L2.34 8.73C2.21 8.95 2.27 9.22 2.46 9.37L4.57 11.03C4.53 11.35 4.5 11.67 4.5 12C4.5 12.33 4.53 12.65 4.57 12.97L2.46 14.63C2.27 14.78 2.21 15.05 2.34 15.27L4.34 18.73C4.46 18.95 4.73 19.03 4.95 18.95L7.44 17.95C7.96 18.34 8.5 18.68 9.13 18.93L9.5 21.58C9.54 21.82 9.75 22 10 22H14C14.25 22 14.46 21.82 14.5 21.58L14.87 18.93C15.5 18.68 16.04 18.34 16.56 17.95L19.05 18.95C19.27 19.04 19.54 18.95 19.66 18.73L21.66 15.27C21.79 15.05 21.73 14.78 21.54 14.63L19.43 12.97Z" fill="currentColor"></path>
             </svg>
             <span id="navSettingsText">Settings</span>
         </button>
@@ -5152,10 +5212,10 @@
             // For native apps, use Vercel URL (localhost not accessible from phone)
             // For web, use current origin or Vercel URL
             API_BASE: (typeof window !== 'undefined' && window.Capacitor) 
-                ? 'https://ok-snap-repo.vercel.app'
+                ? 'https://ok-snap-identifier.vercel.app'
                 : (typeof window !== 'undefined' && window.location.origin.includes('localhost'))
                     ? window.location.origin
-                    : 'https://ok-snap-repo.vercel.app',
+                    : 'https://ok-snap-identifier.vercel.app',
             
             // Recipe links now point directly to recipe websites
             // No API keys needed - using direct website search URLs
@@ -5240,13 +5300,15 @@
                         } catch (e) {
                             // Ignore if no banner exists
                         }
-                        // Show new banner
+                        // Show new banner at bottom
+                        // Footer navigation has z-index 3000 to ensure it stays above banner
+                        // Content padding accounts for banner height (~50px) + footer height (~60px)
                         await AdMob.showBanner({
                             adId: adId,
                             adSize: 'BANNER',
-                            position: 'BOTTOM_CENTER',
+                            position: 'BOTTOM_CENTER', // Banner appears at bottom, footer overlays it with higher z-index
                         });
-                        console.log('[AdManager] Banner ad shown successfully');
+                        console.log('[AdManager] Banner ad shown successfully (footer navigation remains visible above)');
                     } else {
                         console.warn('[AdManager] AdMob plugin not available (running in web browser)');
                     }
@@ -5414,7 +5476,11 @@
         // Get remaining scans from server
         async function updateScanLimit() {
             try {
-                const apiBase = CONFIG.API_BASE || 'http://localhost:3000';
+                const apiBase = (typeof window !== 'undefined' && window.Capacitor) 
+                    ? 'https://ok-snap-identifier.vercel.app'
+                    : (CONFIG && CONFIG.API_BASE) 
+                        ? CONFIG.API_BASE 
+                        : 'https://ok-snap-identifier.vercel.app';
                 const userId = currentUser?.id || null;
                 
                 const response = await fetch(`${apiBase}/api/scan-limit?userId=${userId || ''}`, {
@@ -6701,7 +6767,7 @@
             // Set app version
             const appVersionEl = document.getElementById('appVersion');
             if (appVersionEl) {
-                appVersionEl.textContent = '1.0.17';
+                appVersionEl.textContent = '1.0.19';
             }
 
             // Initialize feedback button
@@ -7041,12 +7107,12 @@
                     const { AdMob } = Capacitor.Plugins;
                     
                     // Initialize AdMob SDK first (required before showing ads)
+                    // Note: Test ads are controlled by using test ad unit IDs, not initialization parameter
                     AdMob.initialize({
-                        appId: ADMOB_CONFIG.APP_ID,
-                        initializeForTesting: ADMOB_CONFIG.USE_TEST_ADS
+                        appId: ADMOB_CONFIG.APP_ID
                     }).then(() => {
                         console.log('[AdManager] AdMob SDK initialized successfully');
-                        console.log('[AdManager] Test mode:', ADMOB_CONFIG.USE_TEST_ADS ? 'ENABLED' : 'DISABLED');
+                        console.log('[AdManager] Test mode:', ADMOB_CONFIG.USE_TEST_ADS ? 'ENABLED (using test ad unit IDs)' : 'DISABLED');
                         
                         // Show banner ad at bottom of screen
                         AdManager.showBannerAd().catch(error => {
@@ -7186,10 +7252,31 @@
                 navigator.serviceWorker.register('/service-worker.js')
                     .then((registration) => {
                         console.log('Service Worker registered:', registration);
+                        
+                        // Check for updates every time the page loads
+                        registration.update();
+                        
+                        // Listen for updates
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // New service worker available, reload page
+                                    console.log('New service worker available, reloading...');
+                                    window.location.reload();
+                                }
+                            });
+                        });
                     })
                     .catch((error) => {
                         console.log('Service Worker registration failed:', error);
                     });
+                
+                // Listen for controller change (service worker updated)
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    console.log('Service worker controller changed, reloading...');
+                    window.location.reload();
+                });
             }
             
             // Initialize app (always initialize, but may be hidden by onboarding)
@@ -7277,6 +7364,30 @@
             
             // Initialize modal visibility handler
             initializeModalVisibility();
+            
+            // Setup "View Full Blog" button event listener
+            const viewBlogBtn = document.getElementById('viewBlogBtn');
+            if (viewBlogBtn) {
+                viewBlogBtn.addEventListener('click', () => {
+                    if (currentDishData) {
+                        generateBlogPost(currentDishData);
+                    }
+                });
+            }
+            
+            // Setup "Back to Results" button event listener
+            const backToResultsBtn = document.getElementById('backToResultsBtn');
+            if (backToResultsBtn) {
+                backToResultsBtn.addEventListener('click', () => {
+                    const blogDisplaySection = document.getElementById('blogDisplaySection');
+                    const blogGenSection = document.getElementById('blogGenerationSection');
+                    const resultSection = document.getElementById('resultSection');
+                    
+                    if (blogDisplaySection) blogDisplaySection.style.display = 'none';
+                    if (blogGenSection) blogGenSection.style.display = 'none';
+                    if (resultSection) resultSection.style.display = 'block';
+                });
+            }
         });
         
         // ============================================
@@ -7799,6 +7910,12 @@
 
             showLoading(true);
             hideResult();
+            
+            // Disable analyze button during analysis to prevent multiple requests
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            if (analyzeBtn) {
+                analyzeBtn.disabled = true;
+            }
 
             try {
                 // Get current language
@@ -7834,7 +7951,14 @@
                 let response;
                 try {
                     console.log('Sending fetch request to backend...');
-                    const apiBase = CONFIG.API_BASE || 'http://localhost:3000';
+                    // Ensure we use the correct API base - never use localhost for native apps
+                    const apiBase = (typeof window !== 'undefined' && window.Capacitor) 
+                        ? 'https://ok-snap-identifier.vercel.app'
+                        : (CONFIG && CONFIG.API_BASE) 
+                            ? CONFIG.API_BASE 
+                            : 'https://ok-snap-identifier.vercel.app';
+                    console.log('API Base URL:', apiBase);
+                    console.log('Is Capacitor:', typeof window !== 'undefined' && !!window.Capacitor);
                     response = await fetch(`${apiBase}/api/identify`, {
                         method: 'POST',
                         headers: {
@@ -7850,9 +7974,15 @@
                 } catch (fetchError) {
                     clearTimeout(timeoutId);
                     currentAbortController = null; // Clear controller
-                    console.warn('Fetch error caught (non-blocking):', {
+                    
+                    // Log full error details for debugging
+                    console.error('Fetch Error Details:', {
                         name: fetchError.name,
-                        message: fetchError.message
+                        message: fetchError.message,
+                        stack: fetchError.stack,
+                        apiBase: apiBase,
+                        endpoint: `${apiBase}/api/identify`,
+                        online: navigator.onLine
                     });
                     
                     if (fetchError.name === 'AbortError') {
@@ -7861,15 +7991,19 @@
                         return;
                     }
                     
-                    // Check if it's a network error
+                    // Check if it's a network error or 404
                     if (fetchError.message && (
                         fetchError.message.includes('Failed to fetch') ||
                         fetchError.message.includes('NetworkError') ||
                         fetchError.message.includes('Network request failed') ||
-                        fetchError.message.includes('Load failed')
+                        fetchError.message.includes('Load failed') ||
+                        fetchError.message.includes('404')
                     )) {
-                        console.warn('Network error detected (non-blocking) - this might be a CORS or connectivity issue');
-                        throw new Error('Network request failed - check internet connection');
+                        const friendlyMessage = 'Unable to connect to the server. Please check your internet connection and try again.';
+                        console.error('Network/404 error detected:', fetchError.message);
+                        showError(friendlyMessage);
+                        showLoading(false);
+                        return;
                     }
                     
                     throw fetchError;
@@ -7889,17 +8023,31 @@
                     let errorDetails = null;
                     try {
                         errorText = await response.text();
-                        errorDetails = JSON.parse(errorText);
+                        if (errorText) {
+                            errorDetails = JSON.parse(errorText);
+                        }
                     } catch (e) {
                         // If parsing fails, use raw text
                         errorText = errorText || 'Unknown error';
                     }
                     
-                    console.warn('Backend API response error (non-blocking):', {
+                    // Log full error details for debugging
+                    console.error('API Error Details:', {
                         status: response.status,
                         statusText: response.statusText,
-                        errorText: errorText.substring(0, 500)
+                        url: `${apiBase}/api/identify`,
+                        errorText: errorText.substring(0, 500),
+                        errorDetails: errorDetails
                     });
+                    
+                    // Handle 404 specifically
+                    if (response.status === 404) {
+                        const friendlyMessage = 'Unable to connect to the server. Please check your internet connection and try again.';
+                        console.error('404 Error - Endpoint not found. Check API_BASE:', apiBase);
+                        showError(friendlyMessage);
+                        showLoading(false);
+                        return;
+                    }
                     
                     // Handle scan limit exceeded (429 status)
                     if (response.status === 429 && errorDetails?.limitExceeded) {
@@ -7919,7 +8067,7 @@
                     }
                     
                     // Handle backend errors
-                    const errorMessage = errorDetails?.error || errorText || `Server error: ${response.status} ${response.statusText}`;
+                    const errorMessage = errorDetails?.error || errorDetails?.message || errorText || `Server error: ${response.status} ${response.statusText}`;
                     
                     if (response.status === 500 && errorMessage.includes('Server configuration error')) {
                         throw new Error('Backend server configuration error. Please contact the administrator.');
@@ -8070,6 +8218,12 @@
                 
                 // Save to history (await to ensure it completes)
                 await addToHistory(currentDishData);
+                
+                // Re-enable analyze button after successful analysis
+                const analyzeBtnSuccess = document.getElementById('analyzeBtn');
+                if (analyzeBtnSuccess && currentImage) {
+                    analyzeBtnSuccess.disabled = false;
+                }
 
             } catch (error) {
                 console.error('Analysis error:', error);
@@ -8112,14 +8266,38 @@
                     errorMessage = t.apiError || 'Request timed out. Please check your internet connection and try again.';
                 }
                 
+                // Get apiBase for logging (recalculate since it was in try block scope)
+                const apiBaseForLogging = (typeof window !== 'undefined' && window.Capacitor) 
+                    ? 'https://ok-snap-identifier.vercel.app'
+                    : (CONFIG && CONFIG.API_BASE) 
+                        ? CONFIG.API_BASE 
+                        : 'https://ok-snap-identifier.vercel.app';
+                
                 // Log additional debugging info
+                console.error('Full error object:', error);
+                console.error('Error message:', error.message);
+                console.error('Error name:', error.name);
+                console.error('API Base used:', apiBaseForLogging);
+                console.error('Full URL attempted:', `${apiBaseForLogging}/api/identify`);
+                console.error('Is Capacitor:', typeof window !== 'undefined' && !!window.Capacitor);
+                console.error('Network status:', navigator.onLine ? 'Online' : 'Offline');
+                
                 if (!navigator.onLine) {
                     console.error('Device appears to be offline');
                     errorMessage = t.networkError || 'You appear to be offline. Please check your internet connection.';
                 }
                 
+                // Show error with more context in console
+                console.error('Final error message shown to user:', errorMessage);
+                
                 showError(errorMessage);
                 showLoading(false);
+                
+                // Re-enable the analyze button after error so user can try again
+                const analyzeBtn = document.getElementById('analyzeBtn');
+                if (analyzeBtn && currentImage) {
+                    analyzeBtn.disabled = false;
+                }
             }
         }
 
@@ -8449,6 +8627,14 @@
             if (blogDisplaySection) blogDisplaySection.style.display = 'none';
         }
 
+        // Helper function to create slug from dish name
+        function createSlug(name) {
+            return name
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/(^-|-$)/g, '');
+        }
+
         // Generate blog post for the dish
         async function generateBlogPost(dishData) {
             const blogGenSection = document.getElementById('blogGenerationSection');
@@ -8457,117 +8643,141 @@
             const blogProgressText = document.getElementById('blogProgressText');
             const blogViewer = document.getElementById('blogViewer');
             const blogExternalLink = document.getElementById('blogExternalLink');
+            const resultSection = document.getElementById('resultSection');
 
             if (!blogGenSection || !blogDisplaySection) {
                 console.warn('Blog generation UI elements not found');
                 return;
             }
 
-            // Show blog generation section
+            // Hide result section and show blog generation section
+            if (resultSection) resultSection.style.display = 'none';
             blogGenSection.style.display = 'block';
             blogDisplaySection.style.display = 'none';
 
-            // Simulate progress (will be faster for cached content)
+            // Simulate progress
             let progress = 0;
             const progressInterval = setInterval(() => {
                 progress += Math.random() * 15;
-                if (progress > 90) progress = 90; // Don't complete until API responds
+                if (progress > 90) progress = 90;
                 if (blogProgressFill) {
                     blogProgressFill.style.width = `${progress}%`;
                 }
             }, 300);
 
             try {
-                const apiBase = CONFIG.API_BASE || 'http://localhost:3000';
-                const response = await fetch(`${apiBase}/api/generate-blog`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        dishData: dishData
-                    })
-                });
+                const apiBase = (typeof window !== 'undefined' && window.Capacitor) 
+                    ? 'https://ok-snap-identifier.vercel.app'
+                    : (CONFIG && CONFIG.API_BASE) 
+                        ? CONFIG.API_BASE 
+                        : 'https://ok-snap-identifier.vercel.app';
+                const slug = createSlug(dishData.name);
+                const publicWebsiteUrl = 'https://ok-snap-identifier.vercel.app';
+                const blogUrl = `${publicWebsiteUrl}/public-site/blogs/${slug}.html`;
+
+                // Step 1: Check if blog exists
+                const checkResponse = await fetch(`${apiBase}/api/blog-exists/${slug}`);
+                const checkResult = await checkResponse.json();
+
+                let finalBlogUrl = blogUrl;
+                let needsGeneration = !checkResult.exists;
+
+                if (needsGeneration) {
+                    // Step 2: Generate blog if it doesn't exist
+                    if (blogProgressText) {
+                        blogProgressText.textContent = 'Generating blog post...';
+                    }
+
+                    const generateResponse = await fetch(`${apiBase}/api/generate-blog`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            dishData: dishData
+                        })
+                    });
+
+                    if (!generateResponse.ok) {
+                        throw new Error('Failed to generate blog post');
+                    }
+
+                    const generateResult = await generateResponse.json();
+                    finalBlogUrl = generateResult.blogUrl || blogUrl;
+                } else {
+                    if (blogProgressText) {
+                        blogProgressText.textContent = 'Loading existing blog post...';
+                    }
+                }
 
                 clearInterval(progressInterval);
                 if (blogProgressFill) blogProgressFill.style.width = '100%';
 
-                if (!response.ok) {
-                    throw new Error('Failed to generate blog post');
-                }
-
-                const result = await response.json();
-                
-                // Update progress text based on whether it was cached
+                // Step 3: Fetch blog content from public website
                 if (blogProgressText) {
-                    if (result.cached) {
-                        blogProgressText.textContent = 'Loading existing blog post...';
-                    } else {
-                        blogProgressText.textContent = 'Blog generated successfully!';
-                    }
+                    blogProgressText.textContent = 'Loading blog content...';
                 }
 
                 // Wait a moment then show the blog
-                setTimeout(() => {
+                setTimeout(async () => {
                     blogGenSection.style.display = 'none';
                     blogDisplaySection.style.display = 'block';
 
-                    // Load blog content via iframe or fetch
-                    if (result.blogUrl) {
-                        // Use iframe to display the blog
-                        const blogUrl = `${apiBase}${result.blogUrl}`;
-                        if (blogViewer) {
-                            // Fetch and display blog content
-                            fetch(blogUrl)
-                                .then(res => res.text())
-                                .then(html => {
-                                    // Extract content from the HTML
-                                    const parser = new DOMParser();
-                                    const doc = parser.parseFromString(html, 'text/html');
-                                    
-                                    // Get featured image if available
-                                    const featuredImage = doc.querySelector('.blog-featured-image');
-                                    const blogContent = doc.querySelector('.blog-post-content');
-                                    
-                                    let viewerContent = '';
-                                    if (featuredImage) {
-                                        viewerContent += featuredImage.outerHTML;
-                                    }
-                                    if (blogContent) {
-                                        viewerContent += blogContent.innerHTML;
-                                    } else {
-                                        viewerContent = '<p>Blog content loaded successfully!</p>';
-                                    }
-                                    
-                                    blogViewer.innerHTML = viewerContent;
-                                })
-                                .catch(err => {
-                                    console.error('Error loading blog content:', err);
-                                    blogViewer.innerHTML = '<p>Blog generated! Click the link below to view it.</p>';
-                                });
+                    // Fetch blog HTML from public website
+                    try {
+                        const blogResponse = await fetch(finalBlogUrl);
+                        if (!blogResponse.ok) {
+                            throw new Error('Failed to fetch blog content');
                         }
 
-                        // Set external link - use full URL from API response if available
+                        const html = await blogResponse.text();
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        
+                        // Extract blog content
+                        const featuredImage = doc.querySelector('.blog-featured-image');
+                        const blogContent = doc.querySelector('.blog-post-content');
+                        
+                        let viewerContent = '';
+                        if (featuredImage) {
+                            viewerContent += featuredImage.outerHTML;
+                        }
+                        if (blogContent) {
+                            viewerContent += blogContent.innerHTML;
+                        } else {
+                            viewerContent = '<p>Blog content loaded successfully!</p>';
+                        }
+                        
+                        if (blogViewer) {
+                            blogViewer.innerHTML = viewerContent;
+                        }
+
+                        // Set external link
                         if (blogExternalLink) {
-                            // Use the full domain URL from API response, or fallback to constructed URL
-                            blogExternalLink.href = result.url || blogUrl;
+                            blogExternalLink.href = finalBlogUrl;
                             blogExternalLink.textContent = 'View Full Blog Post';
                         }
+                    } catch (fetchError) {
+                        console.error('Error loading blog content:', fetchError);
+                        if (blogViewer) {
+                            blogViewer.innerHTML = '<p>Error loading blog content. Please try again or click the link below.</p>';
+                        }
                     }
-                }, result.cached ? 200 : 500); // Faster for cached content
+                }, needsGeneration ? 500 : 200);
 
             } catch (error) {
                 clearInterval(progressInterval);
                 console.error('Error generating blog:', error);
                 
-                // Hide progress section on error
                 blogGenSection.style.display = 'none';
                 
-                // Show error message (non-blocking)
                 if (blogProgressText) {
                     blogProgressText.textContent = 'Blog generation failed. You can still view the recipe information above.';
                     blogProgressText.style.color = 'var(--status-error)';
                 }
+
+                // Show result section again on error
+                if (resultSection) resultSection.style.display = 'block';
             }
         }
 
@@ -10379,6 +10589,102 @@
             
             // Switch to discover tab to show the result
             switchTab('discover');
+        }
+        
+        // ============================================
+        // BROWSE RECIPES FUNCTIONS
+        // ============================================
+        async function loadBrowseRecipes() {
+            const container = document.getElementById('browseRecipesContainer');
+            const loading = document.getElementById('browseLoading');
+            const error = document.getElementById('browseError');
+            const empty = document.getElementById('browseEmpty');
+            
+            // Show loading state
+            if (loading) loading.style.display = 'block';
+            if (error) error.style.display = 'none';
+            if (empty) empty.style.display = 'none';
+            if (container) container.innerHTML = '';
+            
+            try {
+                // Fetch recipes.json from public website
+                const publicWebsiteUrl = 'https://ok-snap-identifier.vercel.app';
+                const recipesUrl = `${publicWebsiteUrl}/public-site/recipes.json`;
+                
+                const response = await fetch(recipesUrl, {
+                    cache: 'no-store' // Always fetch fresh data
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch recipes: ${response.status}`);
+                }
+                
+                const recipes = await response.json();
+                
+                // Hide loading
+                if (loading) loading.style.display = 'none';
+                
+                if (!recipes || recipes.length === 0) {
+                    // Show empty state
+                    if (empty) empty.style.display = 'block';
+                    return;
+                }
+                
+                // Render blog cards
+                renderBlogCards(recipes, container);
+                
+            } catch (err) {
+                console.error('Error loading browse recipes:', err);
+                if (loading) loading.style.display = 'none';
+                if (error) {
+                    error.style.display = 'block';
+                    const errorText = document.getElementById('browseErrorText');
+                    if (errorText) {
+                        errorText.textContent = 'Failed to load recipes. Please check your internet connection.';
+                    }
+                }
+            }
+        }
+        
+        function renderBlogCards(recipes, container) {
+            if (!container) return;
+            
+            const publicWebsiteUrl = 'https://ok-snap-identifier.vercel.app';
+            
+            recipes.forEach((recipe) => {
+                const card = document.createElement('div');
+                card.className = 'blog-card';
+                card.onclick = () => openBlogPost(recipe.url || `${publicWebsiteUrl}/public-site/blogs/${recipe.slug || createSlug(recipe.name)}.html`);
+                
+                const imageUrl = recipe.imageUrl || recipe.image || `${publicWebsiteUrl}/public-site/images/${recipe.slug || createSlug(recipe.name)}.jpg`;
+                const excerpt = recipe.excerpt || recipe.description || 'Discover this delicious recipe and learn how to make it at home.';
+                const date = recipe.date || recipe.publishedDate || '';
+                
+                card.innerHTML = `
+                    <img src="${imageUrl}" alt="${recipe.name}" class="blog-card-image" onerror="this.style.display='none';">
+                    <div class="blog-card-content">
+                        <div class="blog-card-title">${recipe.name || 'Untitled Recipe'}</div>
+                        ${recipe.nameNative ? `<div class="blog-card-title-native">${recipe.nameNative}</div>` : ''}
+                        <div class="blog-card-excerpt">${excerpt}</div>
+                        ${date ? `<div class="blog-card-date">${new Date(date).toLocaleDateString()}</div>` : ''}
+                    </div>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+        
+        function openBlogPost(url) {
+            // Try to open in Capacitor Browser plugin (WebView) if available
+            if (typeof window !== 'undefined' && window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Browser) {
+                window.Capacitor.Plugins.Browser.open({ url: url }).catch(() => {
+                    // Fallback to window.open if Browser plugin fails
+                    window.open(url, '_blank');
+                });
+            } else {
+                // Fallback to external browser
+                window.open(url, '_blank');
+            }
         }
     </script>
 </body>
