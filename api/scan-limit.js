@@ -1,42 +1,14 @@
 // Vercel serverless function for scan limit checking
-module.exports = async (req, res) => {
-    // CORS headers - must be set before any response
-    const origin = req.headers.origin;
-    const allowedOrigins = [
-        'https://ok-snap-identifier.vercel.app',
-        'https://ok-snap-repo.vercel.app',
-        'http://localhost:3000',
-        'http://localhost:5173',
-        'http://localhost:8080'
-    ];
-    
-    // Native apps (Capacitor) don't send origin header - allow them
-    const isNativeApp = !origin;
-    
-    // Allow Vercel preview deployments (pattern: *.vercel.app)
-    const isVercelPreview = origin && origin.endsWith('.vercel.app');
-    const isAllowedOrigin = isNativeApp || allowedOrigins.includes(origin) || isVercelPreview;
-    
-    if (isNativeApp) {
-        // Native app - allow all origins (no origin header means it's a native app)
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        // Cannot use credentials with wildcard origin
-    } else if (isAllowedOrigin) {
-        res.setHeader('Access-Control-Allow-Origin', origin);
-        res.setHeader('Access-Control-Allow-Credentials', 'true');
-    } else {
-        // Default to production URL
-        res.setHeader('Access-Control-Allow-Origin', 'https://ok-snap-repo.vercel.app');
-        res.setHeader('Access-Control-Allow-Credentials', 'true');
-    }
-    
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-    res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
+// Uses shared CORS utility for consistent CORS handling across all API routes
+const { setCorsHeaders, handlePreflight } = require('./_cors');
 
-    // Handle preflight - MUST return CORS headers before ending
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
+module.exports = async (req, res) => {
+    // Set CORS headers on every response - MUST be first
+    setCorsHeaders(req, res);
+    
+    // Handle OPTIONS preflight requests - return immediately, do NOT run business logic
+    if (handlePreflight(req, res)) {
+        return; // Preflight handled, exit early
     }
 
     if (req.method !== 'GET') {
@@ -44,7 +16,12 @@ module.exports = async (req, res) => {
     }
 
     try {
-        const userId = req.query.userId || null;
+        // Handle userId - if empty string, treat as null to avoid unnecessary processing
+        let userId = req.query.userId;
+        if (userId === '' || userId === 'null' || userId === 'undefined') {
+            userId = null;
+        }
+        
         const userIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 
                        req.headers['x-real-ip'] || 
                        '127.0.0.1';

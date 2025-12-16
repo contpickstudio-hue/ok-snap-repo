@@ -5505,12 +5505,35 @@
                 const apiBase = getApiBase();
                 const userId = currentUser?.id || null;
                 
-                const response = await fetch(`${apiBase}/api/scan-limit?userId=${userId || ''}`, {
+                // Don't call API with empty userId - skip request if no user
+                // This prevents unnecessary preflight requests and reduces server load
+                if (!userId) {
+                    // For guests, use default values without API call
+                    userScanInfo = {
+                        remaining: userScanInfo?.remaining !== undefined ? userScanInfo.remaining : 3,
+                        limit: userScanInfo?.limit !== undefined ? userScanInfo.limit : 3,
+                        level: 'guest'
+                    };
+                    console.log('Skipping scan-limit API call for guest user, using defaults:', userScanInfo);
+                    return;
+                }
+                
+                const url = `${apiBase}/api/scan-limit?userId=${userId}`;
+                console.log('Fetching scan limit from:', url);
+                
+                const response = await fetch(url, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     cache: 'no-cache'
+                });
+                
+                console.log('Scan limit response:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    ok: response.ok,
+                    url: url
                 });
                 
                 if (response.ok) {
@@ -5523,11 +5546,19 @@
                     };
                     console.log('Scan limit updated from API:', userScanInfo);
                 } else {
-                    console.warn('Failed to fetch scan limit:', response.status, response.statusText);
+                    console.warn('Failed to fetch scan limit:', {
+                        status: response.status,
+                        statusText: response.statusText,
+                        url: url
+                    });
                     // Keep current userScanInfo or use defaults
                 }
             } catch (error) {
-                console.warn('Failed to fetch scan limit (non-blocking):', error.message || error);
+                console.warn('Failed to fetch scan limit (non-blocking):', {
+                    message: error.message || error,
+                    name: error.name,
+                    url: `${getApiBase()}/api/scan-limit`
+                });
                 // On error, if we're a guest, try to get from localStorage as fallback
                 if (!currentUser) {
                     const today = new Date().toISOString().split('T')[0];
@@ -8045,6 +8076,9 @@
                 console.log('Starting API call to backend...');
                 console.log('Network status:', navigator.onLine ? 'Online' : 'Offline');
                 
+                // Define fetchStartTime at top level to prevent ReferenceError in catch/finally
+                const fetchStartTime = Date.now();
+                
                 const controller = new AbortController();
                 currentAbortController = controller; // Store for cancellation
                 // Set timeout to match backend timeout
@@ -8056,17 +8090,18 @@
                 }, 50000); // 50 second timeout - requires Vercel Pro tier (60s limit)
                 
                 let response;
+                let apiBase;
+                let fullUrl;
                 try {
                     console.log('Sending fetch request to backend...');
                     // Use global getApiBase function to ensure apiBase is always defined
-                    const apiBase = getApiBase();
-                    const fullUrl = `${apiBase}/api/identify`;
+                    apiBase = getApiBase();
+                    fullUrl = `${apiBase}/api/identify`;
                     console.log('API Base URL:', apiBase);
                     console.log('Is Capacitor:', typeof window !== 'undefined' && !!window.Capacitor);
                     console.log('Full URL:', fullUrl);
                     console.log('Request start time:', new Date().toISOString());
                     
-                    const fetchStartTime = Date.now();
                     response = await fetch(fullUrl, {
                         method: 'POST',
                         headers: {
@@ -8083,8 +8118,10 @@
                     clearTimeout(timeoutId);
                     currentAbortController = null; // Clear controller
                     
-                    // Use getApiBase() to ensure apiBase is available in error handler
-                    const apiBaseForError = getApiBase();
+                    // Use apiBase from try block or fallback to getApiBase()
+                    const apiBaseForError = apiBase || getApiBase();
+                    const fullUrlForError = fullUrl || `${apiBaseForError}/api/identify`;
+                    const fetchDuration = Date.now() - fetchStartTime;
                     
                     // Log full error details for debugging
                     console.error('Fetch Error Details:', {
@@ -8092,8 +8129,10 @@
                         message: fetchError.message,
                         stack: fetchError.stack,
                         apiBase: apiBaseForError,
-                        endpoint: `${apiBaseForError}/api/identify`,
-                        online: navigator.onLine
+                        endpoint: fullUrlForError,
+                        duration: fetchDuration + 'ms',
+                        online: navigator.onLine,
+                        timestamp: new Date().toISOString()
                     });
                     
                     if (fetchError.name === 'AbortError') {
@@ -8127,6 +8166,7 @@
                 clearTimeout(timeoutId);
                 currentAbortController = null; // Clear after request completes
                 
+                // fetchStartTime is defined at function scope, safe to use here
                 const fetchDuration = Date.now() - fetchStartTime;
                 console.log('API response received:', {
                     status: response.status,
@@ -8826,8 +8866,38 @@
                 const blogUrl = `${publicWebsiteUrl}/public-site/blogs/${slug}.html`;
 
                 // Step 1: Check if blog exists
-                const checkResponse = await fetch(`${apiBase}/api/blog-exists/${slug}`);
-                const checkResult = await checkResponse.json();
+                let checkResponse;
+                let checkResult;
+                try {
+                    const checkUrl = `${apiBase}/api/blog-exists/${slug}`;
+                    console.log('Checking blog existence:', checkUrl);
+                    checkResponse = await fetch(checkUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    console.log('Blog check response:', {
+                        status: checkResponse.status,
+                        statusText: checkResponse.statusText,
+                        ok: checkResponse.ok,
+                        url: checkUrl
+                    });
+                    
+                    if (!checkResponse.ok) {
+                        throw new Error(`Blog check failed: ${checkResponse.status} ${checkResponse.statusText}`);
+                    }
+                    
+                    checkResult = await checkResponse.json();
+                } catch (checkError) {
+                    console.error('Error checking blog existence:', {
+                        message: checkError.message || checkError,
+                        name: checkError.name,
+                        url: `${apiBase}/api/blog-exists/${slug}`
+                    });
+                    // Default to needs generation if check fails
+                    checkResult = { exists: false };
+                }
 
                 let finalBlogUrl = blogUrl;
                 let needsGeneration = !checkResult.exists;
@@ -8838,22 +8908,43 @@
                         blogProgressText.textContent = 'Generating blog post...';
                     }
 
-                    const generateResponse = await fetch(`${apiBase}/api/generate-blog`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            dishData: dishData
-                        })
-                    });
+                    const generateUrl = `${apiBase}/api/generate-blog`;
+                    console.log('Generating blog:', generateUrl);
+                    
+                    let generateResponse;
+                    try {
+                        generateResponse = await fetch(generateUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                dishData: dishData
+                            })
+                        });
+                        
+                        console.log('Blog generation response:', {
+                            status: generateResponse.status,
+                            statusText: generateResponse.statusText,
+                            ok: generateResponse.ok,
+                            url: generateUrl
+                        });
 
-                    if (!generateResponse.ok) {
-                        throw new Error('Failed to generate blog post');
+                        if (!generateResponse.ok) {
+                            const errorText = await generateResponse.text().catch(() => 'Unknown error');
+                            throw new Error(`Failed to generate blog post: ${generateResponse.status} ${generateResponse.statusText} - ${errorText}`);
+                        }
+
+                        const generateResult = await generateResponse.json();
+                        finalBlogUrl = generateResult.blogUrl || blogUrl;
+                    } catch (generateError) {
+                        console.error('Error generating blog:', {
+                            message: generateError.message || generateError,
+                            name: generateError.name,
+                            url: generateUrl
+                        });
+                        throw generateError; // Re-throw to be caught by outer catch
                     }
-
-                    const generateResult = await generateResponse.json();
-                    finalBlogUrl = generateResult.blogUrl || blogUrl;
                 } else {
                     if (blogProgressText) {
                         blogProgressText.textContent = 'Loading existing blog post...';
@@ -8875,9 +8966,23 @@
 
                     // Fetch blog HTML from public website
                     try {
-                        const blogResponse = await fetch(finalBlogUrl);
+                        console.log('Fetching blog content from:', finalBlogUrl);
+                        const blogResponse = await fetch(finalBlogUrl, {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'text/html'
+                            }
+                        });
+                        
+                        console.log('Blog content response:', {
+                            status: blogResponse.status,
+                            statusText: blogResponse.statusText,
+                            ok: blogResponse.ok,
+                            url: finalBlogUrl
+                        });
+                        
                         if (!blogResponse.ok) {
-                            throw new Error('Failed to fetch blog content');
+                            throw new Error(`Failed to fetch blog content: ${blogResponse.status} ${blogResponse.statusText}`);
                         }
 
                         const html = await blogResponse.text();
@@ -10757,16 +10862,30 @@
             if (container) container.innerHTML = '';
             
             try {
-                // Fetch recipes.json from public website
-                const publicWebsiteUrl = 'https://ok-snap-identifier.vercel.app';
-                const recipesUrl = `${publicWebsiteUrl}/public-site/recipes.json`;
+                // Use API route wrapper for recipes.json to ensure CORS headers
+                // Static files don't automatically get CORS headers, so we use API route
+                const apiBase = getApiBase();
+                const recipesUrl = `${apiBase}/api/recipes-json`;
+                
+                console.log('Fetching recipes from:', recipesUrl);
                 
                 const response = await fetch(recipesUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     cache: 'no-store' // Always fetch fresh data
                 });
                 
+                console.log('Recipes response:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    ok: response.ok,
+                    url: recipesUrl
+                });
+                
                 if (!response.ok) {
-                    throw new Error(`Failed to fetch recipes: ${response.status}`);
+                    throw new Error(`Failed to fetch recipes: ${response.status} ${response.statusText}`);
                 }
                 
                 const recipes = await response.json();
@@ -10784,7 +10903,13 @@
                 renderBlogCards(recipes, container);
                 
             } catch (err) {
-                console.error('Error loading browse recipes:', err);
+                // Harden error handling - ensure all variables exist
+                console.error('Error loading browse recipes:', {
+                    message: err.message || err,
+                    name: err.name,
+                    stack: err.stack,
+                    url: recipesUrl || 'unknown'
+                });
                 if (loading) loading.style.display = 'none';
                 if (error) {
                     error.style.display = 'block';
