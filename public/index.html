@@ -6129,14 +6129,38 @@
 
             // Remove active class from all nav items and contents
             navItems.forEach(nav => nav.classList.remove('active'));
-            tabContents.forEach(content => content.classList.remove('active'));
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+                content.style.display = 'none'; // Explicitly hide inactive tabs
+            });
 
             // Add active class to target nav item and corresponding content
             const targetNavItem = document.querySelector(`[data-tab="${tabName}"]`);
             const targetTabContent = document.getElementById(tabName + 'Tab');
             
-            if (targetNavItem) targetNavItem.classList.add('active');
-            if (targetTabContent) targetTabContent.classList.add('active');
+            console.log('Switching tab:', tabName, 'Nav item found:', !!targetNavItem, 'Tab content found:', !!targetTabContent);
+            
+            if (!targetNavItem) {
+                console.error('Nav item not found for tab:', tabName);
+                return; // Exit early if nav item doesn't exist
+            }
+            if (!targetTabContent) {
+                console.error('Tab content not found for tab:', tabName + 'Tab');
+                return; // Exit early if tab content doesn't exist
+            }
+            
+            targetNavItem.classList.add('active');
+            targetTabContent.classList.add('active');
+            
+            // Ensure tab content is visible (handle both block and flex layouts)
+            // CSS already handles this, but we set it explicitly to override any inline styles
+            if (tabName === 'discover') {
+                targetTabContent.style.display = 'flex';
+                targetTabContent.style.flexDirection = 'column';
+            } else {
+                targetTabContent.style.display = 'block';
+                targetTabContent.style.flexDirection = '';
+            }
             
             currentRoute = tabName;
             
@@ -6156,8 +6180,34 @@
                 }
             } else if (tabName === 'history') {
                 // Initialize history filters when switching to history tab
-                initializeHistoryFilters();
-                loadHistory();
+                try {
+                    if (typeof initializeHistoryFilters === 'function') {
+                        initializeHistoryFilters();
+                    }
+                    if (typeof loadHistory === 'function') {
+                        loadHistory();
+                    }
+                } catch (error) {
+                    console.error('Error loading history tab:', error);
+                }
+            } else if (tabName === 'favorites') {
+                // Load favorites when switching to favorites tab
+                try {
+                    if (typeof loadFavorites === 'function') {
+                        loadFavorites();
+                    }
+                } catch (error) {
+                    console.error('Error loading favorites tab:', error);
+                }
+            } else if (tabName === 'settings') {
+                // Initialize settings when switching to settings tab
+                try {
+                    if (typeof initializeSettings === 'function') {
+                        initializeSettings();
+                    }
+                } catch (error) {
+                    console.error('Error loading settings tab:', error);
+                }
             } else if (tabName === 'discover') {
                 // When switching back to discover tab, show result if it exists
                 if (isShowingResult && currentDishData && resultSection) {
@@ -6338,9 +6388,16 @@
                             // Still try to show the tab even if there's an error
                             const targetTabContent = document.getElementById(targetTab + 'Tab');
                             if (targetTabContent) {
-                                document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+                                document.querySelectorAll('.tab-content').forEach(tab => {
+                                    tab.classList.remove('active');
+                                    tab.style.display = 'none';
+                                });
                                 document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
                                 targetTabContent.classList.add('active');
+                                targetTabContent.style.display = targetTab === 'discover' ? 'flex' : 'block';
+                                if (targetTab === 'discover') {
+                                    targetTabContent.style.flexDirection = 'column';
+                                }
                                 item.classList.add('active');
                             }
                         }
