@@ -8045,10 +8045,12 @@
                 
                 const controller = new AbortController();
                 currentAbortController = controller; // Store for cancellation
+                // Set timeout to 50 seconds to avoid hitting Vercel's limits
+                // Vercel free tier: 10s, Pro: 60s - we use 50s to leave buffer
                 const timeoutId = setTimeout(() => {
-                    console.error('API request timed out after 60 seconds');
+                    console.error('API request timed out after 50 seconds');
                     controller.abort();
-                }, 60000); // 60 second timeout
+                }, 50000); // 50 second timeout - shorter than backend to catch client-side timeouts
                 
                 let response;
                 try {
@@ -8088,8 +8090,12 @@
                     });
                     
                     if (fetchError.name === 'AbortError') {
-                        // Request was cancelled - don't show error, just stop loading
+                        // Request was cancelled due to timeout
+                        const friendlyMessage = 'The request took too long. Please try again with a smaller image or check your internet connection.';
+                        console.error('Request aborted due to timeout');
+                        showError(friendlyMessage);
                         showLoading(false);
+                        if (analyzeBtn) analyzeBtn.disabled = false;
                         return;
                     }
                     
@@ -8155,10 +8161,20 @@
                         return;
                     }
                     
-                    // Handle 504 timeout
+                    // Handle 408 Request Timeout (client timeout)
+                    if (response.status === 408) {
+                        const friendlyMessage = 'The request took too long. Please try again with a smaller image or check your internet connection.';
+                        console.error('408 Error - Request timeout');
+                        showError(friendlyMessage);
+                        showLoading(false);
+                        if (analyzeBtn) analyzeBtn.disabled = false;
+                        return;
+                    }
+                    
+                    // Handle 504 Gateway Timeout (server timeout)
                     if (response.status === 504) {
-                        const friendlyMessage = 'The request took too long. Please try again with a smaller image.';
-                        console.error('504 Error - Request timeout');
+                        const friendlyMessage = 'The server took too long to respond. Please try again with a smaller image.';
+                        console.error('504 Error - Gateway timeout');
                         showError(friendlyMessage);
                         showLoading(false);
                         if (analyzeBtn) analyzeBtn.disabled = false;

@@ -118,7 +118,8 @@ module.exports = async (req, res) => {
 
         // Add timeout to prevent hanging requests
         // Vercel serverless functions have a 10s timeout for free tier, 60s for pro
-        const OPENAI_TIMEOUT = 55000; // 55 seconds - leave buffer for response handling
+        // Use 45 seconds to leave buffer for response handling and avoid hitting Vercel limits
+        const OPENAI_TIMEOUT = 45000; // 45 seconds - leaves 15s buffer for Vercel pro tier
         const controller = new AbortController();
         const timeoutId = setTimeout(() => {
             controller.abort();
