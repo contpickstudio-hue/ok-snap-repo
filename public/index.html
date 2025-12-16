@@ -5235,22 +5235,28 @@
         // Global API base getter - ensures apiBase is always available
         // This prevents "apiBase is not defined" errors in error handlers
         function getApiBase() {
+            // Native app (Capacitor) - use production API
             if (typeof window !== 'undefined' && window.Capacitor) {
                 return 'https://ok-snap-identifier.vercel.app';
             }
+            // Explicit config override
             if (CONFIG && CONFIG.API_BASE) {
                 return CONFIG.API_BASE;
             }
-            // Fallback: check if we're on Vercel
+            // Check if we're on Vercel (production or preview deployment)
             if (typeof window !== 'undefined' && window.location) {
-                if (window.location.origin.includes('vercel.app')) {
-                    return 'https://ok-snap-identifier.vercel.app';
+                const origin = window.location.origin;
+                // If on Vercel preview deployment, use its own API endpoints
+                // Preview URLs: https://ok-snap-identifier-*-*.vercel.app
+                if (origin.includes('vercel.app')) {
+                    return origin; // Use same origin for API calls
                 }
-                if (window.location.origin.includes('localhost')) {
-                    return window.location.origin;
+                // Localhost development
+                if (origin.includes('localhost')) {
+                    return origin;
                 }
             }
-            // Final fallback
+            // Final fallback to production
             return 'https://ok-snap-identifier.vercel.app';
         }
         
