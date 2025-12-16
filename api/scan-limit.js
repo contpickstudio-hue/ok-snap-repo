@@ -1,14 +1,14 @@
 // Vercel serverless function for scan limit checking
-// Uses shared CORS utility for consistent CORS handling across all API routes
-const { setCorsHeaders, handlePreflight } = require('./_cors');
-
 module.exports = async (req, res) => {
-    // Set CORS headers on every response - MUST be first
-    setCorsHeaders(req, res);
+    // === GLOBAL CORS HEADERS ===
+    // MUST be set before ANY response or logic
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     
-    // Handle OPTIONS preflight requests - return immediately, do NOT run business logic
-    if (handlePreflight(req, res)) {
-        return; // Preflight handled, exit early
+    // === PRE-FLIGHT REQUEST ===
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
     }
 
     if (req.method !== 'GET') {
@@ -27,10 +27,10 @@ module.exports = async (req, res) => {
                        '127.0.0.1';
         
         const remainingInfo = await getRemainingScans(userId, userIp);
-        res.json(remainingInfo);
-    } catch (error) {
-        console.error('Error getting scan limit:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        return res.status(200).json(remainingInfo);
+    } catch (err) {
+        console.error('Scan limit API error:', err);
+        return res.status(500).json({ error: 'Scan limit check failed' });
     }
 }
 

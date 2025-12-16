@@ -1,24 +1,13 @@
 // Vercel serverless function for dish identification
-// CORS Configuration:
-// - Allows requests from production domain (ok-snap-identifier.vercel.app)
-// - Allows requests from any Vercel preview deployment (*.vercel.app)
-// - Allows requests from localhost for development
-// - Allows requests from native apps (no origin header)
-// - Properly handles OPTIONS preflight requests
-
 module.exports = async (req, res) => {
-    // ============================================
-    // CORS HEADERS - SET AT VERY TOP
-    // ============================================
-    // CORS headers MUST be set before ANY response or logic
-    // This allows cross-origin requests from web apps, mobile apps, and preview deployments
+    // === GLOBAL CORS HEADERS ===
+    // MUST be set before ANY response or logic
+    // Allows cross-origin requests from web apps, mobile apps, and preview deployments
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     
-    // ============================================
-    // OPTIONS PREFLIGHT HANDLING - IMMEDIATE RETURN
-    // ============================================
+    // === PRE-FLIGHT REQUEST ===
     // Browsers send OPTIONS requests before POST to check CORS permissions
     // MUST return immediately - do NOT run any business logic
     // Do NOT access request body, do NOT call external APIs, do NOT return 408
@@ -206,20 +195,16 @@ All responses must be in ${targetLanguage || 'English'}.`
             console.error('Error calling OpenAI API:', fetchError);
             throw fetchError; // Re-throw to be caught by outer catch
         }
-    } catch (error) {
+    } catch (err) {
         // Ensure we always return a response - prevent hanging requests
-        console.error('Error in identify endpoint:', error);
+        console.error('Identify API error:', err);
         
         // If response already sent, don't try to send again
         if (res.headersSent) {
-            console.error('Response already sent, cannot send error response');
             return;
         }
         
-        const errorMessage = process.env.NODE_ENV === 'production' 
-            ? 'An error occurred while processing your request. Please try again.'
-            : error.message || 'Unknown error occurred';
-        return res.status(500).json({ error: errorMessage });
+        return res.status(500).json({ error: 'Identify failed' });
     }
 }
 

@@ -1,16 +1,18 @@
 // API route wrapper for recipes.json to add CORS headers
 // Static files don't automatically get CORS headers, so we serve via API route
-const { setCorsHeaders, handlePreflight } = require('./_cors');
 const fs = require('fs');
 const path = require('path');
 
 module.exports = async (req, res) => {
-    // Set CORS headers on every response - MUST be first
-    setCorsHeaders(req, res);
+    // === GLOBAL CORS HEADERS ===
+    // MUST be set before ANY response or logic
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     
-    // Handle OPTIONS preflight requests - return immediately, do NOT run business logic
-    if (handlePreflight(req, res)) {
-        return; // Preflight handled, exit early
+    // === PRE-FLIGHT REQUEST ===
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
     }
     
     if (req.method !== 'GET') {
@@ -28,12 +30,11 @@ module.exports = async (req, res) => {
         const recipesJson = fs.readFileSync(recipesJsonPath, 'utf8');
         const recipes = JSON.parse(recipesJson);
         
-        // Return with CORS headers already set
         res.setHeader('Content-Type', 'application/json');
-        res.json(recipes);
-    } catch (error) {
-        console.error('Error reading recipes.json:', error);
-        res.status(500).json({ error: 'Failed to load recipes', recipes: [] });
+        return res.status(200).json(recipes);
+    } catch (err) {
+        console.error('Recipes JSON API error:', err);
+        return res.status(500).json({ error: 'Failed to load recipes', recipes: [] });
     }
 };
 
