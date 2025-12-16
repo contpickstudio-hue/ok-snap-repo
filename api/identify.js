@@ -1,16 +1,34 @@
 // Vercel serverless function for dish identification
-// Uses shared CORS utility for consistent CORS handling across all API routes
-const { setCorsHeaders, handlePreflight } = require('./_cors');
+// CORS Configuration:
+// - Allows requests from production domain (ok-snap-identifier.vercel.app)
+// - Allows requests from any Vercel preview deployment (*.vercel.app)
+// - Allows requests from localhost for development
+// - Allows requests from native apps (no origin header)
+// - Properly handles OPTIONS preflight requests
 
 module.exports = async (req, res) => {
-    // Set CORS headers on every response - MUST be first
-    setCorsHeaders(req, res);
+    // ============================================
+    // CORS HEADERS - SET AT VERY TOP
+    // ============================================
+    // CORS headers MUST be set before ANY response or logic
+    // This allows cross-origin requests from web apps, mobile apps, and preview deployments
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     
-    // Handle OPTIONS preflight requests - return immediately, do NOT run business logic
-    if (handlePreflight(req, res)) {
-        return; // Preflight handled, exit early
+    // ============================================
+    // OPTIONS PREFLIGHT HANDLING - IMMEDIATE RETURN
+    // ============================================
+    // Browsers send OPTIONS requests before POST to check CORS permissions
+    // MUST return immediately - do NOT run any business logic
+    // Do NOT access request body, do NOT call external APIs, do NOT return 408
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
     }
-
+    
+    // ============================================
+    // POST REQUEST HANDLING
+    // ============================================
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
