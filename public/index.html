@@ -5231,6 +5231,31 @@
             SUPABASE_URL: 'https://qiyprefzhprjzgemvqeu.supabase.co', // e.g., 'https://xxxxx.supabase.co'
             SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpeXByZWZ6aHByanpnZW12cWV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MTY0NDgsImV4cCI6MjA3NTA5MjQ0OH0.RZAXhSFG3MOfAJkERaoD8Qv91_lWgkbWUBymtKjjFmU' // e.g., 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
         };
+        
+        // Global API base getter - ensures apiBase is always available
+        // This prevents "apiBase is not defined" errors in error handlers
+        function getApiBase() {
+            if (typeof window !== 'undefined' && window.Capacitor) {
+                return 'https://ok-snap-identifier.vercel.app';
+            }
+            if (CONFIG && CONFIG.API_BASE) {
+                return CONFIG.API_BASE;
+            }
+            // Fallback: check if we're on Vercel
+            if (typeof window !== 'undefined' && window.location) {
+                if (window.location.origin.includes('vercel.app')) {
+                    return 'https://ok-snap-identifier.vercel.app';
+                }
+                if (window.location.origin.includes('localhost')) {
+                    return window.location.origin;
+                }
+            }
+            // Final fallback
+            return 'https://ok-snap-identifier.vercel.app';
+        }
+        
+        // Expose globally for error handlers
+        window.getApiBase = getApiBase;
 
         // ============================================
         // STATE MANAGEMENT
@@ -5476,11 +5501,8 @@
         // Get remaining scans from server
         async function updateScanLimit() {
             try {
-                const apiBase = (typeof window !== 'undefined' && window.Capacitor) 
-                    ? 'https://ok-snap-identifier.vercel.app'
-                    : (CONFIG && CONFIG.API_BASE) 
-                        ? CONFIG.API_BASE 
-                        : 'https://ok-snap-identifier.vercel.app';
+                // Use global getApiBase function to ensure apiBase is always defined
+                const apiBase = getApiBase();
                 const userId = currentUser?.id || null;
                 
                 const response = await fetch(`${apiBase}/api/scan-limit?userId=${userId || ''}`, {
@@ -8031,14 +8053,11 @@
                 let response;
                 try {
                     console.log('Sending fetch request to backend...');
-                    // Ensure we use the correct API base - never use localhost for native apps
-                    const apiBase = (typeof window !== 'undefined' && window.Capacitor) 
-                        ? 'https://ok-snap-identifier.vercel.app'
-                        : (CONFIG && CONFIG.API_BASE) 
-                            ? CONFIG.API_BASE 
-                            : 'https://ok-snap-identifier.vercel.app';
+                    // Use global getApiBase function to ensure apiBase is always defined
+                    const apiBase = getApiBase();
                     console.log('API Base URL:', apiBase);
                     console.log('Is Capacitor:', typeof window !== 'undefined' && !!window.Capacitor);
+                    console.log('Full URL:', `${apiBase}/api/identify`);
                     response = await fetch(`${apiBase}/api/identify`, {
                         method: 'POST',
                         headers: {
@@ -8055,13 +8074,16 @@
                     clearTimeout(timeoutId);
                     currentAbortController = null; // Clear controller
                     
+                    // Use getApiBase() to ensure apiBase is available in error handler
+                    const apiBaseForError = getApiBase();
+                    
                     // Log full error details for debugging
                     console.error('Fetch Error Details:', {
                         name: fetchError.name,
                         message: fetchError.message,
                         stack: fetchError.stack,
-                        apiBase: apiBase,
-                        endpoint: `${apiBase}/api/identify`,
+                        apiBase: apiBaseForError,
+                        endpoint: `${apiBaseForError}/api/identify`,
                         online: navigator.onLine
                     });
                     
@@ -8111,11 +8133,14 @@
                         errorText = errorText || 'Unknown error';
                     }
                     
+                    // Use getApiBase() to ensure apiBase is available in error handler
+                    const apiBaseForError = getApiBase();
+                    
                     // Log full error details for debugging
                     console.error('API Error Details:', {
                         status: response.status,
                         statusText: response.statusText,
-                        url: `${apiBase}/api/identify`,
+                        url: `${apiBaseForError}/api/identify`,
                         errorText: errorText.substring(0, 500),
                         errorDetails: errorDetails
                     });
@@ -8123,9 +8148,20 @@
                     // Handle 404 specifically
                     if (response.status === 404) {
                         const friendlyMessage = 'Unable to connect to the server. Please check your internet connection and try again.';
-                        console.error('404 Error - Endpoint not found. Check API_BASE:', apiBase);
+                        console.error('404 Error - Endpoint not found. Check API_BASE:', apiBaseForError);
                         showError(friendlyMessage);
                         showLoading(false);
+                        if (analyzeBtn) analyzeBtn.disabled = false;
+                        return;
+                    }
+                    
+                    // Handle 504 timeout
+                    if (response.status === 504) {
+                        const friendlyMessage = 'The request took too long. Please try again with a smaller image.';
+                        console.error('504 Error - Request timeout');
+                        showError(friendlyMessage);
+                        showLoading(false);
+                        if (analyzeBtn) analyzeBtn.disabled = false;
                         return;
                     }
                     
@@ -8347,11 +8383,7 @@
                 }
                 
                 // Get apiBase for logging (recalculate since it was in try block scope)
-                const apiBaseForLogging = (typeof window !== 'undefined' && window.Capacitor) 
-                    ? 'https://ok-snap-identifier.vercel.app'
-                    : (CONFIG && CONFIG.API_BASE) 
-                        ? CONFIG.API_BASE 
-                        : 'https://ok-snap-identifier.vercel.app';
+                const apiBaseForLogging = getApiBase();
                 
                 // Log additional debugging info
                 console.error('Full error object:', error);
@@ -8746,11 +8778,8 @@
             }, 300);
 
             try {
-                const apiBase = (typeof window !== 'undefined' && window.Capacitor) 
-                    ? 'https://ok-snap-identifier.vercel.app'
-                    : (CONFIG && CONFIG.API_BASE) 
-                        ? CONFIG.API_BASE 
-                        : 'https://ok-snap-identifier.vercel.app';
+                // Use global getApiBase function to ensure apiBase is always defined
+                const apiBase = getApiBase();
                 const slug = createSlug(dishData.name);
                 const publicWebsiteUrl = 'https://ok-snap-identifier.vercel.app';
                 const blogUrl = `${publicWebsiteUrl}/public-site/blogs/${slug}.html`;

@@ -1,6 +1,13 @@
 // Vercel serverless function for dish identification
+// CORS Configuration:
+// - Allows requests from production domain (ok-snap-identifier.vercel.app)
+// - Allows requests from any Vercel preview deployment (*.vercel.app)
+// - Allows requests from localhost for development
+// - Allows requests from native apps (no origin header)
+// - Properly handles OPTIONS preflight requests
 module.exports = async (req, res) => {
-    // CORS headers - must be set before any response
+    // CORS headers - MUST be set before any response
+    // This ensures preflight OPTIONS requests work correctly
     const origin = req.headers.origin;
     const allowedOrigins = [
         'https://ok-snap-identifier.vercel.app',
@@ -14,6 +21,7 @@ module.exports = async (req, res) => {
     const isNativeApp = !origin;
     
     // Allow Vercel preview deployments (pattern: *.vercel.app)
+    // This is critical for preview deployments which have unique subdomains
     const isVercelPreview = origin && origin.endsWith('.vercel.app');
     const isAllowedOrigin = isNativeApp || allowedOrigins.includes(origin) || isVercelPreview;
     
@@ -108,19 +116,28 @@ module.exports = async (req, res) => {
             return res.status(500).json({ error: 'Server configuration error' });
         }
 
-        // Call OpenAI API
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        // Add timeout to prevent hanging requests
+        // Vercel serverless functions have a 10s timeout for free tier, 60s for pro
+        const OPENAI_TIMEOUT = 55000; // 55 seconds - leave buffer for response handling
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => {
+            controller.abort();
+        }, OPENAI_TIMEOUT);
+
+        try {
+            // Call OpenAI API with timeout
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${OPENAI_KEY}`
             },
-            body: JSON.stringify({
-                model: 'gpt-4o',
-                messages: [
-                    {
-                        role: 'system',
-                        content: `You are Ok Snap, a food recognition expert with special expertise in Korean cuisine. You identify dishes from all cuisines, but have deeper knowledge and cultural context for Korean food (Hansik).
+                body: JSON.stringify({
+                    model: 'gpt-4o',
+                    messages: [
+                        {
+                            role: 'system',
+                            content: `You are Ok Snap, a food recognition expert with special expertise in Korean cuisine. You identify dishes from all cuisines, but have deeper knowledge and cultural context for Korean food (Hansik).
 
 IMPORTANT: Respond entirely in ${targetLanguage || 'English'}. All text including dish names, descriptions, and messages must be in ${targetLanguage || 'English'}.
 
@@ -150,50 +167,74 @@ IMPORTANT: Always include nutrition estimates. Base them on typical serving size
 
 Be culturally authentic, warm, and inspiring. Use light emojis occasionally (🌶, 🍚, 🥢, 🍲, 🍝, 🍜, 🍱).
 All responses must be in ${targetLanguage || 'English'}.`
-                    },
-                    {
-                        role: 'user',
-                        content: [
-                            {
-                                type: 'text',
-                                text: `Analyze this image and identify the dish in ${targetLanguage || 'English'}. If it's Korean food, provide extra cultural context and the Korean name (한글). Otherwise, identify the dish and its cuisine. Provide a detailed, warm description entirely in ${targetLanguage || 'English'}.`
-                            },
-                            {
-                                type: 'image_url',
-                                image_url: {
-                                    url: imageData
+                        },
+                        {
+                            role: 'user',
+                            content: [
+                                {
+                                    type: 'text',
+                                    text: `Analyze this image and identify the dish in ${targetLanguage || 'English'}. If it's Korean food, provide extra cultural context and the Korean name (한글). Otherwise, identify the dish and its cuisine. Provide a detailed, warm description entirely in ${targetLanguage || 'English'}.`
+                                },
+                                {
+                                    type: 'image_url',
+                                    image_url: {
+                                        url: imageData
+                                    }
                                 }
-                            }
-                        ]
-                    }
-                ],
-                max_tokens: 1000
-            })
-        });
+                            ]
+                        }
+                    ],
+                    max_tokens: 1000
+                }),
+                signal: controller.signal
+            });
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ error: { message: 'Unknown error' } }));
-            return res.status(response.status).json({ error: errorData.error?.message || 'OpenAI API error' });
-        }
+            clearTimeout(timeoutId);
 
-        const data = await response.json();
-        
-        // Include remaining scans in response
-        const remainingInfo = await getRemainingScans(userId, userIp);
-        res.json({
-            ...data,
-            scanInfo: {
-                remaining: remainingInfo.remaining,
-                limit: remainingInfo.limit,
-                level: remainingInfo.level
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: { message: 'Unknown error' } }));
+                return res.status(response.status).json({ error: errorData.error?.message || 'OpenAI API error' });
             }
-        });
+
+            const data = await response.json();
+            
+            // Include remaining scans in response
+            const remainingInfo = await getRemainingScans(userId, userIp);
+            return res.json({
+                ...data,
+                scanInfo: {
+                    remaining: remainingInfo.remaining,
+                    limit: remainingInfo.limit,
+                    level: remainingInfo.level
+                }
+            });
+        } catch (fetchError) {
+            clearTimeout(timeoutId);
+            
+            // Handle timeout specifically
+            if (fetchError.name === 'AbortError') {
+                console.error('OpenAI API request timed out');
+                return res.status(504).json({ error: 'Request timeout. The image analysis took too long. Please try again with a smaller image.' });
+            }
+            
+            // Handle other fetch errors
+            console.error('Error calling OpenAI API:', fetchError);
+            throw fetchError; // Re-throw to be caught by outer catch
+        }
     } catch (error) {
-        console.error('Error calling OpenAI API:', error);
+        // Ensure we always return a response - prevent hanging requests
+        console.error('Error in identify endpoint:', error);
+        
+        // If response already sent, don't try to send again
+        if (res.headersSent) {
+            console.error('Response already sent, cannot send error response');
+            return;
+        }
+        
         const errorMessage = process.env.NODE_ENV === 'production' 
             ? 'An error occurred while processing your request. Please try again.'
-            : error.message;
-        res.status(500).json({ error: errorMessage });
+            : error.message || 'Unknown error occurred';
+        return res.status(500).json({ error: errorMessage });
     }
 }
 
