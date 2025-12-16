@@ -5148,10 +5148,14 @@
         // ═══════════════════════════════════════════
         
         const CONFIG = {
-            // Backend API endpoint - Vercel deployment URL
-            // Uses current domain automatically, or set to your Vercel URL
-            // API keys are stored securely in Vercel environment variables
-            API_BASE: typeof window !== 'undefined' ? window.location.origin : 'https://ok-snap-repo.vercel.app',
+            // Backend API endpoint
+            // For native apps, use Vercel URL (localhost not accessible from phone)
+            // For web, use current origin or Vercel URL
+            API_BASE: (typeof window !== 'undefined' && window.Capacitor) 
+                ? 'https://ok-snap-repo.vercel.app'
+                : (typeof window !== 'undefined' && window.location.origin.includes('localhost'))
+                    ? window.location.origin
+                    : 'https://ok-snap-repo.vercel.app',
             
             // Recipe links now point directly to recipe websites
             // No API keys needed - using direct website search URLs
