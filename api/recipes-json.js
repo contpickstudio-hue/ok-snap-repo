@@ -33,8 +33,8 @@ module.exports = async (req, res) => {
         res.setHeader('Content-Type', 'application/json');
         return res.status(200).json(recipes);
     } catch (err) {
-        console.error('Recipes JSON API error:', err);
-        return res.status(500).json({ error: 'Failed to load recipes', recipes: [] });
+        console.error('recipes-json error:', err);
+        return res.status(500).json({ error: 'Failed to load recipes' });
     }
 };
 

@@ -10855,6 +10855,11 @@
             const error = document.getElementById('browseError');
             const empty = document.getElementById('browseEmpty');
             
+            // Define recipesUrl at function scope - ensures it exists in catch block
+            // This prevents ReferenceError if error occurs before fetch
+            const apiBase = getApiBase();
+            const recipesUrl = `${apiBase}/api/recipes-json`;
+            
             // Show loading state
             if (loading) loading.style.display = 'block';
             if (error) error.style.display = 'none';
@@ -10862,11 +10867,6 @@
             if (container) container.innerHTML = '';
             
             try {
-                // Use API route wrapper for recipes.json to ensure CORS headers
-                // Static files don't automatically get CORS headers, so we use API route
-                const apiBase = getApiBase();
-                const recipesUrl = `${apiBase}/api/recipes-json`;
-                
                 console.log('Fetching recipes from:', recipesUrl);
                 
                 const response = await fetch(recipesUrl, {
@@ -10885,7 +10885,7 @@
                 });
                 
                 if (!response.ok) {
-                    throw new Error(`Failed to fetch recipes: ${response.status} ${response.statusText}`);
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
                 
                 const recipes = await response.json();
@@ -10893,7 +10893,7 @@
                 // Hide loading
                 if (loading) loading.style.display = 'none';
                 
-                if (!recipes || recipes.length === 0) {
+                if (!recipes || (Array.isArray(recipes) && recipes.length === 0)) {
                     // Show empty state
                     if (empty) empty.style.display = 'block';
                     return;
@@ -10903,19 +10903,21 @@
                 renderBlogCards(recipes, container);
                 
             } catch (err) {
-                // Harden error handling - ensure all variables exist
-                console.error('Error loading browse recipes:', {
+                // Harden error handling - recipesUrl is now guaranteed to exist
+                console.error('Browse recipes failed:', {
                     message: err.message || err,
                     name: err.name,
                     stack: err.stack,
-                    url: recipesUrl || 'unknown'
+                    url: recipesUrl,
+                    online: navigator.onLine
                 });
+                
                 if (loading) loading.style.display = 'none';
                 if (error) {
                     error.style.display = 'block';
                     const errorText = document.getElementById('browseErrorText');
                     if (errorText) {
-                        errorText.textContent = 'Failed to load recipes. Please check your internet connection.';
+                        errorText.textContent = 'Failed to load recipes. Please check your internet connection and try again.';
                     }
                 }
             }
