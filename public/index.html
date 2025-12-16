@@ -8036,7 +8036,9 @@
                 const targetLanguage = languageNames[lang] || 'English';
                 
                 // Convert image to base64
+                console.log('Converting image to base64...');
                 const base64Image = await fileToBase64(currentImage);
+                console.log('Image converted, size:', Math.round(base64Image.length / 1024), 'KB');
 
                 // Call backend API for image analysis
                 // Add timeout and better error handling
@@ -8045,22 +8047,27 @@
                 
                 const controller = new AbortController();
                 currentAbortController = controller; // Store for cancellation
-                // Set timeout to 50 seconds to avoid hitting Vercel's limits
-                // Vercel free tier: 10s, Pro: 60s - we use 50s to leave buffer
+                // Set timeout to match backend timeout
+                // IMPORTANT: Vercel FREE tier only allows 10 seconds - this will timeout!
+                // Vercel Pro tier allows 60 seconds - we use 50s to leave buffer
                 const timeoutId = setTimeout(() => {
                     console.error('API request timed out after 50 seconds');
                     controller.abort();
-                }, 50000); // 50 second timeout - shorter than backend to catch client-side timeouts
+                }, 50000); // 50 second timeout - requires Vercel Pro tier (60s limit)
                 
                 let response;
                 try {
                     console.log('Sending fetch request to backend...');
                     // Use global getApiBase function to ensure apiBase is always defined
                     const apiBase = getApiBase();
+                    const fullUrl = `${apiBase}/api/identify`;
                     console.log('API Base URL:', apiBase);
                     console.log('Is Capacitor:', typeof window !== 'undefined' && !!window.Capacitor);
-                    console.log('Full URL:', `${apiBase}/api/identify`);
-                    response = await fetch(`${apiBase}/api/identify`, {
+                    console.log('Full URL:', fullUrl);
+                    console.log('Request start time:', new Date().toISOString());
+                    
+                    const fetchStartTime = Date.now();
+                    response = await fetch(fullUrl, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -8120,11 +8127,20 @@
                 clearTimeout(timeoutId);
                 currentAbortController = null; // Clear after request completes
                 
+                const fetchDuration = Date.now() - fetchStartTime;
                 console.log('API response received:', {
                     status: response.status,
                     statusText: response.statusText,
-                    ok: response.ok
+                    ok: response.ok,
+                    duration: fetchDuration + 'ms',
+                    headers: Object.fromEntries(response.headers.entries()),
+                    timestamp: new Date().toISOString()
                 });
+                
+                // If 408 appears immediately (< 1 second), it's likely not a real timeout
+                if (response.status === 408 && fetchDuration < 1000) {
+                    console.error('⚠️ 408 received immediately - this is NOT a timeout! Likely a server configuration issue.');
+                }
 
                 if (!response.ok) {
                     let errorText = '';
@@ -8132,11 +8148,17 @@
                     try {
                         errorText = await response.text();
                         if (errorText) {
-                            errorDetails = JSON.parse(errorText);
+                            try {
+                                errorDetails = JSON.parse(errorText);
+                            } catch (parseError) {
+                                // If JSON parsing fails, use raw text
+                                errorDetails = { error: errorText };
+                            }
                         }
                     } catch (e) {
-                        // If parsing fails, use raw text
-                        errorText = errorText || 'Unknown error';
+                        // If reading fails, use status text
+                        errorText = response.statusText || 'Unknown error';
+                        errorDetails = { error: errorText };
                     }
                     
                     // Use getApiBase() to ensure apiBase is available in error handler
@@ -8148,7 +8170,8 @@
                         statusText: response.statusText,
                         url: `${apiBaseForError}/api/identify`,
                         errorText: errorText.substring(0, 500),
-                        errorDetails: errorDetails
+                        errorDetails: errorDetails,
+                        timestamp: new Date().toISOString()
                     });
                     
                     // Handle 404 specifically
@@ -8162,9 +8185,11 @@
                     }
                     
                     // Handle 408 Request Timeout (client timeout)
+                    // NOTE: If this appears immediately, it's likely NOT a timeout but a different error
                     if (response.status === 408) {
-                        const friendlyMessage = 'The request took too long. Please try again with a smaller image or check your internet connection.';
-                        console.error('408 Error - Request timeout');
+                        console.warn('408 Error received - checking if this is immediate (not a real timeout)');
+                        const friendlyMessage = errorDetails?.error || 'The request timed out. This might be a server configuration issue. Please try again.';
+                        console.error('408 Error - Request timeout:', errorDetails);
                         showError(friendlyMessage);
                         showLoading(false);
                         if (analyzeBtn) analyzeBtn.disabled = false;

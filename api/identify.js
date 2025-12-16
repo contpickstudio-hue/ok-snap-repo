@@ -117,9 +117,11 @@ module.exports = async (req, res) => {
         }
 
         // Add timeout to prevent hanging requests
-        // Vercel serverless functions have a 10s timeout for free tier, 60s for pro
-        // Use 45 seconds to leave buffer for response handling and avoid hitting Vercel limits
-        const OPENAI_TIMEOUT = 45000; // 45 seconds - leaves 15s buffer for Vercel pro tier
+        // Vercel serverless functions have a 10s timeout for FREE tier, 60s for PRO tier
+        // IMPORTANT: Free tier (Hobby) only allows 10 seconds - OpenAI image analysis typically takes 15-30s
+        // This will timeout on free tier. Consider upgrading to Pro or using a different hosting solution.
+        // For Pro tier, use 50 seconds to leave buffer for response handling
+        const OPENAI_TIMEOUT = 50000; // 50 seconds - works with Pro tier (60s limit)
         const controller = new AbortController();
         const timeoutId = setTimeout(() => {
             controller.abort();
@@ -185,7 +187,7 @@ All responses must be in ${targetLanguage || 'English'}.`
                             ]
                         }
                     ],
-                    max_tokens: 1000
+                    max_tokens: 800 // Reduced from 1000 to speed up response time
                 }),
                 signal: controller.signal
             });
