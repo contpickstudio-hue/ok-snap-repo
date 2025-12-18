@@ -3,9 +3,10 @@ module.exports = async (req, res) => {
     // === GLOBAL CORS HEADERS ===
     // MUST be set before ANY response or logic
     // Allows cross-origin requests from web apps, mobile apps, and preview deployments
+    // Set headers for ALL requests (including OPTIONS preflight)
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours - cache preflight responses
     
     // === PRE-FLIGHT REQUEST ===
@@ -13,7 +14,10 @@ module.exports = async (req, res) => {
     // MUST return immediately - do NOT run any business logic
     // Do NOT access request body, do NOT call external APIs, do NOT return 408
     if (req.method === 'OPTIONS') {
-        return res.status(200).end();
+        // Return 200 OK with CORS headers - browser will cache this response
+        res.status(200);
+        res.end();
+        return;
     }
     
     // ============================================
