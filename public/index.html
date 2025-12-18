@@ -5078,7 +5078,7 @@
                         <h3 id="appVersionLabel">App Version</h3>
                         <p id="appVersionDesc">Current version of BiteSight</p>
                     </div>
-                    <div class="version-info" id="appVersion">1.0.19</div>
+                    <div class="version-info" id="appVersion">1.0.20</div>
                 </div>
 
                 <!-- Feedback Button -->
@@ -5552,12 +5552,17 @@
                     };
                     console.log('Scan limit updated from API:', userScanInfo);
                 } else {
-                    console.warn('Failed to fetch scan limit:', {
-                        status: response.status,
-                        statusText: response.statusText,
-                        url: url
-                    });
-                    // Keep current userScanInfo or use defaults
+                    // Handle 404 and other errors gracefully
+                    if (response.status === 404) {
+                        console.warn('Scan limit API endpoint not found (404). Using defaults.');
+                    } else {
+                        console.warn('Failed to fetch scan limit:', {
+                            status: response.status,
+                            statusText: response.statusText,
+                            url: url
+                        });
+                    }
+                    // Keep current userScanInfo or use defaults - don't crash
                 }
             } catch (error) {
                 console.warn('Failed to fetch scan limit (non-blocking):', {
@@ -6906,7 +6911,7 @@
             // Set app version
             const appVersionEl = document.getElementById('appVersion');
             if (appVersionEl) {
-                appVersionEl.textContent = '1.0.19';
+                appVersionEl.textContent = '1.0.20';
             }
 
             // Initialize feedback button
