@@ -1,5 +1,5 @@
 // Service Worker for Ok Snap PWA
-const CACHE_NAME = 'ok-snap-v1.0.19';
+const CACHE_NAME = 'ok-snap-v1.0.20';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -19,6 +19,23 @@ self.addEventListener('install', (event) => {
 
 // Fetch event - serve from cache, fallback to network
 self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+  
+  // Don't intercept API calls - let them pass through normally
+  // This prevents service worker from interfering with CORS requests
+  // Check for:
+  // 1. API endpoints (/api/*)
+  // 2. External domains (different hostname)
+  // 3. Vercel API endpoints (ok-snap-identifier.vercel.app)
+  if (url.pathname.startsWith('/api/') || 
+      url.hostname.includes('ok-snap-identifier.vercel.app') ||
+      (url.hostname !== self.location.hostname && url.hostname !== 'localhost')) {
+    // For API calls and external requests, don't intercept
+    // Let the browser handle them directly to avoid CORS issues
+    return;
+  }
+  
+  // Only intercept same-origin, non-API requests
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
