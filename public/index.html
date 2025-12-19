@@ -10929,8 +10929,8 @@
             
             // Define recipesUrl at function scope - ensures it exists in catch block
             // This prevents ReferenceError if error occurs before fetch
-            const apiBase = getApiBase();
-            const recipesUrl = `${apiBase}/api/recipes-json`;
+            // Fetch recipes.json directly from the deployed ok-snap.com site
+            const recipesUrl = 'https://ok-snap.com/recipes.json';
             
             // Show loading state
             if (loading) loading.style.display = 'block';

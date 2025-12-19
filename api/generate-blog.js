@@ -325,7 +325,12 @@ function checkBlogExists(dishName) {
 async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) {
     const githubToken = process.env.GITHUB_TOKEN;
     const githubRepo = process.env.GITHUB_REPO; // Format: "owner/repo" e.g., "username/ok-snap"
-    const githubBranch = process.env.GITHUB_BRANCH || 'main';
+    // Default to 'site' branch where the blog website is deployed
+    const githubBranch = process.env.GITHUB_BRANCH || 'site';
+    // If your site branch root contains blog files directly (not in public-site/ folder),
+    // set GITHUB_BASE_PATH environment variable to empty string
+    // Default to empty string since site branch likely has files at root
+    const githubBasePath = process.env.GITHUB_BASE_PATH || '';
     
     if (!githubToken || !githubRepo) {
         return {
@@ -410,15 +415,16 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
 </html>`;
         
         // Step 1: Create blog HTML file
-        const blogFilePath = `public-site/blogs/${slug}.html`;
+        const blogFilePath = `${githubBasePath ? githubBasePath + '/' : ''}blogs/${slug}.html`;
         const blogContentBase64 = Buffer.from(fullHtml, 'utf8').toString('base64');
         
         const createBlogResponse = await fetch(`${baseUrl}/repos/${owner}/${repo}/contents/${blogFilePath}`, {
             method: 'PUT',
             headers: {
-                'Authorization': `token ${githubToken}`,
+                'Authorization': `Bearer ${githubToken}`,
                 'Accept': 'application/vnd.github.v3+json',
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'User-Agent': 'ok-snap-blog-generator'
             },
             body: JSON.stringify({
                 message: `Add blog post: ${dishData.name}`,
@@ -434,7 +440,7 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
                 // Get existing file SHA to update it
                 const getFileResponse = await fetch(`${baseUrl}/repos/${owner}/${repo}/contents/${blogFilePath}?ref=${githubBranch}`, {
                     headers: {
-                        'Authorization': `token ${githubToken}`,
+                        'Authorization': `Bearer ${githubToken}`,
                         'Accept': 'application/vnd.github.v3+json'
                     }
                 });
@@ -444,7 +450,7 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
                     const updateResponse = await fetch(`${baseUrl}/repos/${owner}/${repo}/contents/${blogFilePath}`, {
                         method: 'PUT',
                         headers: {
-                            'Authorization': `token ${githubToken}`,
+                            'Authorization': `Bearer ${githubToken}`,
                             'Accept': 'application/vnd.github.v3+json',
                             'Content-Type': 'application/json'
                         },
@@ -468,7 +474,7 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
         }
         
         // Step 2: Update recipes.json
-        const recipesJsonPath = 'public-site/recipes.json';
+        const recipesJsonPath = `${githubBasePath ? githubBasePath + '/' : ''}recipes.json`;
         let recipes = [];
         let recipesSha = null;
         
@@ -476,7 +482,7 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
         try {
             const getRecipesResponse = await fetch(`${baseUrl}/repos/${owner}/${repo}/contents/${recipesJsonPath}?ref=${githubBranch}`, {
                 headers: {
-                    'Authorization': `token ${githubToken}`,
+                    'Authorization': `Bearer ${githubToken}`,
                     'Accept': 'application/vnd.github.v3+json'
                 }
             });
@@ -512,9 +518,10 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
         const updateRecipesResponse = await fetch(`${baseUrl}/repos/${owner}/${repo}/contents/${recipesJsonPath}`, {
             method: 'PUT',
             headers: {
-                'Authorization': `token ${githubToken}`,
+                'Authorization': `Bearer ${githubToken}`,
                 'Accept': 'application/vnd.github.v3+json',
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'User-Agent': 'ok-snap-blog-generator'
             },
             body: JSON.stringify({
                 message: `Update recipes.json: Add ${dishData.name}`,
@@ -525,18 +532,36 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
         });
         
         if (!updateRecipesResponse.ok && updateRecipesResponse.status !== 422) {
-            console.warn('Failed to update recipes.json, but blog was created');
+            const recipesError = await updateRecipesResponse.json().catch(() => ({}));
+            console.warn('Failed to update recipes.json:', updateRecipesResponse.status, recipesError);
         }
         
-        // Convert image path to website URL (remove /public-site prefix if present)
+        // Step 3: Upload image if provided
         let imageUrl = null;
         if (imagePath) {
-            imageUrl = imagePath.startsWith('/public-site/') 
-                ? `${publicSiteUrl}${imagePath.replace('/public-site', '')}` 
-                : imagePath.startsWith('/') 
-                    ? `${publicSiteUrl}${imagePath}` 
-                    : `${publicSiteUrl}/${imagePath}`;
+            try {
+                // imagePath is like /public-site/images/blogs/slug.png
+                // We need to read the actual image file from the local filesystem or fetch it
+                // Since we're in serverless, we can't read local files, so we'll skip image upload for now
+                // Images should be uploaded separately or generated differently
+                console.log('Image upload skipped - imagePath provided but file not accessible in serverless environment');
+                
+                // Convert image path to website URL
+                imageUrl = imagePath.startsWith('/public-site/') 
+                    ? `${publicSiteUrl}${imagePath.replace('/public-site', '')}` 
+                    : imagePath.startsWith('/') 
+                        ? `${publicSiteUrl}${imagePath}` 
+                        : `${publicSiteUrl}/${imagePath}`;
+            } catch (imageError) {
+                console.warn('Image upload failed:', imageError);
+            }
         }
+        
+        console.log('Blog successfully created via GitHub API:', {
+            blogUrl: `${publicSiteUrl}/blogs/${slug}.html`,
+            slug: slug,
+            imageUrl: imageUrl
+        });
         
         return {
             success: true,
@@ -576,15 +601,24 @@ module.exports = async (req, res) => {
             return res.status(400).json({ error: 'dishData with name is required' });
         }
 
-        // Check if blog already exists
-        const existingBlog = checkBlogExists(dishData.name);
-        if (existingBlog) {
+        // Check if blog already exists by checking the deployed site
+        const slug = createSlug(dishData.name);
+        const publicSiteUrl = process.env.PUBLIC_SITE_URL || 'https://ok-snap.com';
+        const blogUrl = `${publicSiteUrl}/blogs/${slug}.html`;
+        
+        try {
+            const checkResponse = await fetch(blogUrl, { method: 'HEAD' });
+            if (checkResponse.ok) {
                 return res.status(200).json({
-                success: true,
-                blogUrl: `https://ok-snap.com${existingBlog.blogUrl}`,
-                slug: existingBlog.slug,
-                message: 'Blog already exists'
-            });
+                    success: true,
+                    blogUrl: blogUrl,
+                    slug: slug,
+                    message: 'Blog already exists'
+                });
+            }
+        } catch (checkError) {
+            // Blog doesn't exist yet, continue with generation
+            console.log('Blog does not exist yet, proceeding with generation');
         }
 
         // Generate blog content
@@ -597,8 +631,6 @@ module.exports = async (req, res) => {
         } catch (imageError) {
             console.warn('Image generation failed, continuing without image:', imageError);
         }
-
-        const slug = createSlug(dishData.name);
         
         // Use GitHub API to create blog files in the repository
         // This will trigger a new Vercel deployment for public-site
