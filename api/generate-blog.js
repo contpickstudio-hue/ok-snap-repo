@@ -311,12 +311,301 @@ function checkBlogExists(dishName) {
     return null;
 }
 
-module.exports = {
-    generateBlogPost,
-    generateBlogImage,
-    saveBlogPost,
-    updateRecipesJson,
-    createSlug,
-    checkBlogExists
+/**
+ * Create blog files using GitHub API
+ * This allows us to create files in the repository, which triggers Vercel deployment
+ */
+async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) {
+    const githubToken = process.env.GITHUB_TOKEN;
+    const githubRepo = process.env.GITHUB_REPO; // Format: "owner/repo" e.g., "username/ok-snap"
+    const githubBranch = process.env.GITHUB_BRANCH || 'main';
+    
+    if (!githubToken || !githubRepo) {
+        return {
+            success: false,
+            error: 'GitHub credentials not configured. Set GITHUB_TOKEN and GITHUB_REPO environment variables.'
+        };
+    }
+    
+    try {
+        const [owner, repo] = githubRepo.split('/');
+        if (!owner || !repo) {
+            throw new Error('Invalid GITHUB_REPO format. Use "owner/repo"');
+        }
+        
+        const baseUrl = 'https://api.github.com';
+        const publicSiteUrl = 'https://ok-snap-identifier.vercel.app';
+        
+        // Create full HTML for blog post
+        let featuredImageHtml = '';
+        if (imagePath) {
+            featuredImageHtml = `
+            <div class="blog-featured-image">
+                <img src="${imagePath}" alt="${dishData.name}${dishData.nameKorean ? ` (${dishData.nameKorean})` : ''}" style="width: 100%; max-width: 800px; height: auto; border-radius: 12px; margin: 2rem auto; display: block; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+            </div>
+        `;
+        }
+        
+        const fullHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Learn how to make ${dishData.name}${dishData.nameKorean ? ` (${dishData.nameKorean})` : ''} - Authentic Korean recipe with step-by-step instructions.">
+    <meta name="keywords" content="${dishData.name}, Korean food, Korean recipe, ${dishData.nameKorean || ''}, Hansik">
+    ${imagePath ? `<meta property="og:image" content="${publicSiteUrl}${imagePath}">` : ''}
+    <title>${dishData.name} Recipe - OK-Snap</title>
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="logo"><a href="../index.html" style="text-decoration: none; color: inherit;">OK-Snap</a></h1>
+                <nav class="nav">
+                    <a href="../index.html" class="nav-link">Home</a>
+                    <a href="../blog.html" class="nav-link">Blog</a>
+                    <a href="../about.html" class="nav-link">About</a>
+                    <a href="../contact.html" class="nav-link">Contact</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <article class="blog-post">
+            <div class="blog-post-header">
+                <h1 class="blog-post-title">${dishData.name}${dishData.nameKorean ? ` (${dishData.nameKorean})` : ''}</h1>
+                <div class="blog-post-meta">
+                    Published: ${new Date().toLocaleDateString()}
+                </div>
+            </div>
+            ${featuredImageHtml}
+            <div class="blog-post-content">
+                ${blogContent}
+            </div>
+        </article>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 OK-Snap. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>`;
+        
+        // Step 1: Create blog HTML file
+        const blogFilePath = `public-site/blogs/${slug}.html`;
+        const blogContentBase64 = Buffer.from(fullHtml, 'utf8').toString('base64');
+        
+        const createBlogResponse = await fetch(`${baseUrl}/repos/${owner}/${repo}/contents/${blogFilePath}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `token ${githubToken}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                message: `Add blog post: ${dishData.name}`,
+                content: blogContentBase64,
+                branch: githubBranch
+            })
+        });
+        
+        if (!createBlogResponse.ok) {
+            const errorData = await createBlogResponse.json().catch(() => ({}));
+            // If file exists, try to update it
+            if (createBlogResponse.status === 422 && errorData.message?.includes('already exists')) {
+                // Get existing file SHA to update it
+                const getFileResponse = await fetch(`${baseUrl}/repos/${owner}/${repo}/contents/${blogFilePath}?ref=${githubBranch}`, {
+                    headers: {
+                        'Authorization': `token ${githubToken}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (getFileResponse.ok) {
+                    const fileData = await getFileResponse.json();
+                    const updateResponse = await fetch(`${baseUrl}/repos/${owner}/${repo}/contents/${blogFilePath}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `token ${githubToken}`,
+                            'Accept': 'application/vnd.github.v3+json',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            message: `Update blog post: ${dishData.name}`,
+                            content: blogContentBase64,
+                            sha: fileData.sha,
+                            branch: githubBranch
+                        })
+                    });
+                    
+                    if (!updateResponse.ok) {
+                        throw new Error(`Failed to update blog file: ${updateResponse.status}`);
+                    }
+                } else {
+                    throw new Error(`Failed to get existing file: ${getFileResponse.status}`);
+                }
+            } else {
+                throw new Error(`Failed to create blog file: ${createBlogResponse.status} - ${JSON.stringify(errorData)}`);
+            }
+        }
+        
+        // Step 2: Update recipes.json
+        const recipesJsonPath = 'public-site/recipes.json';
+        let recipes = [];
+        let recipesSha = null;
+        
+        // Get existing recipes.json if it exists
+        try {
+            const getRecipesResponse = await fetch(`${baseUrl}/repos/${owner}/${repo}/contents/${recipesJsonPath}?ref=${githubBranch}`, {
+                headers: {
+                    'Authorization': `token ${githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+            
+            if (getRecipesResponse.ok) {
+                const fileData = await getRecipesResponse.json();
+                recipesSha = fileData.sha;
+                const content = Buffer.from(fileData.content, 'base64').toString('utf8');
+                recipes = JSON.parse(content);
+            }
+        } catch (e) {
+            // File doesn't exist, start fresh
+            recipes = [];
+        }
+        
+        // Update recipes array
+        const recipeEntry = {
+            name: dishData.name,
+            slug: slug,
+            url: `${publicSiteUrl}/public-site/blogs/${slug}.html`,
+            createdAt: new Date().toISOString()
+        };
+        
+        const existingIndex = recipes.findIndex(r => r.slug === slug);
+        if (existingIndex >= 0) {
+            recipes[existingIndex] = recipeEntry;
+        } else {
+            recipes.unshift(recipeEntry);
+        }
+        
+        const recipesContentBase64 = Buffer.from(JSON.stringify(recipes, null, 2), 'utf8').toString('base64');
+        
+        const updateRecipesResponse = await fetch(`${baseUrl}/repos/${owner}/${repo}/contents/${recipesJsonPath}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `token ${githubToken}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                message: `Update recipes.json: Add ${dishData.name}`,
+                content: recipesContentBase64,
+                sha: recipesSha,
+                branch: githubBranch
+            })
+        });
+        
+        if (!updateRecipesResponse.ok && updateRecipesResponse.status !== 422) {
+            console.warn('Failed to update recipes.json, but blog was created');
+        }
+        
+        return {
+            success: true,
+            blogUrl: `${publicSiteUrl}/public-site/blogs/${slug}.html`,
+            imageUrl: imagePath ? `${publicSiteUrl}${imagePath}` : null
+        };
+        
+    } catch (error) {
+        console.error('GitHub API error:', error);
+        return {
+            success: false,
+            error: error.message || 'Unknown error creating blog files via GitHub'
+        };
+    }
+}
+
+// Vercel serverless function handler
+module.exports = async (req, res) => {
+    // === GLOBAL CORS HEADERS ===
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    
+    // === PRE-FLIGHT REQUEST ===
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    try {
+        const { dishData } = req.body;
+        
+        if (!dishData || !dishData.name) {
+            return res.status(400).json({ error: 'dishData with name is required' });
+        }
+
+        // Check if blog already exists
+        const existingBlog = checkBlogExists(dishData.name);
+        if (existingBlog) {
+            return res.status(200).json({
+                success: true,
+                blogUrl: `https://ok-snap-identifier.vercel.app${existingBlog.blogUrl}`,
+                slug: existingBlog.slug,
+                message: 'Blog already exists'
+            });
+        }
+
+        // Generate blog content
+        const blogContent = await generateBlogPost(dishData);
+        
+        // Generate image (optional - don't fail if image generation fails)
+        let imagePath = null;
+        try {
+            imagePath = await generateBlogImage(dishData);
+        } catch (imageError) {
+            console.warn('Image generation failed, continuing without image:', imageError);
+        }
+
+        const slug = createSlug(dishData.name);
+        
+        // Use GitHub API to create blog files in the repository
+        // This will trigger a new Vercel deployment for public-site
+        const githubResult = await createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug);
+        
+        if (githubResult.success) {
+            return res.status(200).json({
+                success: true,
+                blogUrl: githubResult.blogUrl,
+                slug: slug,
+                imageUrl: githubResult.imageUrl,
+                message: 'Blog post created successfully. It will be available on the website shortly.'
+            });
+        } else {
+            // If GitHub API fails, return content in response as fallback
+            console.warn('GitHub API failed, returning content in response:', githubResult.error);
+            return res.status(200).json({
+                success: true,
+                blogUrl: `https://ok-snap-identifier.vercel.app/public-site/blogs/${slug}.html`,
+                slug: slug,
+                imageUrl: imagePath ? `https://ok-snap-identifier.vercel.app${imagePath}` : null,
+                blogContent: blogContent, // Include content in response for frontend display
+                note: 'Blog content included in response (GitHub upload failed)'
+            });
+        }
+    } catch (err) {
+        console.error('Blog generation error:', err);
+        return res.status(500).json({ 
+            error: 'Failed to generate blog post',
+            message: err.message || 'Unknown error'
+        });
+    }
 };
 

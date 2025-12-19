@@ -5559,7 +5559,7 @@
                         limit: userScanInfo?.limit !== undefined ? userScanInfo.limit : 3,
                         level: 'guest'
                     };
-                    console.log('Skipping scan-limit API call for guest user, using defaults:', userScanInfo);
+                    // Removed console.log to reduce console noise
                     return;
                 }
                 
@@ -6041,7 +6041,7 @@
             const remaining = userScanInfo.remaining !== undefined ? userScanInfo.remaining : 0;
             const limit = userScanInfo.limit !== undefined ? userScanInfo.limit : 3;
             
-            console.log('[updateScanLimitDisplay] Updating display:', { remaining, limit, level });
+            // Removed console.log to reduce console noise - only update when needed
             
             // Update main scan limit display (below upload area)
             if (scanLimitDisplay) {
@@ -7502,14 +7502,12 @@
                 updateScanLimitDisplay();
             });
             
-            // Also refresh scan limit periodically (every 30 seconds) to keep it accurate
-            setInterval(() => {
-                updateScanLimit().then(() => {
-                    updateScanLimitDisplay();
-                }).catch((error) => {
-                    console.error('Failed to refresh scan limit:', error);
-                });
-            }, 30000);
+            // Scan limit is now updated only when needed:
+            // - On page load (already done above)
+            // - After a scan is completed
+            // - After recharging via ad
+            // - When user logs in/out
+            // No periodic refresh needed - reduces unnecessary API calls
             
             // Initialize AdMob ads
             initializeAds();
@@ -9030,6 +9028,13 @@
 
                         const generateResult = await generateResponse.json();
                         finalBlogUrl = generateResult.blogUrl || blogUrl;
+                        
+                        // If blog content is in the response (Vercel serverless can't write files)
+                        // Store it for display instead of fetching from URL
+                        if (generateResult.blogContent) {
+                            window.generatedBlogContent = generateResult.blogContent;
+                            window.generatedBlogImageUrl = generateResult.imageUrl;
+                        }
                     } catch (generateError) {
                         // Mark as failed to prevent future retries
                         blogGenerationFailed.add(slug);
@@ -9054,50 +9059,79 @@
                     blogGenSection.style.display = 'none';
                     blogDisplaySection.style.display = 'block';
 
-                    // Fetch blog HTML from public website
-                    try {
-                        const blogResponse = await fetch(finalBlogUrl, {
-                            method: 'GET',
-                            headers: {
-                                'Content-Type': 'text/html'
-                            }
-                        });
-                        
-                        if (!blogResponse.ok) {
-                            throw new Error(`Failed to fetch blog content: ${blogResponse.status}`);
-                        }
-
-                        const html = await blogResponse.text();
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(html, 'text/html');
-                        
-                        // Extract blog content
-                        const featuredImage = doc.querySelector('.blog-featured-image');
-                        const blogContent = doc.querySelector('.blog-post-content');
-                        
+                    // Check if blog content was provided in API response (Vercel serverless)
+                    if (window.generatedBlogContent) {
+                        // Use content from API response
                         let viewerContent = '';
-                        if (featuredImage) {
-                            viewerContent += featuredImage.outerHTML;
+                        
+                        // Add image if available
+                        if (window.generatedBlogImageUrl) {
+                            viewerContent += `<div class="blog-featured-image"><img src="${window.generatedBlogImageUrl}" alt="${dishData.name}" style="width: 100%; max-width: 800px; height: auto; border-radius: 12px; margin: 2rem auto; display: block;"></div>`;
                         }
-                        if (blogContent) {
-                            viewerContent += blogContent.innerHTML;
-                        } else {
-                            viewerContent = '<p>Blog content loaded successfully!</p>';
-                        }
+                        
+                        // Add blog content
+                        viewerContent += `<div class="blog-post-content">${window.generatedBlogContent}</div>`;
                         
                         if (blogViewer) {
                             blogViewer.innerHTML = viewerContent;
                         }
-
-                        // Set external link
+                        
+                        // Set external link (may not exist, but set it anyway)
                         if (blogExternalLink) {
                             blogExternalLink.href = finalBlogUrl;
                             blogExternalLink.textContent = 'View Full Blog Post';
+                            blogExternalLink.style.display = 'none'; // Hide since file doesn't exist
                         }
-                    } catch (fetchError) {
-                        // Silently handle fetch errors - don't spam console
-                        if (blogViewer) {
-                            blogViewer.innerHTML = '<p>Unable to load blog content. The recipe information above is still available.</p>';
+                        
+                        // Clear stored content
+                        delete window.generatedBlogContent;
+                        delete window.generatedBlogImageUrl;
+                    } else {
+                        // Try to fetch blog HTML from public website (for existing blogs)
+                        try {
+                            const blogResponse = await fetch(finalBlogUrl, {
+                                method: 'GET',
+                                headers: {
+                                    'Content-Type': 'text/html'
+                                }
+                            });
+                            
+                            if (!blogResponse.ok) {
+                                throw new Error(`Failed to fetch blog content: ${blogResponse.status}`);
+                            }
+
+                            const html = await blogResponse.text();
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
+                            
+                            // Extract blog content
+                            const featuredImage = doc.querySelector('.blog-featured-image');
+                            const blogContent = doc.querySelector('.blog-post-content');
+                            
+                            let viewerContent = '';
+                            if (featuredImage) {
+                                viewerContent += featuredImage.outerHTML;
+                            }
+                            if (blogContent) {
+                                viewerContent += blogContent.innerHTML;
+                            } else {
+                                viewerContent = '<p>Blog content loaded successfully!</p>';
+                            }
+                            
+                            if (blogViewer) {
+                                blogViewer.innerHTML = viewerContent;
+                            }
+
+                            // Set external link
+                            if (blogExternalLink) {
+                                blogExternalLink.href = finalBlogUrl;
+                                blogExternalLink.textContent = 'View Full Blog Post';
+                            }
+                        } catch (fetchError) {
+                            // Silently handle fetch errors - don't spam console
+                            if (blogViewer) {
+                                blogViewer.innerHTML = '<p>Unable to load blog content. The recipe information above is still available.</p>';
+                            }
                         }
                     }
                 }, needsGeneration ? 500 : 200);
