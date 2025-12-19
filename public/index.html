@@ -9087,51 +9087,17 @@
                         delete window.generatedBlogContent;
                         delete window.generatedBlogImageUrl;
                     } else {
-                        // Try to fetch blog HTML from public website (for existing blogs)
-                        try {
-                            const blogResponse = await fetch(finalBlogUrl, {
-                                method: 'GET',
-                                headers: {
-                                    'Content-Type': 'text/html'
-                                }
-                            });
-                            
-                            if (!blogResponse.ok) {
-                                throw new Error(`Failed to fetch blog content: ${blogResponse.status}`);
-                            }
-
-                            const html = await blogResponse.text();
-                            const parser = new DOMParser();
-                            const doc = parser.parseFromString(html, 'text/html');
-                            
-                            // Extract blog content
-                            const featuredImage = doc.querySelector('.blog-featured-image');
-                            const blogContent = doc.querySelector('.blog-post-content');
-                            
-                            let viewerContent = '';
-                            if (featuredImage) {
-                                viewerContent += featuredImage.outerHTML;
-                            }
-                            if (blogContent) {
-                                viewerContent += blogContent.innerHTML;
-                            } else {
-                                viewerContent = '<p>Blog content loaded successfully!</p>';
-                            }
-                            
-                            if (blogViewer) {
-                                blogViewer.innerHTML = viewerContent;
-                            }
-
-                            // Set external link
-                            if (blogExternalLink) {
-                                blogExternalLink.href = finalBlogUrl;
-                                blogExternalLink.textContent = 'View Full Blog Post';
-                            }
-                        } catch (fetchError) {
-                            // Silently handle fetch errors - don't spam console
-                            if (blogViewer) {
-                                blogViewer.innerHTML = '<p>Unable to load blog content. The recipe information above is still available.</p>';
-                            }
+                        // Blog exists on ok-snap.com - show link to open in browser
+                        // Do NOT fetch HTML (violates CORS, breaks AdSense)
+                        if (blogViewer) {
+                            blogViewer.innerHTML = '<p>Blog post is ready! Click the button below to view the full recipe on ok-snap.com.</p>';
+                        }
+                        
+                        // Set external link to open blog
+                        if (blogExternalLink) {
+                            blogExternalLink.href = finalBlogUrl;
+                            blogExternalLink.textContent = 'View Full Blog Post';
+                            blogExternalLink.style.display = 'inline-block';
                         }
                     }
                 }, needsGeneration ? 500 : 200);
@@ -11020,17 +10986,15 @@
                 card.className = 'blog-card';
                 card.onclick = () => openBlogPost(recipe.url || `${publicWebsiteUrl}/blogs/${recipe.slug || createSlug(recipe.name)}.html`);
                 
-                const imageUrl = recipe.imageUrl || recipe.image || `${publicWebsiteUrl}/images/${recipe.slug || createSlug(recipe.name)}.jpg`;
-                const excerpt = recipe.excerpt || recipe.description || 'Discover this delicious recipe and learn how to make it at home.';
-                const date = recipe.date || recipe.publishedDate || '';
+                // Use JSON data only - no HTML fetching
+                const title = recipe.title || recipe.name || 'Untitled Recipe';
+                const date = recipe.createdAt || recipe.date || recipe.publishedDate || '';
                 
                 card.innerHTML = `
-                    <img src="${imageUrl}" alt="${recipe.name}" class="blog-card-image" onerror="this.style.display='none';">
                     <div class="blog-card-content">
-                        <div class="blog-card-title">${recipe.name || 'Untitled Recipe'}</div>
-                        ${recipe.nameNative ? `<div class="blog-card-title-native">${recipe.nameNative}</div>` : ''}
-                        <div class="blog-card-excerpt">${excerpt}</div>
+                        <div class="blog-card-title">${title}</div>
                         ${date ? `<div class="blog-card-date">${new Date(date).toLocaleDateString()}</div>` : ''}
+                        <div class="blog-card-excerpt">Click to view full recipe on ok-snap.com</div>
                     </div>
                 `;
                 
@@ -11039,14 +11003,15 @@
         }
         
         function openBlogPost(url) {
-            // Try to open in Capacitor Browser plugin (WebView) if available
+            // Open blog in browser/WebView - never fetch HTML into app
+            // This preserves AdSense and avoids CORS issues
             if (typeof window !== 'undefined' && window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Browser) {
+                // Android/iOS: Use Capacitor Browser plugin (WebView)
                 window.Capacitor.Plugins.Browser.open({ url: url }).catch(() => {
-                    // Fallback to window.open if Browser plugin fails
                     window.open(url, '_blank');
                 });
             } else {
-                // Fallback to external browser
+                // Web: Open in new tab
                 window.open(url, '_blank');
             }
         }

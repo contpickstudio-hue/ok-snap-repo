@@ -163,10 +163,9 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
     const githubRepo = process.env.GITHUB_REPO; // Format: "owner/repo" e.g., "username/ok-snap"
     // Default to 'site' branch where the blog website is deployed
     const githubBranch = process.env.GITHUB_BRANCH || 'site';
-    // If your site branch root contains blog files directly (not in public-site/ folder),
-    // set GITHUB_BASE_PATH environment variable to empty string
-    // Default to empty string since site branch likely has files at root
-    const githubBasePath = process.env.GITHUB_BASE_PATH || '';
+    // Default to 'public-site' folder structure
+    // If your site branch root contains blog files directly, set GITHUB_BASE_PATH to empty string
+    const githubBasePath = process.env.GITHUB_BASE_PATH !== undefined ? process.env.GITHUB_BASE_PATH : 'public-site';
     
     if (!githubToken || !githubRepo) {
         return {
@@ -321,10 +320,11 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
         
         // Update recipes array
         const recipeEntry = {
-            name: dishData.name,
             slug: slug,
+            title: dishData.name,
+            name: dishData.name, // Keep for backward compatibility
             url: `${publicSiteUrl}/blogs/${slug}.html`,
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString().split('T')[0] // Format: YYYY-MM-DD
         };
         
         const existingIndex = recipes.findIndex(r => r.slug === slug);
