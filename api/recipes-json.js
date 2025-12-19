@@ -13,12 +13,25 @@ module.exports = async (req, res) => {
     }
     
     try {
-        const response = await fetch('https://ok-snap.com/recipes.json');
+        // Try www.ok-snap.com first (production domain)
+        let response = await fetch('https://www.ok-snap.com/recipes.json');
+        if (!response.ok) {
+            // Fallback to ok-snap.com (without www)
+            response = await fetch('https://ok-snap.com/recipes.json');
+        }
+        
         if (!response.ok) {
             // Return empty array if file doesn't exist yet
+            console.log('recipes.json not found on deployed site, returning empty array');
             return res.status(200).json([]);
         }
+        
         const data = await response.json();
+        if (!Array.isArray(data)) {
+            console.warn('recipes.json is not an array, returning empty array');
+            return res.status(200).json([]);
+        }
+        
         return res.status(200).json(data);
     } catch (err) {
         console.error('recipes-json error:', err);
