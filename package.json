@@ -1,6 +1,6 @@
 {
   "name": "ok-snap",
-  "version": "1.0.20",
+  "version": "1.0.21",
   "description": "A modern web application that uses OpenAI Vision API to identify dishes from photos, providing detailed information including nutrition facts, descriptions, and recipe links.",
   "main": "service-worker.js",
   "scripts": {
@@ -22,7 +22,7 @@
   "license": "ISC",
   "type": "commonjs",
   "engines": {
-    "node": "18.x"
+    "node": "24.x"
   },
   "dependencies": {
     "@capacitor-community/admob": "^7.2.0",
