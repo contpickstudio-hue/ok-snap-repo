@@ -4726,11 +4726,6 @@
                         </svg>
                         <h3 class="result-section-title">Full Recipe Blog</h3>
                     </div>
-                    <div style="margin-bottom: 1rem; text-align: center;">
-                        <button class="btn btn-secondary" id="backToResultsBtn" style="padding: 0.5rem 1rem;">
-                            ← Back to Results
-                        </button>
-                    </div>
                     <div class="blog-viewer" id="blogViewer">
                         <!-- Blog content will be loaded here -->
                     </div>
@@ -4842,18 +4837,18 @@
                         </svg>
                         Save to Favorites
                     </button>
-                    <button class="btn-secondary" id="shareBtnTop" style="flex: 1;">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" style="margin-right: 8px; vertical-align: middle;">
-                            <rect x="4" y="12" width="16" height="8" rx="2" fill="currentColor"></rect>
-                            <polyline points="16 6 12 2 8 6" stroke="white" stroke-width="2" fill="none"></polyline>
-                            <line x1="12" y1="2" x2="12" y2="15" stroke="white" stroke-width="2"></line>
+                    <button class="btn-secondary" id="shareBtnTop" style="flex: 1; background: var(--secondary); border: 2px solid var(--primary);">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--primary)" stroke="var(--primary)" stroke-width="2.5" style="margin-right: 8px; vertical-align: middle;">
+                            <rect x="4" y="12" width="16" height="8" rx="2" fill="var(--primary)"></rect>
+                            <polyline points="16 6 12 2 8 6" stroke="white" stroke-width="2.5" fill="none"></polyline>
+                            <line x1="12" y1="2" x2="12" y2="15" stroke="white" stroke-width="2.5"></line>
                         </svg>
                         Share
                     </button>
                 </div>
-                <!-- View Blog Button -->
-                <div style="margin: 1rem 0; text-align: center;">
-                    <button class="btn" id="viewBlogBtn" style="background: var(--accent); color: white; padding: 0.75rem 1.5rem;">
+                <!-- View Blog Button - Only shown when blog is available -->
+                <div id="viewBlogButtonContainer" style="margin: 1rem 0; text-align: center; display: none;">
+                    <a href="#" id="viewBlogBtn" target="_blank" class="btn" style="background: var(--accent); color: white; padding: 0.75rem 1.5rem; text-decoration: none; display: inline-block;">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px; vertical-align: middle;">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                             <polyline points="14 2 14 8 20 8"></polyline>
@@ -4861,15 +4856,10 @@
                             <line x1="16" y1="17" x2="8" y2="17"></line>
                         </svg>
                         View Full Blog
-                    </button>
+                    </a>
                 </div>
             </div>
 
-            <!-- Warm Message (shown when user has history) -->
-            <div class="warm-message" id="warmMessage" style="display: none;">
-                <p id="warmMessageText"></p>
-            </div>
-            
             <!-- Feature Row - Positioned at bottom of discover tab using flex -->
             <div class="feature-row" style="margin-top: auto; padding: 24px 16px;">
                 <div class="feature-item">
@@ -4920,6 +4910,31 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Footer -->
+            <div class="feature-row" style="margin-top: auto; padding: 24px 16px;">
+                <div class="feature-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                        <path d="M2 17l10 5 10-5"></path>
+                        <path d="M2 12l10 5 10-5"></path>
+                    </svg>
+                    <span>Powered by AI</span>
+                </div>
+                <div class="feature-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    <span>Korean Focus</span>
+                </div>
+                <div class="feature-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                    <span>Cultural Stories</span>
+                </div>
+            </div>
         </div>
 
         <!-- Favorites Tab -->
@@ -4934,6 +4949,31 @@
                         </svg>
                         <p id="favoritesEmpty" style="color: var(--text-secondary); font-size: 0.9375rem; margin-top: 12px;">Save dishes you love to revisit them later</p>
                     </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="feature-row" style="margin-top: auto; padding: 24px 16px;">
+                <div class="feature-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                        <path d="M2 17l10 5 10-5"></path>
+                        <path d="M2 12l10 5 10-5"></path>
+                    </svg>
+                    <span>Powered by AI</span>
+                </div>
+                <div class="feature-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    <span>Korean Focus</span>
+                </div>
+                <div class="feature-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                    <span>Cultural Stories</span>
                 </div>
             </div>
         </div>
@@ -4966,6 +5006,31 @@
                 <div id="browseEmpty" style="display: none; text-align: center; padding: 40px 20px;">
                     <div style="font-size: 1.5rem; margin-bottom: 12px;">📚</div>
                     <p style="color: var(--text-secondary);">No recipes available yet. Check back soon!</p>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="feature-row" style="margin-top: auto; padding: 24px 16px;">
+                <div class="feature-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                        <path d="M2 17l10 5 10-5"></path>
+                        <path d="M2 12l10 5 10-5"></path>
+                    </svg>
+                    <span>Powered by AI</span>
+                </div>
+                <div class="feature-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    <span>Korean Focus</span>
+                </div>
+                <div class="feature-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                    <span>Cultural Stories</span>
                 </div>
             </div>
         </div>
@@ -5078,7 +5143,7 @@
                         <h3 id="appVersionLabel">App Version</h3>
                         <p id="appVersionDesc">Current version of BiteSight</p>
                     </div>
-                    <div class="version-info" id="appVersion">1.0.22</div>
+                    <div class="version-info" id="appVersion">1.0.23</div>
                 </div>
 
                 <!-- Feedback Button -->
@@ -5089,6 +5154,31 @@
                         </svg>
                         <span id="feedbackBtnText">Feedback</span>
                     </button>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="feature-row" style="margin-top: auto; padding: 24px 16px;">
+                <div class="feature-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                        <path d="M2 17l10 5 10-5"></path>
+                        <path d="M2 12l10 5 10-5"></path>
+                    </svg>
+                    <span>Powered by AI</span>
+                </div>
+                <div class="feature-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    <span>Korean Focus</span>
+                </div>
+                <div class="feature-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                    <span>Cultural Stories</span>
                 </div>
             </div>
         </div>
@@ -6967,7 +7057,7 @@
             // Set app version
             const appVersionEl = document.getElementById('appVersion');
             if (appVersionEl) {
-                appVersionEl.textContent = '1.0.22';
+                appVersionEl.textContent = '1.0.23';
             }
 
             // Initialize feedback button
@@ -7563,29 +7653,21 @@
             // Initialize modal visibility handler
             initializeModalVisibility();
             
-            // Setup "View Full Blog" button event listener
+            // Setup "View Full Blog" button event listener - opens blog URL directly
             const viewBlogBtn = document.getElementById('viewBlogBtn');
             if (viewBlogBtn) {
-                viewBlogBtn.addEventListener('click', () => {
-                    if (currentDishData) {
+                viewBlogBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const url = viewBlogBtn.getAttribute('href');
+                    if (url && url !== '#') {
+                        openBlogPost(url);
+                    } else if (currentDishData) {
+                        // Generate blog if URL not set yet
                         generateBlogPost(currentDishData);
                     }
                 });
             }
             
-            // Setup "Back to Results" button event listener
-            const backToResultsBtn = document.getElementById('backToResultsBtn');
-            if (backToResultsBtn) {
-                backToResultsBtn.addEventListener('click', () => {
-                    const blogDisplaySection = document.getElementById('blogDisplaySection');
-                    const blogGenSection = document.getElementById('blogGenerationSection');
-                    const resultSection = document.getElementById('resultSection');
-                    
-                    if (blogDisplaySection) blogDisplaySection.style.display = 'none';
-                    if (blogGenSection) blogGenSection.style.display = 'none';
-                    if (resultSection) resultSection.style.display = 'block';
-                });
-            }
         });
         
         // ============================================
@@ -8700,21 +8782,10 @@
                 confidenceBadge.className = 'confidence-badge low';
             }
 
-            // Set description - already in user's language from API
-            let descriptionText = dishData.description || '';
-            // Remove any JSON artifacts or code blocks
-            descriptionText = descriptionText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-            // If description looks like JSON, try to extract meaningful text
-            if (descriptionText.startsWith('{') || descriptionText.startsWith('[')) {
-                try {
-                    const parsed = JSON.parse(descriptionText);
-                    descriptionText = parsed.description || parsed.text || descriptionText;
-                } catch (e) {
-                    // If parsing fails, just use the text as is but clean it up
-                    descriptionText = descriptionText.replace(/[{}[\]]/g, '').replace(/"/g, '').trim();
-                }
+            // Hide description section - no narrative text needed
+            if (dishDescription) {
+                dishDescription.style.display = 'none';
             }
-            dishDescription.innerHTML = `<strong>${dishData.name}</strong><br><br>${descriptionText}`;
 
             // Update Google Maps link with dish name
             const findRestaurantsLink = document.getElementById('findRestaurantsLink');
@@ -8831,8 +8902,14 @@
                 addToLogBtn.style.display = 'none';
             }
 
-            // Show result section
-            resultSection.style.display = 'block';
+            // Show result section immediately - don't wait for tab switch
+            if (resultSection) {
+                resultSection.style.display = 'block';
+                // Ensure we're on discover tab to show results
+                if (currentRoute !== 'discover') {
+                    switchTab('discover', true);
+                }
+            }
             resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
@@ -8964,7 +9041,9 @@
                 // Use global getApiBase function to ensure apiBase is always defined
                 const apiBase = getApiBase();
                 const publicWebsiteUrl = 'https://ok-snap.com';
-                const blogUrl = `${publicWebsiteUrl}/blogs/${slug}.html`;
+                // Ensure blog URL uses correct format: ok-snap.com/blogs/{slug}.html
+                const slug = createSlug(dishData.name);
+                const blogUrl = `https://ok-snap.com/blogs/${slug}.html`;
 
                 // Step 1: Check if blog exists (handle 404 gracefully)
                 let checkResult = { exists: false };
@@ -9029,6 +9108,16 @@
                         const generateResult = await generateResponse.json();
                         finalBlogUrl = generateResult.blogUrl || blogUrl;
                         
+                        // Update "View Full Blog" button if blog was successfully created
+                        if (generateResult.success && finalBlogUrl) {
+                            const viewBlogBtnContainer = document.getElementById('viewBlogButtonContainer');
+                            const viewBlogBtn = document.getElementById('viewBlogBtn');
+                            if (viewBlogBtnContainer && viewBlogBtn) {
+                                viewBlogBtn.href = finalBlogUrl;
+                                viewBlogBtnContainer.style.display = 'block';
+                            }
+                        }
+                        
                         // If blog content is in the response (Vercel serverless can't write files)
                         // Store it for display instead of fetching from URL
                         if (generateResult.blogContent) {
@@ -9041,8 +9130,15 @@
                         throw generateError; // Re-throw to be caught by outer catch
                     }
                 } else {
+                    // Blog already exists - show button immediately
                     if (blogProgressText) {
-                        blogProgressText.textContent = 'Loading existing blog post...';
+                        blogProgressText.textContent = 'Blog post is ready!';
+                    }
+                    const viewBlogBtnContainer = document.getElementById('viewBlogButtonContainer');
+                    const viewBlogBtn = document.getElementById('viewBlogBtn');
+                    if (viewBlogBtnContainer && viewBlogBtn) {
+                        viewBlogBtn.href = finalBlogUrl;
+                        viewBlogBtnContainer.style.display = 'block';
                     }
                 }
 
@@ -9098,6 +9194,14 @@
                             blogExternalLink.href = finalBlogUrl;
                             blogExternalLink.textContent = 'View Full Blog Post';
                             blogExternalLink.style.display = 'inline-block';
+                        }
+                        
+                        // Also update the main "View Full Blog" button
+                        const viewBlogBtnContainer = document.getElementById('viewBlogButtonContainer');
+                        const viewBlogBtn = document.getElementById('viewBlogBtn');
+                        if (viewBlogBtnContainer && viewBlogBtn) {
+                            viewBlogBtn.href = finalBlogUrl;
+                            viewBlogBtnContainer.style.display = 'block';
                         }
                     }
                 }, needsGeneration ? 500 : 200);
@@ -10156,16 +10260,7 @@
                 return;
             }
 
-            // Show warm message with recent dishes
-            const recentDishes = history.slice(0, 3).map(item => item.nameKorean || item.name).join(', ');
-            if (warmMessage && warmMessageText) {
-                if (history.length >= 2) {
-                    warmMessageText.textContent = `You recently explored ${recentDishes} — want to save them for your cooking list?`;
-                    warmMessage.style.display = 'block';
-                } else {
-                    warmMessage.style.display = 'none';
-                }
-            }
+            // Warm message removed - footer content moved to bottom of all tabs
 
             // Render history items with descriptions
             if (historyGrid) {
