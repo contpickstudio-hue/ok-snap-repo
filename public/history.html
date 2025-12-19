@@ -4564,17 +4564,50 @@
                 </div>
             </div>
         </div>
-        
-        <!-- REMOVED: Discover Tab Content -->
-        <!-- REMOVED: Favorites Tab Content -->
-        <!-- REMOVED: Browse Tab Content -->
-        <!-- REMOVED: Settings Tab Content -->
-            <div class="hero-card">
-                <div class="upload-section">
-                <div class="upload-area" id="uploadArea">
-                    <div id="previewContainer" style="display: none;" onclick="event.stopPropagation()">
-                        <img id="previewImage" class="preview-image" alt="Preview">
-                        <button type="button" class="remove-preview" id="removePreview" title="Remove image">×</button>
+
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-navigation">
+        <a href="index.html" class="nav-item" id="navDiscover">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+            </svg>
+            <span id="navDiscoverText">Discover</span>
+        </a>
+        <a href="history.html" class="nav-item active" id="navHistory">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span id="navHistoryText">History</span>
+        </a>
+        <a href="favorites.html" class="nav-item" id="navFavorites">
+            <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="currentColor"></path>
+            </svg>
+            <span id="navFavoritesText">Favorites</span>
+        </a>
+        <a href="browse.html" class="nav-item" id="navBrowse">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            <span id="navBrowseText">Browse</span>
+        </a>
+        <a href="settings.html" class="nav-item" id="navSettings">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 15.5C10.07 15.5 8.5 13.93 8.5 12C8.5 10.07 10.07 8.5 12 8.5C13.93 8.5 15.5 10.07 15.5 12C15.5 13.93 13.93 15.5 12 15.5ZM12 10C10.9 10 10 10.9 10 12C10 13.1 10.9 14 12 14C13.1 14 14 13.1 14 12C14 10.9 13.1 10 12 10Z" fill="currentColor"></path>
+                <path d="M19.43 12.97C19.47 12.65 19.5 12.33 19.5 12C19.5 11.67 19.47 11.35 19.43 11.03L21.54 9.37C21.73 9.22 21.78 8.95 21.66 8.73L19.66 5.27C19.54 5.05 19.27 4.96 19.05 5.05L16.56 6.05C16.04 5.65 15.5 5.32 14.87 5.07L14.5 2.42C14.46 2.18 14.25 2 14 2H10C9.75 2 9.54 2.18 9.5 2.42L9.13 5.07C8.5 5.32 7.96 5.66 7.44 6.05L4.95 5.05C4.73 4.96 4.46 5.05 4.34 5.27L2.34 8.73C2.21 8.95 2.27 9.22 2.46 9.37L4.57 11.03C4.53 11.35 4.5 11.67 4.5 12C4.5 12.33 4.53 12.65 4.57 12.97L2.46 14.63C2.27 14.78 2.21 15.05 2.34 15.27L4.34 18.73C4.46 18.95 4.73 19.03 4.95 18.95L7.44 17.95C7.96 18.34 8.5 18.68 9.13 18.93L9.5 21.58C9.54 21.82 9.75 22 10 22H14C14.25 22 14.46 21.82 14.5 21.58L14.87 18.93C15.5 18.68 16.04 18.34 16.56 17.95L19.05 18.95C19.27 19.04 19.54 18.95 19.66 18.73L21.66 15.27C21.79 15.05 21.73 14.78 21.54 14.63L19.43 12.97Z" fill="currentColor"></path>
+            </svg>
+            <span id="navSettingsText">Settings</span>
+        </a>
+    </nav>
+
+    <script>
                     </div>
                     <div id="uploadPlaceholder">
                         <div class="upload-icon">
@@ -6135,143 +6168,16 @@
         window.refreshSession = refreshSession;
 
         // ============================================
-        // BOTTOM NAVIGATION
+        // PAGE-SPECIFIC INITIALIZATION
         // ============================================
-        function switchTab(tabName, skipHistory = false) {
-            const navItems = document.querySelectorAll('.nav-item');
-            const tabContents = document.querySelectorAll('.tab-content');
-
-            // Track navigation history
-            if (!skipHistory && currentRoute !== tabName) {
-                navigationHistory.push(currentRoute);
-                // Keep only last 10 routes
-                if (navigationHistory.length > 10) {
-                    navigationHistory.shift();
-                }
+        // History page initialization - runs only on history.html
+        if (location.pathname.includes('history')) {
+            // Initialize history filters and load history on page load
+            if (typeof initializeHistoryFilters === 'function') {
+                initializeHistoryFilters();
             }
-
-            // Remove active class from all nav items and contents
-            navItems.forEach(nav => nav.classList.remove('active'));
-            tabContents.forEach(content => {
-                content.classList.remove('active');
-                content.style.display = 'none'; // Explicitly hide inactive tabs
-            });
-
-            // Add active class to target nav item and corresponding content
-            const targetNavItem = document.querySelector(`[data-tab="${tabName}"]`);
-            const targetTabContent = document.getElementById(tabName + 'Tab');
-            
-            console.log('Switching tab:', tabName, 'Nav item found:', !!targetNavItem, 'Tab content found:', !!targetTabContent);
-            
-            if (!targetNavItem) {
-                console.error('Nav item not found for tab:', tabName);
-                return; // Exit early if nav item doesn't exist
-            }
-            if (!targetTabContent) {
-                console.error('Tab content not found for tab:', tabName + 'Tab');
-                return; // Exit early if tab content doesn't exist
-            }
-            
-            targetNavItem.classList.add('active');
-            targetTabContent.classList.add('active');
-            
-            // Ensure tab content is visible (handle both block and flex layouts)
-            // CSS already handles this, but we set it explicitly to override any inline styles
-            if (tabName === 'discover') {
-                targetTabContent.style.display = 'flex';
-                targetTabContent.style.flexDirection = 'column';
-            } else {
-                targetTabContent.style.display = 'block';
-                targetTabContent.style.flexDirection = '';
-            }
-            
-            currentRoute = tabName;
-            
-            // Handle result display based on tab
-            // CRITICAL: Scan results must ONLY be visible on Discover tab
-            const resultSection = document.getElementById('resultSection');
-            const blogGenSection = document.getElementById('blogGenerationSection');
-            const blogDisplaySection = document.getElementById('blogDisplaySection');
-            
-            // Hide scan results when switching away from Discover tab
-            if (tabName !== 'discover') {
-                // Hide all scan result UI elements
-                if (resultSection) {
-                    resultSection.style.display = 'none';
-                }
-                if (blogGenSection) {
-                    blogGenSection.style.display = 'none';
-                }
-                if (blogDisplaySection) {
-                    blogDisplaySection.style.display = 'none';
-                }
-            }
-            
-            if (tabName === 'browse') {
-                // Load browse recipes when switching to this tab
-                if (typeof loadBrowseRecipes === 'function') {
-                    try {
-                        loadBrowseRecipes();
-                    } catch (error) {
-                        console.error('Error loading browse recipes:', error);
-                    }
-                } else {
-                    console.warn('loadBrowseRecipes function not found');
-                }
-            } else if (tabName === 'history') {
-                // Initialize history filters when switching to history tab
-                try {
-                    if (typeof initializeHistoryFilters === 'function') {
-                        initializeHistoryFilters();
-                    }
-                    if (typeof loadHistory === 'function') {
-                        loadHistory();
-                    }
-                } catch (error) {
-                    console.error('Error loading history tab:', error);
-                }
-            } else if (tabName === 'favorites') {
-                // Load favorites when switching to favorites tab
-                try {
-                    if (typeof loadFavorites === 'function') {
-                        loadFavorites();
-                    }
-                } catch (error) {
-                    console.error('Error loading favorites tab:', error);
-                }
-            } else if (tabName === 'settings') {
-                // Initialize settings when switching to settings tab
-                try {
-                    if (typeof initializeSettings === 'function') {
-                        initializeSettings();
-                    }
-                } catch (error) {
-                    console.error('Error loading settings tab:', error);
-                }
-            } else if (tabName === 'discover') {
-                // When switching back to discover tab, show result if it exists
-                if (isShowingResult && currentDishData && resultSection) {
-                    // Just show the result section, don't re-render (to avoid duplicate history states)
-                    resultSection.style.display = 'block';
-                    // Scroll to result if needed
-                    setTimeout(() => {
-                        resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }, 100);
-                } else if (resultSection) {
-                    // Hide result if no result data
-                    resultSection.style.display = 'none';
-                }
-            } else {
-                // Hide result section when switching to other tabs (but keep the state)
-                if (resultSection && isShowingResult) {
-                    resultSection.style.display = 'none';
-                    // Don't set isShowingResult = false, keep it true so we can restore later
-                }
-            }
-            
-            // Update profile card visibility when switching to settings
-            if (tabName === 'settings') {
-                initializeProfileCard();
+            if (typeof loadHistory === 'function') {
+                loadHistory();
             }
         }
         
@@ -10794,85 +10700,16 @@
         // ============================================
         // UTILITY FUNCTIONS
         // ============================================
-        function loadDishFromHistory(name) {
-            const history = JSON.parse(localStorage.getItem('biteSightHistory') || '[]');
-            const historyItem = history.find(item => item.name === name);
-            
-            if (!historyItem) {
-                const lang = getCurrentLanguage();
-                const t = translations[lang] || translations.en;
-                alert(t.historyItemNotFound || 'History item not found.');
-                return;
-            }
-            
-            // Restore the complete dish data (with fallbacks for old history items)
-            currentDishData = {
-                name: historyItem.name || '',
-                nameKorean: historyItem.nameKorean || '',
-                isKorean: historyItem.isKorean || false,
-                cuisine: historyItem.cuisine || '',
-                confidence: historyItem.confidence || 0.5,
-                description: historyItem.description || '',
-                alternatives: historyItem.alternatives || []
-            };
-            
-            // Restore the image (use imageSrc if available, otherwise fallback to thumbnail)
-            const dishImage = document.getElementById('dishImage');
-            if (dishImage) {
-                dishImage.src = historyItem.imageSrc || historyItem.thumbnail || '';
-            }
-            
-            // Display the result exactly as it was
-            displayResult(currentDishData);
-            
-            // Setup recipe links
-            setupRecipeLinks(currentDishData.name);
-            
-            // Switch to discover tab to show the result
-            switchTab('discover');
-        }
-        
-        function loadDishFromFavorites(name) {
-            const favorites = JSON.parse(localStorage.getItem('biteSightFavorites') || '[]');
-            const favoriteItem = favorites.find(item => item.name === name);
-            
-            if (!favoriteItem) {
-                const lang = getCurrentLanguage();
-                const t = translations[lang] || translations.en;
-                alert(t.favoriteItemNotFound || 'Favorite item not found.');
-                return;
-            }
-            
-            // Restore the complete dish data (with fallbacks for old favorite items)
-            currentDishData = {
-                name: favoriteItem.name || '',
-                nameKorean: favoriteItem.nameKorean || '',
-                isKorean: favoriteItem.isKorean || false,
-                cuisine: favoriteItem.cuisine || '',
-                confidence: favoriteItem.confidence || 0.5,
-                description: favoriteItem.description || '',
-                alternatives: favoriteItem.alternatives || []
-            };
-            
-            // Restore the image (use imageSrc if available, otherwise fallback to thumbnail)
-            const dishImage = document.getElementById('dishImage');
-            if (dishImage) {
-                dishImage.src = favoriteItem.imageSrc || favoriteItem.thumbnail || '';
-            }
-            
-            // Display the result exactly as it was
-            displayResult(currentDishData);
-            
-            // Setup recipe links
-            setupRecipeLinks(currentDishData.name);
-            
-            // Switch to discover tab to show the result
-            switchTab('discover');
-        }
+        // Removed loadDishFromHistory and loadDishFromFavorites - these functions
+        // redirected to discover tab, but history.html is now a separate page.
+        // Users can click history items to navigate to index.html if needed.
         
         // ============================================
-        // BROWSE RECIPES FUNCTIONS
+        // BROWSE RECIPES FUNCTIONS - REMOVED
         // ============================================
+        // loadBrowseRecipes removed - not needed in history.html
+        // This function belongs in browse.html only
+        /*
         async function loadBrowseRecipes() {
             const container = document.getElementById('browseRecipesContainer');
             const loading = document.getElementById('browseLoading');
@@ -10988,19 +10825,7 @@
             });
         }
         
-        function openBlogPost(url) {
-            // Open blog in browser/WebView - never fetch HTML into app
-            // This preserves AdSense and avoids CORS issues
-            if (typeof window !== 'undefined' && window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Browser) {
-                // Android/iOS: Use Capacitor Browser plugin (WebView)
-                window.Capacitor.Plugins.Browser.open({ url: url }).catch(() => {
-                    window.open(url, '_blank');
-                });
-            } else {
-                // Web: Open in new tab
-                window.open(url, '_blank');
-            }
-        }
+        */
     </script>
 </body>
 </html>

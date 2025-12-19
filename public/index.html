@@ -6104,48 +6104,9 @@
                 }
             }
             
-            if (tabName === 'browse') {
-                // Load browse recipes when switching to this tab
-                if (typeof loadBrowseRecipes === 'function') {
-                    try {
-                        loadBrowseRecipes();
-                    } catch (error) {
-                        console.error('Error loading browse recipes:', error);
-                    }
-                } else {
-                    console.warn('loadBrowseRecipes function not found');
-                }
-            } else if (tabName === 'history') {
-                // Initialize history filters when switching to history tab
-                try {
-                    if (typeof initializeHistoryFilters === 'function') {
-                        initializeHistoryFilters();
-                    }
-                    if (typeof loadHistory === 'function') {
-                        loadHistory();
-                    }
-                } catch (error) {
-                    console.error('Error loading history tab:', error);
-                }
-            } else if (tabName === 'favorites') {
-                // Load favorites when switching to favorites tab
-                try {
-                    if (typeof loadFavorites === 'function') {
-                        loadFavorites();
-                    }
-                } catch (error) {
-                    console.error('Error loading favorites tab:', error);
-                }
-            } else if (tabName === 'settings') {
-                // Initialize settings when switching to settings tab
-                try {
-                    if (typeof initializeSettings === 'function') {
-                        initializeSettings();
-                    }
-                } catch (error) {
-                    console.error('Error loading settings tab:', error);
-                }
-            } else if (tabName === 'discover') {
+            // Note: browse, history, favorites, and settings are now separate pages
+            // Navigation to these pages uses href links, not tab switching
+            if (tabName === 'discover') {
                 // When switching back to discover tab, show result if it exists
                 if (isShowingResult && currentDishData && resultSection) {
                     // Just show the result section, don't re-render (to avoid duplicate history states)
@@ -7228,7 +7189,19 @@
             if (header) header.style.display = 'flex';
         }
 
+        // ============================================
+        // PAGE-SPECIFIC INITIALIZATION
+        // ============================================
+        // Only run discover/upload initialization on index.html
+        if (location.pathname.includes('index.html') || location.pathname === '/' || location.pathname.endsWith('/')) {
+            // Initialize discover page functionality
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
+            // Page-specific initialization
+            if (location.pathname.includes('index.html') || location.pathname === '/' || location.pathname.endsWith('/')) {
+                // Initialize discover page
+            }
             // Check onboarding status first
             const shouldShowOnboarding = checkOnboardingStatus();
             
