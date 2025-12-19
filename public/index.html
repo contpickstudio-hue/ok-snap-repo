@@ -4697,20 +4697,37 @@
                 <!-- Blog Generation Progress Section -->
                 <div class="blog-generation-section" id="blogGenerationSection" style="display: none;">
                     <div class="result-section-header">
-                        <svg class="result-section-icon" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5">
+                        <svg class="result-section-icon" id="blogStatusIcon" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                             <polyline points="14 2 14 8 20 8"></polyline>
                             <line x1="16" y1="13" x2="8" y2="13"></line>
                             <line x1="16" y1="17" x2="8" y2="17"></line>
                             <polyline points="10 9 9 9 8 9"></polyline>
                         </svg>
-                        <h3 class="result-section-title">Creating Recipe Blog</h3>
+                        <h3 class="result-section-title" id="blogStatusTitle">Creating Recipe Blog</h3>
                     </div>
                     <div class="blog-progress-container">
                         <div class="blog-progress-bar">
                             <div class="blog-progress-fill" id="blogProgressFill"></div>
                         </div>
                         <p class="blog-progress-text" id="blogProgressText">Generating your personalized recipe blog...</p>
+                    </div>
+                    <!-- Success State (hidden by default) -->
+                    <div class="blog-status-message blog-success" id="blogSuccessMessage" style="display: none;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 24px; height: 24px; margin-right: 8px;">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        <span>Blog post created successfully!</span>
+                    </div>
+                    <!-- Failure State (hidden by default) -->
+                    <div class="blog-status-message blog-error" id="blogErrorMessage" style="display: none;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 24px; height: 24px; margin-right: 8px;">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <span id="blogErrorText">Blog generation failed. Please try again later.</span>
                     </div>
                 </div>
 
@@ -4837,31 +4854,25 @@
                         </svg>
                         Save to Favorites
                     </button>
-                    <button class="btn-secondary" id="shareBtnTop" style="flex: 1; background: var(--secondary); border: 2px solid var(--primary);">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--primary)" stroke="var(--primary)" stroke-width="2.5" style="margin-right: 8px; vertical-align: middle;">
-                            <rect x="4" y="12" width="16" height="8" rx="2" fill="var(--primary)"></rect>
-                            <polyline points="16 6 12 2 8 6" stroke="white" stroke-width="2.5" fill="none"></polyline>
-                            <line x1="12" y1="2" x2="12" y2="15" stroke="white" stroke-width="2.5"></line>
+                    <button class="btn-secondary" id="shareBtnTop" style="flex: 1;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" style="margin-right: 8px; vertical-align: middle;">
+                            <rect x="4" y="12" width="16" height="8" rx="2" fill="currentColor"></rect>
+                            <polyline points="16 6 12 2 8 6" stroke="white" stroke-width="2" fill="none"></polyline>
+                            <line x1="12" y1="2" x2="12" y2="15" stroke="white" stroke-width="2"></line>
                         </svg>
                         Share
                     </button>
                 </div>
-                <!-- View Blog Button - Only shown when blog is available -->
-                <div id="viewBlogButtonContainer" style="margin: 1rem 0; text-align: center; display: none;">
-                    <a href="#" id="viewBlogBtn" target="_blank" class="btn" style="background: var(--accent); color: white; padding: 0.75rem 1.5rem; text-decoration: none; display: inline-block;">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px; vertical-align: middle;">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                        </svg>
-                        View Full Blog
-                    </a>
-                </div>
             </div>
 
-            <!-- Feature Row - Positioned at bottom of discover tab using flex -->
-            <div class="feature-row" style="margin-top: auto; padding: 24px 16px;">
+            <!-- Warm Message (shown when user has history) -->
+            <!-- Warm Message (shown when user has history) - at bottom -->
+            <div class="warm-message" id="warmMessage" style="display: none; margin-top: auto; padding-top: 24px;">
+                <p id="warmMessageText"></p>
+            </div>
+            
+            <!-- Feature Row - Positioned at bottom of discover tab -->
+            <div class="feature-row" style="margin-top: 16px; padding: 24px 16px;">
                 <div class="feature-item">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
@@ -4887,7 +4898,7 @@
         </div>
 
         <!-- History Tab -->
-        <div class="tab-content" id="historyTab">
+        <div class="tab-content" id="historyTab" style="display: flex; flex-direction: column;">
             <div class="history-section">
                 <h2 class="section-title" id="recentDiscoveries">📜 Your Recent Discoveries</h2>
                 
@@ -4911,7 +4922,7 @@
                 </div>
             </div>
             
-            <!-- Footer -->
+            <!-- Footer at bottom -->
             <div class="feature-row" style="margin-top: auto; padding: 24px 16px;">
                 <div class="feature-item">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -4938,7 +4949,7 @@
         </div>
 
         <!-- Favorites Tab -->
-        <div class="tab-content" id="favoritesTab">
+        <div class="tab-content" id="favoritesTab" style="display: flex; flex-direction: column;">
             <div class="favorites-section">
                 <h2 class="section-title" id="favoriteDishes">❤️ Your Favorite Dishes</h2>
                 <div class="favorites-grid" id="favoritesGrid">
@@ -4952,7 +4963,7 @@
                 </div>
             </div>
             
-            <!-- Footer -->
+            <!-- Footer at bottom -->
             <div class="feature-row" style="margin-top: auto; padding: 24px 16px;">
                 <div class="feature-item">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -4979,7 +4990,7 @@
         </div>
 
         <!-- Browse Tab -->
-        <div class="tab-content" id="browseTab">
+        <div class="tab-content" id="browseTab" style="display: flex; flex-direction: column;">
             <div class="browse-section">
                 <h2 class="section-title" id="browseTitle" style="margin-bottom: 8px;">🍽️ Browse Recipes</h2>
                 <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 20px;">Discover delicious recipes from our blog</p>
@@ -5009,7 +5020,7 @@
                 </div>
             </div>
             
-            <!-- Footer -->
+            <!-- Footer at bottom -->
             <div class="feature-row" style="margin-top: auto; padding: 24px 16px;">
                 <div class="feature-item">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -5075,7 +5086,7 @@
         </div>
 
         <!-- Settings Tab -->
-        <div class="tab-content" id="settingsTab">
+        <div class="tab-content" id="settingsTab" style="display: flex; flex-direction: column;">
             <div class="settings-section">
                 <h2 class="section-title" id="settingsTitle">⚙️ Settings</h2>
                 
@@ -5143,7 +5154,7 @@
                         <h3 id="appVersionLabel">App Version</h3>
                         <p id="appVersionDesc">Current version of BiteSight</p>
                     </div>
-                    <div class="version-info" id="appVersion">1.0.23</div>
+                    <div class="version-info" id="appVersion">1.0.22</div>
                 </div>
 
                 <!-- Feedback Button -->
@@ -5157,7 +5168,7 @@
                 </div>
             </div>
             
-            <!-- Footer -->
+            <!-- Footer at bottom -->
             <div class="feature-row" style="margin-top: auto; padding: 24px 16px;">
                 <div class="feature-item">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -7057,7 +7068,7 @@
             // Set app version
             const appVersionEl = document.getElementById('appVersion');
             if (appVersionEl) {
-                appVersionEl.textContent = '1.0.23';
+                appVersionEl.textContent = '1.0.22';
             }
 
             // Initialize feedback button
@@ -7652,21 +7663,6 @@
             
             // Initialize modal visibility handler
             initializeModalVisibility();
-            
-            // Setup "View Full Blog" button event listener - opens blog URL directly
-            const viewBlogBtn = document.getElementById('viewBlogBtn');
-            if (viewBlogBtn) {
-                viewBlogBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const url = viewBlogBtn.getAttribute('href');
-                    if (url && url !== '#') {
-                        openBlogPost(url);
-                    } else if (currentDishData) {
-                        // Generate blog if URL not set yet
-                        generateBlogPost(currentDishData);
-                    }
-                });
-            }
             
         });
         
@@ -8538,6 +8534,15 @@
                     }
                 };
 
+                // Set result state BEFORE switching tabs so switchTab shows it immediately
+                isShowingResult = true;
+                
+                // Ensure we're on discover tab BEFORE displaying results
+                if (currentRoute !== 'discover') {
+                    switchTab('discover', false);
+                }
+                
+                // Display results immediately - no tab switch dependency
                 displayResult(currentDishData);
                 showLoading(false);
                 
@@ -8744,10 +8749,13 @@
         function displayResult(dishData) {
             isShowingResult = true;
             
-            // Push a history state when showing result so back button works properly
-            if (currentRoute === 'discover') {
-                window.history.pushState({ route: 'discover', showingResult: true }, '', window.location.href);
+            // Ensure we're on discover tab to show results (if not already)
+            if (currentRoute !== 'discover') {
+                switchTab('discover', false);
             }
+            
+            // Push a history state when showing result so back button works properly
+            window.history.pushState({ route: 'discover', showingResult: true }, '', window.location.href);
             
             const lang = getCurrentLanguage();
             const t = translations[lang] || translations.en;
@@ -8782,7 +8790,7 @@
                 confidenceBadge.className = 'confidence-badge low';
             }
 
-            // Hide description section - no narrative text needed
+            // Hide description - only show structured data (name, nutrition, ingredients)
             if (dishDescription) {
                 dishDescription.style.display = 'none';
             }
@@ -8902,16 +8910,10 @@
                 addToLogBtn.style.display = 'none';
             }
 
-            // Show result section immediately - don't wait for tab switch
-            if (resultSection) {
-                resultSection.style.display = 'block';
-                // Ensure we're on discover tab to show results
-                if (currentRoute !== 'discover') {
-                    switchTab('discover', true);
-                }
-            }
+            // Show result section
+            resultSection.style.display = 'block';
             resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+            
 
         function displayNutritionInfo(dishData) {
             const nutritionSection = document.getElementById('nutritionSection');
@@ -9022,10 +9024,32 @@
             // Mark as attempted immediately to prevent duplicate calls
             blogGenerationAttempted.add(slug);
 
-            // Hide result section and show blog generation section
-            if (resultSection) resultSection.style.display = 'none';
+            // Show blog generation section (keep result section visible)
             blogGenSection.style.display = 'block';
             blogDisplaySection.style.display = 'none';
+            
+            // Reset status messages and UI elements
+            const blogSuccessMessage = document.getElementById('blogSuccessMessage');
+            const blogErrorMessage = document.getElementById('blogErrorMessage');
+            const blogStatusIcon = document.getElementById('blogStatusIcon');
+            const blogStatusTitle = document.getElementById('blogStatusTitle');
+            const blogProgressBar = document.querySelector('.blog-progress-bar');
+            
+            if (blogSuccessMessage) blogSuccessMessage.style.display = 'none';
+            if (blogErrorMessage) blogErrorMessage.style.display = 'none';
+            if (blogProgressBar) blogProgressBar.style.display = 'block';
+            if (blogStatusTitle) blogStatusTitle.textContent = 'Creating Recipe Blog';
+            
+            // Reset icon to default (document icon)
+            if (blogStatusIcon) {
+                blogStatusIcon.innerHTML = `
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                `;
+            }
 
             // Simulate progress
             let progress = 0;
@@ -9041,9 +9065,8 @@
                 // Use global getApiBase function to ensure apiBase is always defined
                 const apiBase = getApiBase();
                 const publicWebsiteUrl = 'https://ok-snap.com';
-                // Ensure blog URL uses correct format: ok-snap.com/blogs/{slug}.html
-                const slug = createSlug(dishData.name);
-                const blogUrl = `https://ok-snap.com/blogs/${slug}.html`;
+                // Ensure URL format matches: ok-snap.com/blogs/{slug}.html
+                const blogUrl = `${publicWebsiteUrl}/blogs/${slug}.html`;
 
                 // Step 1: Check if blog exists (handle 404 gracefully)
                 let checkResult = { exists: false };
@@ -9073,6 +9096,7 @@
 
                 let finalBlogUrl = blogUrl;
                 let needsGeneration = !checkResult.exists;
+                let generateResult = null; // Declare outside if block for scope access
 
                 if (needsGeneration) {
                     // Step 2: Generate blog if it doesn't exist
@@ -9105,17 +9129,22 @@
                             throw new Error(`Blog generation failed: ${generateResponse.status}`);
                         }
 
-                        const generateResult = await generateResponse.json();
-                        finalBlogUrl = generateResult.blogUrl || blogUrl;
+                        generateResult = await generateResponse.json();
+                        // Use blogUrl from response if available, otherwise construct it
+                        if (generateResult.blogUrl) {
+                            finalBlogUrl = generateResult.blogUrl;
+                        } else if (generateResult.slug) {
+                            // Construct URL from slug if provided
+                            finalBlogUrl = `${publicWebsiteUrl}/blogs/${generateResult.slug}.html`;
+                        } else {
+                            // Fallback to constructed URL
+                            finalBlogUrl = blogUrl;
+                        }
                         
-                        // Update "View Full Blog" button if blog was successfully created
-                        if (generateResult.success && finalBlogUrl) {
-                            const viewBlogBtnContainer = document.getElementById('viewBlogButtonContainer');
-                            const viewBlogBtn = document.getElementById('viewBlogBtn');
-                            if (viewBlogBtnContainer && viewBlogBtn) {
-                                viewBlogBtn.href = finalBlogUrl;
-                                viewBlogBtnContainer.style.display = 'block';
-                            }
+                        // Verify blog was successfully created (not skipped)
+                        if (generateResult.skipped) {
+                            // Blog already exists, use the existing URL
+                            finalBlogUrl = generateResult.blogUrl || blogUrl;
                         }
                         
                         // If blog content is in the response (Vercel serverless can't write files)
@@ -9130,27 +9159,39 @@
                         throw generateError; // Re-throw to be caught by outer catch
                     }
                 } else {
-                    // Blog already exists - show button immediately
                     if (blogProgressText) {
-                        blogProgressText.textContent = 'Blog post is ready!';
-                    }
-                    const viewBlogBtnContainer = document.getElementById('viewBlogButtonContainer');
-                    const viewBlogBtn = document.getElementById('viewBlogBtn');
-                    if (viewBlogBtnContainer && viewBlogBtn) {
-                        viewBlogBtn.href = finalBlogUrl;
-                        viewBlogBtnContainer.style.display = 'block';
+                        blogProgressText.textContent = 'Loading existing blog post...';
                     }
                 }
 
                 clearInterval(progressInterval);
                 if (blogProgressFill) blogProgressFill.style.width = '100%';
 
-                // Step 3: Fetch blog content from public website
+                // Show success state
+                const blogStatusIcon = document.getElementById('blogStatusIcon');
+                const blogStatusTitle = document.getElementById('blogStatusTitle');
+                const blogSuccessMessage = document.getElementById('blogSuccessMessage');
+                const blogProgressBar = document.querySelector('.blog-progress-bar');
+                
                 if (blogProgressText) {
-                    blogProgressText.textContent = 'Loading blog content...';
+                    blogProgressText.textContent = 'Blog post ready!';
                 }
+                
+                // Update icon and title to success state
+                if (blogStatusIcon) {
+                    blogStatusIcon.innerHTML = `
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M9 12l2 2 4-4"></path>
+                    `;
+                    blogStatusIcon.setAttribute('stroke', 'currentColor');
+                }
+                if (blogStatusTitle) blogStatusTitle.textContent = 'Recipe Blog Ready';
+                
+                // Show success message and hide progress bar
+                if (blogSuccessMessage) blogSuccessMessage.style.display = 'flex';
+                if (blogProgressBar) blogProgressBar.style.display = 'none';
 
-                // Wait a moment then show the blog
+                // Step 3: Show blog display section after brief delay
                 setTimeout(async () => {
                     blogGenSection.style.display = 'none';
                     blogDisplaySection.style.display = 'block';
@@ -9172,52 +9213,106 @@
                             blogViewer.innerHTML = viewerContent;
                         }
                         
-                        // Set external link (may not exist, but set it anyway)
+                        // Only show link if blog was successfully created (not just content in response)
+                        // If blogContent is in response, it means GitHub upload failed, so don't show link
                         if (blogExternalLink) {
-                            blogExternalLink.href = finalBlogUrl;
-                            blogExternalLink.textContent = 'View Full Blog Post';
-                            blogExternalLink.style.display = 'none'; // Hide since file doesn't exist
+                            if (generateResult.success && !generateResult.blogContent) {
+                                // Blog was successfully uploaded to GitHub - show link
+                                blogExternalLink.href = finalBlogUrl;
+                                blogExternalLink.textContent = 'View Full Blog Post';
+                                blogExternalLink.style.display = 'inline-block';
+                            } else {
+                                // Blog content only in response (GitHub upload failed) - hide link
+                                blogExternalLink.style.display = 'none';
+                            }
                         }
                         
                         // Clear stored content
                         delete window.generatedBlogContent;
                         delete window.generatedBlogImageUrl;
                     } else {
-                        // Blog exists on ok-snap.com - show link to open in browser
-                        // Do NOT fetch HTML (violates CORS, breaks AdSense)
-                        if (blogViewer) {
-                            blogViewer.innerHTML = '<p>Blog post is ready! Click the button below to view the full recipe on ok-snap.com.</p>';
+                        // Blog exists on ok-snap.com - verify URL format and show link
+                        // Ensure URL format is correct: ok-snap.com/blogs/{slug}.html
+                        if (!finalBlogUrl.includes('/blogs/') || !finalBlogUrl.endsWith('.html')) {
+                            // Fix URL format if incorrect
+                            finalBlogUrl = `${publicWebsiteUrl}/blogs/${slug}.html`;
                         }
                         
-                        // Set external link to open blog
-                        if (blogExternalLink) {
-                            blogExternalLink.href = finalBlogUrl;
-                            blogExternalLink.textContent = 'View Full Blog Post';
-                            blogExternalLink.style.display = 'inline-block';
-                        }
-                        
-                        // Also update the main "View Full Blog" button
-                        const viewBlogBtnContainer = document.getElementById('viewBlogButtonContainer');
-                        const viewBlogBtn = document.getElementById('viewBlogBtn');
-                        if (viewBlogBtnContainer && viewBlogBtn) {
-                            viewBlogBtn.href = finalBlogUrl;
-                            viewBlogBtnContainer.style.display = 'block';
+                        // Verify blog exists before showing link
+                        try {
+                            const verifyResponse = await fetch(finalBlogUrl, { method: 'HEAD' });
+                            if (verifyResponse.ok) {
+                                // Blog exists - show link
+                                if (blogViewer) {
+                                    blogViewer.innerHTML = '<p>Blog post is ready! Click the button below to view the full recipe on ok-snap.com.</p>';
+                                }
+                                
+                                if (blogExternalLink) {
+                                    blogExternalLink.href = finalBlogUrl;
+                                    blogExternalLink.textContent = 'View Full Blog Post';
+                                    blogExternalLink.style.display = 'inline-block';
+                                }
+                            } else {
+                                // Blog doesn't exist - hide link
+                                if (blogViewer) {
+                                    blogViewer.innerHTML = '<p>Blog post is being prepared. Please check back later.</p>';
+                                }
+                                if (blogExternalLink) {
+                                    blogExternalLink.style.display = 'none';
+                                }
+                            }
+                        } catch (verifyError) {
+                            // Verification failed - show link anyway (might be CORS issue)
+                            if (blogViewer) {
+                                blogViewer.innerHTML = '<p>Blog post is ready! Click the button below to view the full recipe on ok-snap.com.</p>';
+                            }
+                            
+                            if (blogExternalLink) {
+                                blogExternalLink.href = finalBlogUrl;
+                                blogExternalLink.textContent = 'View Full Blog Post';
+                                blogExternalLink.style.display = 'inline-block';
+                            }
                         }
                     }
                 }, needsGeneration ? 500 : 200);
 
             } catch (error) {
-                // Gracefully handle all errors - don't break UX
+                // Gracefully handle all errors - show failure state
                 clearInterval(progressInterval);
                 
-                // Hide blog generation UI
-                blogGenSection.style.display = 'none';
+                // Update to failure state
+                const blogStatusIcon = document.getElementById('blogStatusIcon');
+                const blogStatusTitle = document.getElementById('blogStatusTitle');
+                const blogErrorMessage = document.getElementById('blogErrorMessage');
+                const blogErrorText = document.getElementById('blogErrorText');
+                const blogProgressBar = document.querySelector('.blog-progress-bar');
                 
-                // Show result section again - scan results must still be visible
-                if (resultSection) resultSection.style.display = 'block';
+                if (blogProgressFill) blogProgressFill.style.width = '100%';
+                if (blogProgressText) {
+                    blogProgressText.textContent = 'Blog generation failed';
+                }
                 
-                // Don't show error message to user - blog generation is optional
-                // The scan results are the primary content and must remain visible
+                // Update icon and title to error state
+                if (blogStatusIcon) {
+                    blogStatusIcon.innerHTML = `
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    `;
+                    blogStatusIcon.setAttribute('stroke', 'currentColor');
+                }
+                if (blogStatusTitle) blogStatusTitle.textContent = 'Blog Generation Failed';
+                
+                // Show error message and hide progress bar
+                if (blogErrorMessage) {
+                    const errorMsg = error.message || 'Blog generation failed. Please try again later.';
+                    if (blogErrorText) blogErrorText.textContent = errorMsg;
+                    blogErrorMessage.style.display = 'flex';
+                }
+                if (blogProgressBar) blogProgressBar.style.display = 'none';
+                
+                // Keep blog generation section visible to show error state
+                // Scan results remain visible (resultSection is not hidden)
             }
         }
 
@@ -10260,7 +10355,16 @@
                 return;
             }
 
-            // Warm message removed - footer content moved to bottom of all tabs
+            // Show warm message with recent dishes
+            const recentDishes = history.slice(0, 3).map(item => item.nameKorean || item.name).join(', ');
+            if (warmMessage && warmMessageText) {
+                if (history.length >= 2) {
+                    warmMessageText.textContent = `You recently explored ${recentDishes} — want to save them for your cooking list?`;
+                    warmMessage.style.display = 'block';
+                } else {
+                    warmMessage.style.display = 'none';
+                }
+            }
 
             // Render history items with descriptions
             if (historyGrid) {

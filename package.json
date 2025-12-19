@@ -1,6 +1,6 @@
 {
   "name": "ok-snap",
-  "version": "1.0.23",
+  "version": "1.0.22",
   "description": "A modern web application that uses OpenAI Vision API to identify dishes from photos, providing detailed information including nutrition facts, descriptions, and recipe links.",
   "main": "service-worker.js",
   "scripts": {
