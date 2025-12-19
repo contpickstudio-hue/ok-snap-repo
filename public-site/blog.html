@@ -49,29 +49,115 @@
     <script>
         // Load blog posts
         async function loadBlogPosts() {
+            const postsGrid = document.getElementById('blogPosts');
+            
+            // Try multiple sources in order of preference
+            let recipes = [];
+            
+            // 1. Try to fetch recipes.json from current domain
             try {
                 const response = await fetch('recipes.json');
-                const recipes = await response.json();
-                const postsGrid = document.getElementById('blogPosts');
-                
-                if (recipes.length === 0) {
-                    postsGrid.innerHTML = '<p class="no-posts">No recipes yet. Check back soon!</p>';
-                    return;
+                if (response.ok) {
+                    const data = await response.json();
+                    if (Array.isArray(data) && data.length > 0) {
+                        recipes = data;
+                        console.log('Loaded recipes from recipes.json:', recipes.length);
+                        renderBlogPosts(recipes);
+                        return;
+                    }
                 }
+            } catch (error) {
+                console.log('Failed to fetch recipes.json from current domain:', error);
+            }
+            
+            // 2. Try to fetch from API endpoint (for CORS-safe access)
+            try {
+                // Determine API base URL
+                const apiBase = window.location.origin.includes('localhost') 
+                    ? window.location.origin 
+                    : 'https://ok-snap-identifier.vercel.app';
                 
-                postsGrid.innerHTML = recipes.map(recipe => `
+                const apiResponse = await fetch(`${apiBase}/api/recipes-json`);
+                if (apiResponse.ok) {
+                    const apiRecipes = await apiResponse.json();
+                    if (Array.isArray(apiRecipes) && apiRecipes.length > 0) {
+                        recipes = apiRecipes;
+                        console.log('Loaded recipes from API endpoint:', recipes.length);
+                        renderBlogPosts(recipes);
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.log('Failed to fetch from API endpoint:', error);
+            }
+            
+            // 3. Try to fetch directly from www.ok-snap.com (production site)
+            try {
+                const wwwResponse = await fetch('https://www.ok-snap.com/recipes.json');
+                if (wwwResponse.ok) {
+                    const wwwRecipes = await wwwResponse.json();
+                    if (Array.isArray(wwwRecipes) && wwwRecipes.length > 0) {
+                        recipes = wwwRecipes;
+                        console.log('Loaded recipes from www.ok-snap.com:', recipes.length);
+                        renderBlogPosts(recipes);
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.log('Failed to fetch from www.ok-snap.com:', error);
+            }
+            
+            // 4. Try to fetch from ok-snap.com (without www)
+            try {
+                const directResponse = await fetch('https://ok-snap.com/recipes.json');
+                if (directResponse.ok) {
+                    const directRecipes = await directResponse.json();
+                    if (Array.isArray(directRecipes) && directRecipes.length > 0) {
+                        recipes = directRecipes;
+                        console.log('Loaded recipes from ok-snap.com:', recipes.length);
+                        renderBlogPosts(recipes);
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.log('Failed to fetch from ok-snap.com:', error);
+            }
+            
+            // No recipes found from any source
+            if (recipes.length === 0) {
+                console.warn('No recipes found from any source. Check that recipes.json exists and contains blog entries.');
+                console.log('Debug info:', {
+                    currentHost: window.location.hostname,
+                    currentOrigin: window.location.origin,
+                    triedSources: [
+                        'recipes.json (relative)',
+                        '/api/recipes-json',
+                        'https://www.ok-snap.com/recipes.json',
+                        'https://ok-snap.com/recipes.json'
+                    ]
+                });
+                postsGrid.innerHTML = '<p class="no-posts">No recipes yet. Check back soon!</p>';
+            }
+        }
+        
+        // Render blog posts
+        function renderBlogPosts(recipes) {
+            const postsGrid = document.getElementById('blogPosts');
+            postsGrid.innerHTML = recipes.map(recipe => {
+                const slug = recipe.slug || (recipe.name ? recipe.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : '');
+                const title = recipe.title || recipe.name || 'Untitled Recipe';
+                const date = recipe.createdAt ? new Date(recipe.createdAt).toLocaleDateString() : 'Date unknown';
+                
+                return `
                     <article class="post-card">
                         <div class="post-content">
-                            <h2 class="post-title"><a href="blogs/${recipe.slug}.html">${recipe.name}</a></h2>
-                            <p class="post-date">Published: ${new Date(recipe.createdAt).toLocaleDateString()}</p>
-                            <a href="blogs/${recipe.slug}.html" class="btn btn-secondary">Read More</a>
+                            <h2 class="post-title"><a href="blogs/${slug}.html">${title}</a></h2>
+                            <p class="post-date">Published: ${date}</p>
+                            <a href="blogs/${slug}.html" class="btn btn-secondary">Read More</a>
                         </div>
                     </article>
-                `).join('');
-            } catch (error) {
-                console.error('Error loading blog posts:', error);
-                document.getElementById('blogPosts').innerHTML = '<p class="error">Failed to load recipes. Please try again later.</p>';
-            }
+                `;
+            }).join('');
         }
         
         loadBlogPosts();
