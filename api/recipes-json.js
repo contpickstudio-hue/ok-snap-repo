@@ -1,9 +1,14 @@
 // API route wrapper for recipes.json to add CORS headers
 // Static files don't automatically get CORS headers, so we serve via API route
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
-module.exports = async (req, res) => {
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+export default async function handler(req, res) {
     // === GLOBAL CORS HEADERS ===
     // MUST be set before ANY response or logic
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -36,5 +41,5 @@ module.exports = async (req, res) => {
         console.error('recipes-json error:', err);
         return res.status(500).json({ error: 'Failed to load recipes' });
     }
-};
+}
 

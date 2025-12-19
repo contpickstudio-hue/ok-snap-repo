@@ -1,5 +1,5 @@
 // Vercel serverless function for scan limit checking
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
     // === GLOBAL CORS HEADERS ===
     // MUST be set before ANY response or logic
     res.setHeader('Access-Control-Allow-Origin', '*');

@@ -1,5 +1,5 @@
 // Vercel serverless function for dish identification
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
     // === GLOBAL CORS HEADERS ===
     // MUST be set before ANY response or logic
     // Allows cross-origin requests from web apps, mobile apps, and preview deployments
