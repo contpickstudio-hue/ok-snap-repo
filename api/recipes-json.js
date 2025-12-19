@@ -1,16 +1,9 @@
-// API route wrapper for recipes.json to add CORS headers
-// Static files don't automatically get CORS headers, so we serve via API route
-const fs = require('fs');
-const path = require('path');
-
+// API route to fetch recipes.json from ok-snap.com with CORS headers
 module.exports = async (req, res) => {
-    // === GLOBAL CORS HEADERS ===
-    // MUST be set before ANY response or logic
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     
-    // === PRE-FLIGHT REQUEST ===
     if (req.method === 'OPTIONS') {
         return res.status(200).end();
     }
@@ -20,21 +13,16 @@ module.exports = async (req, res) => {
     }
     
     try {
-        // Path to recipes.json in public-site directory
-        const recipesJsonPath = path.join(__dirname, '..', 'public-site', 'recipes.json');
-        
-        if (!fs.existsSync(recipesJsonPath)) {
-            return res.status(404).json({ error: 'Recipes file not found', recipes: [] });
+        const response = await fetch('https://ok-snap.com/recipes.json');
+        if (!response.ok) {
+            // Return empty array if file doesn't exist yet
+            return res.status(200).json([]);
         }
-        
-        const recipesJson = fs.readFileSync(recipesJsonPath, 'utf8');
-        const recipes = JSON.parse(recipesJson);
-        
-        res.setHeader('Content-Type', 'application/json');
-        return res.status(200).json(recipes);
+        const data = await response.json();
+        return res.status(200).json(data);
     } catch (err) {
         console.error('recipes-json error:', err);
-        return res.status(500).json({ error: 'Failed to load recipes' });
+        return res.status(200).json([]); // Return empty array instead of error
     }
 }
 

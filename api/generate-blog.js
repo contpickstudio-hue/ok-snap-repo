@@ -1,8 +1,6 @@
 // Blog generation API endpoint
 // This endpoint generates a blog post using ChatGPT API with the specified system prompt
-
-const fs = require('fs');
-const path = require('path');
+// Note: No filesystem operations - all files are created via GitHub API
 
 async function generateBlogPost(dishData) {
     const apiKey = process.env.OPENAI_API_KEY;
@@ -116,24 +114,7 @@ async function generateBlogImage(dishData) {
         throw new Error('OPENAI_API_KEY is not set in environment variables');
     }
 
-    const publicSitePath = path.join(__dirname, '..', 'public-site');
-    const imagesPath = path.join(publicSitePath, 'images', 'blogs');
-    
-    // Ensure images directory exists
-    if (!fs.existsSync(imagesPath)) {
-        fs.mkdirSync(imagesPath, { recursive: true });
-    }
-
     const slug = createSlug(dishData.name);
-    const imageFilePath = path.join(imagesPath, `${slug}.png`);
-    
-    // Check if image already exists
-    if (fs.existsSync(imageFilePath)) {
-        console.log(`Image already exists for ${dishData.name}, reusing existing image`);
-        return `/public-site/images/blogs/${slug}.png`;
-    }
-
-    // Create prompt for image generation
     const imagePrompt = `Professional food photography of ${dishData.name}${dishData.nameKorean ? ` (${dishData.nameKorean})` : ''}, ${dishData.isKorean ? 'Korean cuisine' : dishData.cuisine || 'delicious dish'}, beautifully plated on a modern table, natural lighting, appetizing, high quality, food blog style`;
 
     try {
@@ -159,164 +140,19 @@ async function generateBlogImage(dishData) {
 
         const data = await response.json();
         const imageUrl = data.data[0].url;
-
-        // Download and save the image
-        const imageResponse = await fetch(imageUrl);
-        if (!imageResponse.ok) {
-            throw new Error('Failed to download generated image');
-        }
-
-        const imageBuffer = await imageResponse.arrayBuffer();
-        fs.writeFileSync(imageFilePath, Buffer.from(imageBuffer));
-
-        console.log(`Generated and saved image for ${dishData.name}`);
-        return `/public-site/images/blogs/${slug}.png`;
+        
+        // Return image URL - will be uploaded to GitHub, not saved locally
+        console.log(`Generated image URL for ${dishData.name}`);
+        return imageUrl; // Return URL instead of file path
     } catch (error) {
-        console.error('Error generating blog image:', error);
-        // Return a placeholder path if image generation fails
+        console.warn('Image generation failed, continuing without image:', error);
         return null;
     }
 }
 
-function saveBlogPost(dishData, blogContent, imagePath = null) {
-    const publicSitePath = path.join(__dirname, '..', 'public-site');
-    const blogsPath = path.join(publicSitePath, 'blogs');
-    
-    // Ensure blogs directory exists
-    if (!fs.existsSync(blogsPath)) {
-        fs.mkdirSync(blogsPath, { recursive: true });
-    }
-
-    const slug = createSlug(dishData.name);
-    const blogFilePath = path.join(blogsPath, `${slug}.html`);
-    
-        // Add featured image at the top of blog content if available
-        // Convert file path to website URL (remove /public-site prefix if present)
-        let featuredImageHtml = '';
-        if (imagePath) {
-            // Convert file path to website URL
-            const imageUrl = imagePath.startsWith('/public-site/') 
-                ? imagePath.replace('/public-site', '') 
-                : imagePath.startsWith('/') 
-                    ? imagePath 
-                    : `/${imagePath}`;
-            featuredImageHtml = `
-            <div class="blog-featured-image">
-                <img src="${imageUrl}" alt="${dishData.name}${dishData.nameKorean ? ` (${dishData.nameKorean})` : ''}" style="width: 100%; max-width: 800px; height: auto; border-radius: 12px; margin: 2rem auto; display: block; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
-            </div>
-        `;
-        }
-    
-    // Create full HTML document
-    const fullHtml = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Learn how to make ${dishData.name}${dishData.nameKorean ? ` (${dishData.nameKorean})` : ''} - Authentic Korean recipe with step-by-step instructions.">
-    <meta name="keywords" content="${dishData.name}, Korean food, Korean recipe, ${dishData.nameKorean || ''}, Hansik">
-    ${imagePath ? `<meta property="og:image" content="${imagePath}">` : ''}
-    <title>${dishData.name} Recipe - OK-Snap</title>
-    <link rel="stylesheet" href="../styles.css">
-</head>
-<body>
-    <header class="header">
-        <div class="container">
-            <div class="header-content">
-                <h1 class="logo"><a href="../index.html" style="text-decoration: none; color: inherit;">OK-Snap</a></h1>
-                <nav class="nav">
-                    <a href="../index.html" class="nav-link">Home</a>
-                    <a href="../blog.html" class="nav-link">Blog</a>
-                    <a href="../about.html" class="nav-link">About</a>
-                    <a href="../contact.html" class="nav-link">Contact</a>
-                </nav>
-            </div>
-        </div>
-    </header>
-
-    <main class="main">
-        <article class="blog-post">
-            <div class="blog-post-header">
-                <h1 class="blog-post-title">${dishData.name}${dishData.nameKorean ? ` (${dishData.nameKorean})` : ''}</h1>
-                <div class="blog-post-meta">
-                    Published: ${new Date().toLocaleDateString()}
-                </div>
-            </div>
-            ${featuredImageHtml}
-            <div class="blog-post-content">
-                ${blogContent}
-            </div>
-        </article>
-    </main>
-
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; 2025 OK-Snap. All rights reserved.</p>
-        </div>
-    </footer>
-</body>
-</html>`;
-
-    fs.writeFileSync(blogFilePath, fullHtml, 'utf8');
-    return slug;
-}
-
-function updateRecipesJson(dishData, slug) {
-    const publicSitePath = path.join(__dirname, '..', 'public-site');
-    const recipesJsonPath = path.join(publicSitePath, 'recipes.json');
-    
-    let recipes = [];
-    if (fs.existsSync(recipesJsonPath)) {
-        try {
-            const content = fs.readFileSync(recipesJsonPath, 'utf8');
-            recipes = JSON.parse(content);
-        } catch (error) {
-            console.warn('Error reading recipes.json, starting fresh:', error);
-            recipes = [];
-        }
-    }
-
-    // Check if recipe already exists
-    const existingIndex = recipes.findIndex(r => r.slug === slug);
-    const recipeEntry = {
-        name: dishData.name,
-        slug: slug,
-        url: `https://ok-snap.com/blogs/${slug}.html`,
-        createdAt: new Date().toISOString()
-    };
-
-    if (existingIndex >= 0) {
-        recipes[existingIndex] = recipeEntry;
-    } else {
-        recipes.unshift(recipeEntry); // Add to beginning
-    }
-
-    fs.writeFileSync(recipesJsonPath, JSON.stringify(recipes, null, 2), 'utf8');
-    return recipeEntry;
-}
-
-/**
- * Check if blog post already exists
- * @param {string} dishName - Name of the dish
- * @returns {Object|null} - Blog info if exists, null otherwise
- */
-function checkBlogExists(dishName) {
-    const slug = createSlug(dishName);
-    const publicSitePath = path.join(__dirname, '..', 'public-site');
-    const blogFilePath = path.join(publicSitePath, 'blogs', `${slug}.html`);
-    const imagePath = path.join(publicSitePath, 'images', 'blogs', `${slug}.png`);
-    
-    if (fs.existsSync(blogFilePath)) {
-        return {
-            slug: slug,
-            blogPath: blogFilePath,
-            imagePath: fs.existsSync(imagePath) ? `/public-site/images/blogs/${slug}.png` : null,
-            blogUrl: `/blogs/${slug}.html`
-        };
-    }
-    
-    return null;
-}
+// Removed saveBlogPost, updateRecipesJson, and checkBlogExists functions
+// These used filesystem operations which are not allowed in Vercel serverless functions
+// All operations now go through GitHub API
 
 /**
  * Create blog files using GitHub API
@@ -414,8 +250,28 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
 </body>
 </html>`;
         
-        // Step 1: Create blog HTML file
+        // Step 1: Check if blog already exists BEFORE creating
         const blogFilePath = `${githubBasePath ? githubBasePath + '/' : ''}blogs/${slug}.html`;
+        const checkBlogResponse = await fetch(`${baseUrl}/repos/${owner}/${repo}/contents/${blogFilePath}?ref=${githubBranch}`, {
+            headers: {
+                'Authorization': `Bearer ${githubToken}`,
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        });
+        
+        if (checkBlogResponse.ok) {
+            // Blog already exists - skip generation
+            console.log(`Blog already exists for ${dishData.name}, skipping generation`);
+            return {
+                success: true,
+                blogUrl: `${publicSiteUrl}/blogs/${slug}.html`,
+                slug: slug,
+                skipped: true,
+                message: 'Blog already exists'
+            };
+        }
+        
+        // Step 2: Create blog HTML file (blog doesn't exist)
         const blogContentBase64 = Buffer.from(fullHtml, 'utf8').toString('base64');
         
         const createBlogResponse = await fetch(`${baseUrl}/repos/${owner}/${repo}/contents/${blogFilePath}`, {
@@ -435,52 +291,10 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
         
         if (!createBlogResponse.ok) {
             const errorData = await createBlogResponse.json().catch(() => ({}));
-            console.error('GitHub API create blog error:', {
-                status: createBlogResponse.status,
-                statusText: createBlogResponse.statusText,
-                error: errorData,
-                blogFilePath: blogFilePath,
-                branch: githubBranch
-            });
-            // If file exists, try to update it
-            if (createBlogResponse.status === 422 && errorData.message?.includes('already exists')) {
-                // Get existing file SHA to update it
-                const getFileResponse = await fetch(`${baseUrl}/repos/${owner}/${repo}/contents/${blogFilePath}?ref=${githubBranch}`, {
-                    headers: {
-                        'Authorization': `Bearer ${githubToken}`,
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
-                });
-                
-                if (getFileResponse.ok) {
-                    const fileData = await getFileResponse.json();
-                    const updateResponse = await fetch(`${baseUrl}/repos/${owner}/${repo}/contents/${blogFilePath}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Authorization': `Bearer ${githubToken}`,
-                            'Accept': 'application/vnd.github.v3+json',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            message: `Update blog post: ${dishData.name}`,
-                            content: blogContentBase64,
-                            sha: fileData.sha,
-                            branch: githubBranch
-                        })
-                    });
-                    
-                    if (!updateResponse.ok) {
-                        throw new Error(`Failed to update blog file: ${updateResponse.status}`);
-                    }
-                } else {
-                    throw new Error(`Failed to get existing file: ${getFileResponse.status}`);
-                }
-            } else {
-                throw new Error(`Failed to create blog file: ${createBlogResponse.status} - ${JSON.stringify(errorData)}`);
-            }
+            throw new Error(`Failed to create blog file: ${createBlogResponse.status} - ${JSON.stringify(errorData)}`);
         }
         
-        // Step 2: Update recipes.json
+        // Step 3: Update recipes.json
         const recipesJsonPath = `${githubBasePath ? githubBasePath + '/' : ''}recipes.json`;
         let recipes = [];
         let recipesSha = null;
@@ -556,25 +370,12 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
             });
         }
         
-        // Step 3: Upload image if provided
+        // Step 4: Handle image URL (image is already generated, just use the URL)
         let imageUrl = null;
         if (imagePath) {
-            try {
-                // imagePath is like /public-site/images/blogs/slug.png
-                // We need to read the actual image file from the local filesystem or fetch it
-                // Since we're in serverless, we can't read local files, so we'll skip image upload for now
-                // Images should be uploaded separately or generated differently
-                console.log('Image upload skipped - imagePath provided but file not accessible in serverless environment');
-                
-                // Convert image path to website URL
-                imageUrl = imagePath.startsWith('/public-site/') 
-                    ? `${publicSiteUrl}${imagePath.replace('/public-site', '')}` 
-                    : imagePath.startsWith('/') 
-                        ? `${publicSiteUrl}${imagePath}` 
-                        : `${publicSiteUrl}/${imagePath}`;
-            } catch (imageError) {
-                console.warn('Image upload failed:', imageError);
-            }
+            // imagePath is now a URL from OpenAI DALL-E API
+            // Use it directly in the blog HTML (already included in featuredImageHtml)
+            imageUrl = imagePath.startsWith('http') ? imagePath : `${publicSiteUrl}/images/blogs/${slug}.png`;
         }
         
         console.log('Blog successfully created via GitHub API:', {
