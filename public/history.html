@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Ok Snap">
-    <title>Ok Snap - Discover Food Through Your Lens</title>
+    <title>History - Ok Snap</title>
     <script>
         // Only load icons and manifest if not using file:// protocol (avoids CORS/file errors)
         if (window.location.protocol !== 'file:') {
@@ -4503,9 +4503,61 @@
 
     <div class="container">
 
-        <!-- Discover Tab -->
-        <div class="tab-content active" id="discoverTab" style="display: flex; flex-direction: column;">
-            <!-- Hero Card -->
+        <!-- History Tab Content -->
+        <div class="main-content" style="display: flex; flex-direction: column;">
+            <div class="history-section">
+                <h2 class="section-title" id="recentDiscoveries">📜 Your Recent Discoveries</h2>
+                
+                <!-- Filter Bar -->
+                <div class="history-filter-bar" style="display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 8px;">
+                    <button class="history-filter-btn active" data-period="today" style="padding: 8px 16px; border-radius: 16px; border: none; background: var(--primary); color: white; font-weight: 600; font-size: 0.875rem; white-space: nowrap; cursor: pointer; transition: all 150ms ease;">Today</button>
+                    <button class="history-filter-btn" data-period="week" style="padding: 8px 16px; border-radius: 16px; border: 2px solid var(--secondary-dark); background: var(--background-alt); color: var(--text-primary); font-weight: 600; font-size: 0.875rem; white-space: nowrap; cursor: pointer; transition: all 150ms ease;">Week</button>
+                    <button class="history-filter-btn" data-period="month" style="padding: 8px 16px; border-radius: 16px; border: 2px solid var(--secondary-dark); background: var(--background-alt); color: var(--text-primary); font-weight: 600; font-size: 0.875rem; white-space: nowrap; cursor: pointer; transition: all 150ms ease;">Month</button>
+                </div>
+                
+                <div class="history-grid" id="historyGrid">
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" style="width: 64px; height: 64px; color: var(--text-tertiary);">
+                            <circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.1"></circle>
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round"></line>
+                        </svg>
+                        <p id="historyEmpty" style="color: var(--text-secondary); font-size: 0.9375rem; margin-top: 12px;">Your exploration history will appear here</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer at bottom -->
+            <div class="feature-row" style="margin-top: auto; padding: 24px 16px;">
+                <div class="feature-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                        <path d="M2 17l10 5 10-5"></path>
+                        <path d="M2 12l10 5 10-5"></path>
+                    </svg>
+                    <span>Powered by AI</span>
+                </div>
+                <div class="feature-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    <span>Korean Focus</span>
+                </div>
+                <div class="feature-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                    <span>Cultural Stories</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- REMOVED: Discover Tab Content -->
+        <!-- REMOVED: Favorites Tab Content -->
+        <!-- REMOVED: Browse Tab Content -->
+        <!-- REMOVED: Settings Tab Content -->
             <div class="hero-card">
                 <div class="upload-section">
                 <div class="upload-area" id="uploadArea">
@@ -4897,7 +4949,58 @@
             </div>
         </div>
 
-        <!-- REMOVED: Duplicate tab content (History, Favorites, Browse, Settings) -->
+        <!-- History Tab -->
+        <div class="tab-content" id="historyTab" style="display: flex; flex-direction: column;">
+            <div class="history-section">
+                <h2 class="section-title" id="recentDiscoveries">📜 Your Recent Discoveries</h2>
+                
+                <!-- Filter Bar -->
+                <div class="history-filter-bar" style="display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 8px;">
+                    <button class="history-filter-btn active" data-period="today" style="padding: 8px 16px; border-radius: 16px; border: none; background: var(--primary); color: white; font-weight: 600; font-size: 0.875rem; white-space: nowrap; cursor: pointer; transition: all 150ms ease;">Today</button>
+                    <button class="history-filter-btn" data-period="week" style="padding: 8px 16px; border-radius: 16px; border: 2px solid var(--secondary-dark); background: var(--background-alt); color: var(--text-primary); font-weight: 600; font-size: 0.875rem; white-space: nowrap; cursor: pointer; transition: all 150ms ease;">Week</button>
+                    <button class="history-filter-btn" data-period="month" style="padding: 8px 16px; border-radius: 16px; border: 2px solid var(--secondary-dark); background: var(--background-alt); color: var(--text-primary); font-weight: 600; font-size: 0.875rem; white-space: nowrap; cursor: pointer; transition: all 150ms ease;">Month</button>
+                </div>
+                
+                <div class="history-grid" id="historyGrid">
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" style="width: 64px; height: 64px; color: var(--text-tertiary);">
+                            <circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.1"></circle>
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round"></line>
+                        </svg>
+                        <p id="historyEmpty" style="color: var(--text-secondary); font-size: 0.9375rem; margin-top: 12px;">Your exploration history will appear here</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer at bottom -->
+            <div class="feature-row" style="margin-top: auto; padding: 24px 16px;">
+                <div class="feature-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                        <path d="M2 17l10 5 10-5"></path>
+                        <path d="M2 12l10 5 10-5"></path>
+                    </svg>
+                    <span>Powered by AI</span>
+                </div>
+                <div class="feature-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    <span>Korean Focus</span>
+                </div>
+                <div class="feature-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                    <span>Cultural Stories</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- REMOVED: Duplicate tab content (Favorites, Browse, Settings) -->
 
         <!-- Camera Modal -->
         <div class="camera-modal" id="cameraModal">
@@ -4955,14 +5058,14 @@
 
     <!-- Bottom Navigation -->
     <nav class="bottom-navigation">
-        <a href="index.html" class="nav-item active" id="navDiscover">
+        <a href="index.html" class="nav-item" id="navDiscover">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="11" cy="11" r="8"></circle>
                 <path d="m21 21-4.35-4.35"></path>
             </svg>
             <span id="navDiscoverText">Discover</span>
         </a>
-        <a href="history.html" class="nav-item" id="navHistory">
+        <a href="history.html" class="nav-item active" id="navHistory">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
                 <polyline points="12 6 12 12 16 14"></polyline>

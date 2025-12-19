@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Ok Snap">
-    <title>Ok Snap - Discover Food Through Your Lens</title>
+    <title>Browse Recipes - Ok Snap</title>
     <script>
         // Only load icons and manifest if not using file:// protocol (avoids CORS/file errors)
         if (window.location.protocol !== 'file:') {
@@ -1953,6 +1953,12 @@
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
             flex: 1;
+            text-decoration: none;
+        }
+        
+        a.nav-item {
+            border: none;
+            background: transparent;
         }
         
         @media (min-width: 420px) {
@@ -4503,9 +4509,69 @@
 
     <div class="container">
 
-        <!-- Discover Tab -->
-        <div class="tab-content active" id="discoverTab" style="display: flex; flex-direction: column;">
-            <!-- Hero Card -->
+        <!-- Browse Tab Content -->
+        <div class="main-content" style="display: flex; flex-direction: column;">
+            <div class="browse-section">
+                <h2 class="section-title" id="browseTitle" style="margin-bottom: 8px;">🍽️ Browse Recipes</h2>
+                <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 20px;">Discover delicious recipes from our blog</p>
+                
+                <!-- Loading State -->
+                <div id="browseLoading" style="display: none; text-align: center; padding: 40px 20px;">
+                    <div style="font-size: 1.5rem; margin-bottom: 12px;">⏳</div>
+                    <p style="color: var(--text-secondary);">Loading recipes...</p>
+                </div>
+                
+                <!-- Error State -->
+                <div id="browseError" style="display: none; text-align: center; padding: 40px 20px;">
+                    <div style="font-size: 1.5rem; margin-bottom: 12px;">⚠️</div>
+                    <p style="color: var(--text-secondary); margin-bottom: 16px;" id="browseErrorText">Failed to load recipes</p>
+                    <button class="btn" onclick="loadBrowseRecipes()" style="padding: 0.75rem 1.5rem;">Try Again</button>
+                </div>
+                
+                <!-- Blog Cards Container -->
+                <div id="browseRecipesContainer" style="display: grid; gap: 16px; padding-bottom: 20px;">
+                    <!-- Blog cards will be inserted here -->
+                </div>
+                
+                <!-- Empty State -->
+                <div id="browseEmpty" style="display: none; text-align: center; padding: 40px 20px;">
+                    <div style="font-size: 1.5rem; margin-bottom: 12px;">📚</div>
+                    <p style="color: var(--text-secondary);">No recipes available yet. Check back soon!</p>
+                </div>
+            </div>
+            
+            <!-- Footer at bottom -->
+            <div class="feature-row" style="margin-top: auto; padding: 24px 16px;">
+                <div class="feature-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                        <path d="M2 17l10 5 10-5"></path>
+                        <path d="M2 12l10 5 10-5"></path>
+                    </svg>
+                    <span>Powered by AI</span>
+                </div>
+                <div class="feature-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    <span>Korean Focus</span>
+                </div>
+                <div class="feature-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                    <span>Cultural Stories</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- REMOVED: Discover Tab Content -->
+        <!-- REMOVED: History Tab Content -->
+        <!-- REMOVED: Favorites Tab Content -->
+        <!-- REMOVED: Settings Tab Content -->
+        
+        <!-- REMOVED: Hero Card -->
             <div class="hero-card">
                 <div class="upload-section">
                 <div class="upload-area" id="uploadArea">
@@ -4897,7 +4963,47 @@
             </div>
         </div>
 
-        <!-- REMOVED: Duplicate tab content (History, Favorites, Browse, Settings) -->
+        <!-- REMOVED: History Tab -->
+        <!-- REMOVED: Favorites Tab -->
+        <!-- REMOVED: Duplicate Browse Tab -->
+        
+        <!-- REMOVED: Edit Entry Modal (not needed for browse page) -->
+        <div class="edit-entry-modal" id="editEntryModal">
+            <div class="edit-entry-content">
+                <div class="edit-entry-header">
+                    <h3 class="edit-entry-title">Edit Entry</h3>
+                    <button class="edit-entry-close" id="closeEditModal">×</button>
+                </div>
+                <div class="edit-entry-form" id="editEntryForm">
+                    <div class="edit-entry-field">
+                        <label class="edit-entry-label">Dish Name</label>
+                        <input type="text" class="edit-entry-input" id="editDishName" readonly>
+                    </div>
+                    <div class="edit-entry-field">
+                        <label class="edit-entry-label">Calories</label>
+                        <input type="number" class="edit-entry-input" id="editCalories" min="0" step="1">
+                    </div>
+                    <div class="edit-entry-field">
+                        <label class="edit-entry-label">Protein (g)</label>
+                        <input type="number" class="edit-entry-input" id="editProtein" min="0" step="0.1">
+                    </div>
+                    <div class="edit-entry-field">
+                        <label class="edit-entry-label">Carbs (g)</label>
+                        <input type="number" class="edit-entry-input" id="editCarbs" min="0" step="0.1">
+                    </div>
+                    <div class="edit-entry-field">
+                        <label class="edit-entry-label">Fat (g)</label>
+                        <input type="number" class="edit-entry-input" id="editFat" min="0" step="0.1">
+                    </div>
+                    <div class="edit-entry-actions">
+                        <button class="edit-entry-cancel" id="cancelEditBtn">Cancel</button>
+                        <button class="edit-entry-save" id="saveEditBtn">Save Changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- REMOVED: Settings Tab Content -->
 
         <!-- Camera Modal -->
         <div class="camera-modal" id="cameraModal">
@@ -4955,7 +5061,7 @@
 
     <!-- Bottom Navigation -->
     <nav class="bottom-navigation">
-        <a href="index.html" class="nav-item active" id="navDiscover">
+        <a href="index.html" class="nav-item" id="navDiscover">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="11" cy="11" r="8"></circle>
                 <path d="m21 21-4.35-4.35"></path>
@@ -4975,7 +5081,7 @@
             </svg>
             <span id="navFavoritesText">Favorites</span>
         </a>
-        <a href="browse.html" class="nav-item" id="navBrowse">
+        <a href="browse.html" class="nav-item active" id="navBrowse">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="3" width="7" height="7"></rect>
                 <rect x="14" y="3" width="7" height="7"></rect>
@@ -5435,9 +5541,7 @@
         let isCapturing = false; // Prevent double captures
         let capturedImageBlob = null; // Store captured image
         
-        // Navigation state tracking
-        let navigationHistory = [];
-        let currentRoute = 'discover'; // 'discover', 'history', 'favorites', 'settings', 'result', 'historyDetail', 'favoriteDetail'
+        // REMOVED: Navigation state tracking (using page navigation now)
         let isShowingResult = false;
 
         // ============================================
@@ -6022,234 +6126,7 @@
 
         // ============================================
         // BOTTOM NAVIGATION
-        // ============================================
-        function switchTab(tabName, skipHistory = false) {
-            const navItems = document.querySelectorAll('.nav-item');
-            const tabContents = document.querySelectorAll('.tab-content');
-
-            // Track navigation history
-            if (!skipHistory && currentRoute !== tabName) {
-                navigationHistory.push(currentRoute);
-                // Keep only last 10 routes
-                if (navigationHistory.length > 10) {
-                    navigationHistory.shift();
-                }
-            }
-
-            // Remove active class from all nav items and contents
-            navItems.forEach(nav => nav.classList.remove('active'));
-            tabContents.forEach(content => {
-                content.classList.remove('active');
-                content.style.display = 'none'; // Explicitly hide inactive tabs
-            });
-
-            // Add active class to target nav item and corresponding content
-            const targetNavItem = document.querySelector(`[data-tab="${tabName}"]`);
-            const targetTabContent = document.getElementById(tabName + 'Tab');
-            
-            console.log('Switching tab:', tabName, 'Nav item found:', !!targetNavItem, 'Tab content found:', !!targetTabContent);
-            
-            if (!targetNavItem) {
-                console.error('Nav item not found for tab:', tabName);
-                return; // Exit early if nav item doesn't exist
-            }
-            if (!targetTabContent) {
-                console.error('Tab content not found for tab:', tabName + 'Tab');
-                return; // Exit early if tab content doesn't exist
-            }
-            
-            targetNavItem.classList.add('active');
-            targetTabContent.classList.add('active');
-            
-            // Ensure tab content is visible (handle both block and flex layouts)
-            // CSS already handles this, but we set it explicitly to override any inline styles
-            if (tabName === 'discover') {
-                targetTabContent.style.display = 'flex';
-                targetTabContent.style.flexDirection = 'column';
-            } else {
-                targetTabContent.style.display = 'block';
-                targetTabContent.style.flexDirection = '';
-            }
-            
-            currentRoute = tabName;
-            
-            // Handle result display based on tab
-            // CRITICAL: Scan results must ONLY be visible on Discover tab
-            const resultSection = document.getElementById('resultSection');
-            const blogGenSection = document.getElementById('blogGenerationSection');
-            const blogDisplaySection = document.getElementById('blogDisplaySection');
-            
-            // Hide scan results when switching away from Discover tab
-            if (tabName !== 'discover') {
-                // Hide all scan result UI elements
-                if (resultSection) {
-                    resultSection.style.display = 'none';
-                }
-                if (blogGenSection) {
-                    blogGenSection.style.display = 'none';
-                }
-                if (blogDisplaySection) {
-                    blogDisplaySection.style.display = 'none';
-                }
-            }
-            
-            if (tabName === 'browse') {
-                // Load browse recipes when switching to this tab
-                if (typeof loadBrowseRecipes === 'function') {
-                    try {
-                        loadBrowseRecipes();
-                    } catch (error) {
-                        console.error('Error loading browse recipes:', error);
-                    }
-                } else {
-                    console.warn('loadBrowseRecipes function not found');
-                }
-            } else if (tabName === 'history') {
-                // Initialize history filters when switching to history tab
-                try {
-                    if (typeof initializeHistoryFilters === 'function') {
-                        initializeHistoryFilters();
-                    }
-                    if (typeof loadHistory === 'function') {
-                        loadHistory();
-                    }
-                } catch (error) {
-                    console.error('Error loading history tab:', error);
-                }
-            } else if (tabName === 'favorites') {
-                // Load favorites when switching to favorites tab
-                try {
-                    if (typeof loadFavorites === 'function') {
-                        loadFavorites();
-                    }
-                } catch (error) {
-                    console.error('Error loading favorites tab:', error);
-                }
-            } else if (tabName === 'settings') {
-                // Initialize settings when switching to settings tab
-                try {
-                    if (typeof initializeSettings === 'function') {
-                        initializeSettings();
-                    }
-                } catch (error) {
-                    console.error('Error loading settings tab:', error);
-                }
-            } else if (tabName === 'discover') {
-                // When switching back to discover tab, show result if it exists
-                if (isShowingResult && currentDishData && resultSection) {
-                    // Just show the result section, don't re-render (to avoid duplicate history states)
-                    resultSection.style.display = 'block';
-                    // Scroll to result if needed
-                    setTimeout(() => {
-                        resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }, 100);
-                } else if (resultSection) {
-                    // Hide result if no result data
-                    resultSection.style.display = 'none';
-                }
-            } else {
-                // Hide result section when switching to other tabs (but keep the state)
-                if (resultSection && isShowingResult) {
-                    resultSection.style.display = 'none';
-                    // Don't set isShowingResult = false, keep it true so we can restore later
-                }
-            }
-            
-            // Update profile card visibility when switching to settings
-            if (tabName === 'settings') {
-                initializeProfileCard();
-            }
-        }
-        
-        // ============================================
-        // BACK NAVIGATION HANDLER
-        // ============================================
-        function handleBackNavigation() {
-            // If showing result on discover tab, reset to blank slate
-            if (currentRoute === 'discover' && isShowingResult) {
-                resetToBlankSlate();
-                // Replace current state to prevent creating new history entry
-                window.history.replaceState({ route: 'discover', isBlankSlate: true }, '', window.location.href);
-                return true; // Handled
-            }
-            
-            // If we have navigation history, go back
-            if (navigationHistory.length > 0) {
-                const previousRoute = navigationHistory.pop();
-                switchTab(previousRoute, true); // Skip adding to history
-                // Replace current state
-                window.history.replaceState({ route: previousRoute }, '', window.location.href);
-                return true; // Handled
-            }
-            
-            // Default behavior - reset to blank slate on discover tab
-            if (currentRoute === 'discover') {
-                resetToBlankSlate();
-                window.history.replaceState({ route: 'discover', isBlankSlate: true }, '', window.location.href);
-                return true;
-            }
-            
-            return false;
-        }
-        
-        // Initialize back button handler
-        function initializeBackNavigation() {
-            // Push initial state if none exists
-            if (window.history.state === null) {
-                window.history.replaceState({ route: 'discover', isBlankSlate: true }, '', window.location.href);
-            }
-            
-            // Handle browser back button
-            window.addEventListener('popstate', (e) => {
-                const state = e.state;
-                
-                // Handle the navigation based on state
-                if (state && state.isBlankSlate) {
-                    // Coming back to blank slate - ensure it's reset
-                    resetToBlankSlate();
-                } else if (state && state.showingResult) {
-                    // This shouldn't happen when going back, but handle it
-                    // If we're going back from a result, reset to blank slate
-                    resetToBlankSlate();
-                    // Replace state to blank slate
-                    window.history.replaceState({ route: 'discover', isBlankSlate: true }, '', window.location.href);
-                } else if (state && state.route) {
-                    // Navigate to the route in state
-                    switchTab(state.route, true);
-                } else {
-                    // Handle our custom navigation logic
-                    const handled = handleBackNavigation();
-                    if (!handled) {
-                        // If not handled, ensure we're on discover tab
-                        switchTab('discover', true);
-                        resetToBlankSlate();
-                    }
-                }
-            });
-            
-            // Handle Android hardware back button via Capacitor if available
-            if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
-                window.Capacitor.Plugins.App.addListener('backButton', ({ canGoBack }) => {
-                    // Always handle our custom logic first
-                    if (currentRoute === 'discover' && isShowingResult) {
-                        // Reset to blank slate
-                        resetToBlankSlate();
-                        window.history.replaceState({ route: 'discover', isBlankSlate: true }, '', window.location.href);
-                    } else if (navigationHistory.length > 0) {
-                        // Go back in navigation history
-                        const previousRoute = navigationHistory.pop();
-                        switchTab(previousRoute, true);
-                        window.history.replaceState({ route: previousRoute }, '', window.location.href);
-                    } else if (!canGoBack) {
-                        // Can't go back, exit app
-                        window.Capacitor.Plugins.App.exitApp();
-                    } else {
-                        // Let browser handle it
-                        window.history.back();
-                    }
-                });
-            }
-        }
+        // REMOVED: Tab switching and back navigation handlers (using browser navigation now)
         
         // Reset to blank slate (clear scan result)
         function resetToBlankSlate() {
@@ -6298,39 +6175,7 @@
             updateFavoriteButtonState();
         }
 
-        function initializeTabs() {
-            const navItems = document.querySelectorAll('.nav-item');
-
-            navItems.forEach(item => {
-                item.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const targetTab = item.getAttribute('data-tab');
-                    if (targetTab) {
-                        try {
-                            switchTab(targetTab);
-                        } catch (error) {
-                            console.error('Error switching tab:', error, 'Target tab:', targetTab);
-                            // Still try to show the tab even if there's an error
-                            const targetTabContent = document.getElementById(targetTab + 'Tab');
-                            if (targetTabContent) {
-                                document.querySelectorAll('.tab-content').forEach(tab => {
-                                    tab.classList.remove('active');
-                                    tab.style.display = 'none';
-                                });
-                                document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-                                targetTabContent.classList.add('active');
-                                targetTabContent.style.display = targetTab === 'discover' ? 'flex' : 'block';
-                                if (targetTab === 'discover') {
-                                    targetTabContent.style.flexDirection = 'column';
-                                }
-                                item.classList.add('active');
-                            }
-                        }
-                    }
-                });
-            });
-        }
+        // REMOVED: initializeTabs function (using href navigation now)
 
         // ============================================
         // TRANSLATIONS
@@ -7145,8 +6990,7 @@
             const appLogo = document.getElementById('appLogo');
             if (appLogo) {
                 appLogo.addEventListener('click', () => {
-                    resetToBlankSlate();
-                    switchTab('discover', true);
+                    window.location.href = 'index.html';
                 });
             }
             
@@ -7154,7 +6998,7 @@
             const profileGreeting = document.getElementById('profileGreeting');
             if (profileGreeting) {
                 profileGreeting.addEventListener('click', () => {
-                    switchTab('settings');
+                    window.location.href = 'settings.html';
                 });
             }
         }
@@ -7285,19 +7129,15 @@
                 });
             }
             
-            // Initialize app (always initialize, but may be hidden by onboarding)
+            // Initialize app
             initializeSupabase();
-            initializeUpload();
-            initializeCamera();
             initializeAuth();
-            initializeTabs();
-            initializeSettings();
-            initializeBackNavigation();
             initializeHeader();
-            initializeProfileCard();
-            initializeHistoryFilters();
-            loadHistory();
-            loadFavorites();
+            
+            // Load browse recipes on page load
+            if (typeof loadBrowseRecipes === 'function') {
+                loadBrowseRecipes();
+            }
             
             // Initialize scan limits - ensure it completes before displaying
             updateScanLimit().then(() => {
@@ -8242,12 +8082,9 @@
                 // Set result state BEFORE switching tabs so switchTab shows it immediately
                 isShowingResult = true;
                 
-                // Ensure we're on discover tab BEFORE displaying results
-                if (currentRoute !== 'discover') {
-                    switchTab('discover', false);
-                }
+                // REMOVED: Tab switching (browse page doesn't show scan results)
                 
-                // Display results immediately - no tab switch dependency
+                // Display results immediately
                 displayResult(currentDishData);
                 showLoading(false);
                 
@@ -8454,10 +8291,7 @@
         function displayResult(dishData) {
             isShowingResult = true;
             
-            // Ensure we're on discover tab to show results (if not already)
-            if (currentRoute !== 'discover') {
-                switchTab('discover', false);
-            }
+            // REMOVED: Tab switching (browse page doesn't show scan results)
             
             // Push a history state when showing result so back button works properly
             window.history.pushState({ route: 'discover', showingResult: true }, '', window.location.href);

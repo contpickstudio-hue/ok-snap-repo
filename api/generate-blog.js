@@ -293,7 +293,7 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
             throw new Error(`Failed to create blog file: ${createBlogResponse.status} - ${JSON.stringify(errorData)}`);
         }
         
-        // Step 3: Update recipes.json
+        // Step 3: Update recipes.json (CRITICAL - must succeed)
         const recipesJsonPath = `${githubBasePath ? githubBasePath + '/' : ''}recipes.json`;
         let recipes = [];
         let recipesSha = null;
@@ -303,7 +303,8 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
             const getRecipesResponse = await fetch(`${baseUrl}/repos/${owner}/${repo}/contents/${recipesJsonPath}?ref=${githubBranch}`, {
                 headers: {
                     'Authorization': `Bearer ${githubToken}`,
-                    'Accept': 'application/vnd.github.v3+json'
+                    'Accept': 'application/vnd.github.v3+json',
+                    'User-Agent': 'ok-snap-blog-generator'
                 }
             });
             
@@ -311,11 +312,39 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
                 const fileData = await getRecipesResponse.json();
                 recipesSha = fileData.sha;
                 const content = Buffer.from(fileData.content, 'base64').toString('utf8');
-                recipes = JSON.parse(content);
+                // Handle empty file or invalid JSON
+                try {
+                    recipes = JSON.parse(content);
+                    if (!Array.isArray(recipes)) {
+                        console.warn('recipes.json exists but is not an array, resetting to empty array');
+                        recipes = [];
+                        recipesSha = null; // Force create new file
+                    }
+                } catch (parseError) {
+                    console.warn('Failed to parse existing recipes.json, starting fresh:', parseError.message);
+                    recipes = [];
+                    recipesSha = null; // Force create new file
+                }
+            } else if (getRecipesResponse.status === 404) {
+                // File doesn't exist yet - will create new file
+                console.log('recipes.json does not exist yet, will create new file');
+                recipes = [];
+                recipesSha = null;
+            } else {
+                // Other error - log but continue
+                const errorData = await getRecipesResponse.json().catch(() => ({}));
+                console.warn('Failed to fetch existing recipes.json, starting fresh:', {
+                    status: getRecipesResponse.status,
+                    error: errorData
+                });
+                recipes = [];
+                recipesSha = null;
             }
         } catch (e) {
-            // File doesn't exist, start fresh
+            // Network or other error - start fresh
+            console.warn('Error fetching existing recipes.json, starting fresh:', e.message);
             recipes = [];
+            recipesSha = null;
         }
         
         // Update recipes array
@@ -334,40 +363,109 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
             recipes.unshift(recipeEntry);
         }
         
-        const recipesContentBase64 = Buffer.from(JSON.stringify(recipes, null, 2), 'utf8').toString('base64');
+        let recipesContentBase64 = Buffer.from(JSON.stringify(recipes, null, 2), 'utf8').toString('base64');
         
-        const updateRecipesResponse = await fetch(`${baseUrl}/repos/${owner}/${repo}/contents/${recipesJsonPath}`, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${githubToken}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'Content-Type': 'application/json',
-                'User-Agent': 'ok-snap-blog-generator'
-            },
-            body: JSON.stringify({
-                message: `Update recipes.json: Add ${dishData.name}`,
-                content: recipesContentBase64,
-                sha: recipesSha,
-                branch: githubBranch
-            })
-        });
+        // Update recipes.json with retry logic
+        let updateRecipesResponse = null;
+        let recipesUpdateSuccess = false;
+        const maxRetries = 2;
         
-        if (!updateRecipesResponse.ok && updateRecipesResponse.status !== 422) {
-            const recipesError = await updateRecipesResponse.json().catch(() => ({}));
-            console.error('Failed to update recipes.json:', {
-                status: updateRecipesResponse.status,
-                statusText: updateRecipesResponse.statusText,
-                error: recipesError,
-                recipesJsonPath: recipesJsonPath,
-                branch: githubBranch
-            });
-            // Don't throw - blog was created, recipes.json update failure is not critical
-        } else {
-            console.log('Successfully updated recipes.json:', {
-                recipesJsonPath: recipesJsonPath,
-                branch: githubBranch,
-                recipeCount: recipes.length
-            });
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            try {
+                const updateBody = {
+                    message: `Update recipes.json: Add ${dishData.name}`,
+                    content: recipesContentBase64,
+                    branch: githubBranch
+                };
+                
+                // Only include SHA if file exists (for updates)
+                if (recipesSha) {
+                    updateBody.sha = recipesSha;
+                }
+                
+                updateRecipesResponse = await fetch(`${baseUrl}/repos/${owner}/${repo}/contents/${recipesJsonPath}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${githubToken}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json',
+                        'User-Agent': 'ok-snap-blog-generator'
+                    },
+                    body: JSON.stringify(updateBody)
+                });
+                
+                if (updateRecipesResponse.ok) {
+                    recipesUpdateSuccess = true;
+                    const responseData = await updateRecipesResponse.json();
+                    console.log('Successfully updated recipes.json:', {
+                        recipesJsonPath: recipesJsonPath,
+                        branch: githubBranch,
+                        recipeCount: recipes.length,
+                        commitSha: responseData.commit?.sha,
+                        attempt: attempt + 1
+                    });
+                    break;
+                } else if (updateRecipesResponse.status === 422 && attempt < maxRetries) {
+                    // 422 = SHA mismatch or file conflict - retry by fetching fresh SHA
+                    console.warn(`recipes.json update failed (422) on attempt ${attempt + 1}, fetching fresh SHA and retrying...`);
+                    try {
+                        const retryGetResponse = await fetch(`${baseUrl}/repos/${owner}/${repo}/contents/${recipesJsonPath}?ref=${githubBranch}`, {
+                            headers: {
+                                'Authorization': `Bearer ${githubToken}`,
+                                'Accept': 'application/vnd.github.v3+json',
+                                'User-Agent': 'ok-snap-blog-generator'
+                            }
+                        });
+                        if (retryGetResponse.ok) {
+                            const retryFileData = await retryGetResponse.json();
+                            recipesSha = retryFileData.sha;
+                            const retryContent = Buffer.from(retryFileData.content, 'base64').toString('utf8');
+                            try {
+                                recipes = JSON.parse(retryContent);
+                                if (!Array.isArray(recipes)) recipes = [];
+                            } catch (e) {
+                                recipes = [];
+                            }
+                            // Re-add the recipe entry
+                            const retryExistingIndex = recipes.findIndex(r => r.slug === slug);
+                            if (retryExistingIndex >= 0) {
+                                recipes[retryExistingIndex] = recipeEntry;
+                            } else {
+                                recipes.unshift(recipeEntry);
+                            }
+                            recipesContentBase64 = Buffer.from(JSON.stringify(recipes, null, 2), 'utf8').toString('base64');
+                            continue; // Retry with fresh SHA
+                        }
+                    } catch (retryError) {
+                        console.error('Failed to fetch fresh SHA for retry:', retryError);
+                    }
+                }
+                
+                // If we get here, the update failed
+                const recipesError = await updateRecipesResponse.json().catch(() => ({}));
+                console.error(`Failed to update recipes.json (attempt ${attempt + 1}):`, {
+                    status: updateRecipesResponse.status,
+                    statusText: updateRecipesResponse.statusText,
+                    error: recipesError,
+                    recipesJsonPath: recipesJsonPath,
+                    branch: githubBranch
+                });
+                
+                if (attempt === maxRetries) {
+                    // Final attempt failed - this is critical, throw error
+                    throw new Error(`Failed to update recipes.json after ${maxRetries + 1} attempts: ${updateRecipesResponse.status} - ${JSON.stringify(recipesError)}`);
+                }
+            } catch (updateError) {
+                if (attempt === maxRetries) {
+                    // Final attempt failed
+                    throw new Error(`Failed to update recipes.json: ${updateError.message}`);
+                }
+                console.warn(`recipes.json update attempt ${attempt + 1} failed:`, updateError.message);
+            }
+        }
+        
+        if (!recipesUpdateSuccess) {
+            throw new Error('Failed to update recipes.json after all retry attempts');
         }
         
         // Step 4: Handle image URL (image is already generated, just use the URL)
