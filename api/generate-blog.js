@@ -435,6 +435,13 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
         
         if (!createBlogResponse.ok) {
             const errorData = await createBlogResponse.json().catch(() => ({}));
+            console.error('GitHub API create blog error:', {
+                status: createBlogResponse.status,
+                statusText: createBlogResponse.statusText,
+                error: errorData,
+                blogFilePath: blogFilePath,
+                branch: githubBranch
+            });
             // If file exists, try to update it
             if (createBlogResponse.status === 422 && errorData.message?.includes('already exists')) {
                 // Get existing file SHA to update it
@@ -533,7 +540,20 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
         
         if (!updateRecipesResponse.ok && updateRecipesResponse.status !== 422) {
             const recipesError = await updateRecipesResponse.json().catch(() => ({}));
-            console.warn('Failed to update recipes.json:', updateRecipesResponse.status, recipesError);
+            console.error('Failed to update recipes.json:', {
+                status: updateRecipesResponse.status,
+                statusText: updateRecipesResponse.statusText,
+                error: recipesError,
+                recipesJsonPath: recipesJsonPath,
+                branch: githubBranch
+            });
+            // Don't throw - blog was created, recipes.json update failure is not critical
+        } else {
+            console.log('Successfully updated recipes.json:', {
+                recipesJsonPath: recipesJsonPath,
+                branch: githubBranch,
+                recipeCount: recipes.length
+            });
         }
         
         // Step 3: Upload image if provided
@@ -560,7 +580,11 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
         console.log('Blog successfully created via GitHub API:', {
             blogUrl: `${publicSiteUrl}/blogs/${slug}.html`,
             slug: slug,
-            imageUrl: imageUrl
+            imageUrl: imageUrl,
+            blogFilePath: blogFilePath,
+            recipesJsonPath: recipesJsonPath,
+            branch: githubBranch,
+            basePath: githubBasePath || '(root)'
         });
         
         return {
@@ -570,10 +594,21 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
         };
         
     } catch (error) {
-        console.error('GitHub API error:', error);
+        console.error('GitHub API error:', {
+            message: error.message,
+            stack: error.stack,
+            githubRepo: githubRepo,
+            githubBranch: githubBranch,
+            githubBasePath: githubBasePath || '(root)'
+        });
         return {
             success: false,
-            error: error.message || 'Unknown error creating blog files via GitHub'
+            error: error.message || 'Unknown error creating blog files via GitHub',
+            details: {
+                repo: githubRepo,
+                branch: githubBranch,
+                basePath: githubBasePath || '(root)'
+            }
         };
     }
 }
@@ -645,15 +680,20 @@ module.exports = async (req, res) => {
                 message: 'Blog post created successfully. It will be available on the website shortly.'
             });
         } else {
-            // If GitHub API fails, return content in response as fallback
-            console.warn('GitHub API failed, returning content in response:', githubResult.error);
+            // If GitHub API fails, log detailed error and return content in response as fallback
+            console.error('GitHub API failed:', {
+                error: githubResult.error,
+                details: githubResult.details
+            });
             return res.status(200).json({
                 success: true,
                 blogUrl: `https://ok-snap.com/blogs/${slug}.html`,
                 slug: slug,
                 imageUrl: imagePath ? `https://ok-snap.com${imagePath}` : null,
                 blogContent: blogContent, // Include content in response for frontend display
-                note: 'Blog content included in response (GitHub upload failed)'
+                note: 'Blog content included in response (GitHub upload failed)',
+                githubError: githubResult.error,
+                githubDetails: githubResult.details
             });
         }
     } catch (err) {

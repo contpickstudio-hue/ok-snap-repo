@@ -10949,6 +10949,13 @@
                     cache: 'no-store' // Always fetch fresh data
                 });
                 
+                console.log('Recipes fetch response:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    ok: response.ok,
+                    url: response.url
+                });
+                
                 console.log('Recipes response:', {
                     status: response.status,
                     statusText: response.statusText,
@@ -10957,6 +10964,13 @@
                 });
                 
                 if (!response.ok) {
+                    if (response.status === 404) {
+                        // recipes.json doesn't exist yet - show empty state
+                        console.log('recipes.json not found on ok-snap.com yet (404)');
+                        if (loading) loading.style.display = 'none';
+                        if (empty) empty.style.display = 'block';
+                        return;
+                    }
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
                 
