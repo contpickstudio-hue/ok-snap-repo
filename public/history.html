@@ -1934,7 +1934,8 @@
             }
         }
 
-        .nav-item {
+        .nav-item,
+        a.nav-item {
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -1953,6 +1954,7 @@
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
             flex: 1;
+            text-decoration: none;
         }
         
         @media (min-width: 420px) {
@@ -1963,12 +1965,21 @@
             }
         }
 
-        .nav-item:hover {
+        .nav-item:hover,
+        a.nav-item:hover {
             color: var(--primary);
+            text-decoration: none;
         }
         
-        .nav-item:active {
+        .nav-item:active,
+        a.nav-item:active {
             transform: scale(0.95); /* Tap feedback */
+        }
+        
+        .nav-item:focus,
+        a.nav-item:focus {
+            text-decoration: none;
+            outline: none;
         }
 
         .nav-item.active {
@@ -6401,39 +6412,7 @@
             updateFavoriteButtonState();
         }
 
-        function initializeTabs() {
-            const navItems = document.querySelectorAll('.nav-item');
-
-            navItems.forEach(item => {
-                item.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const targetTab = item.getAttribute('data-tab');
-                    if (targetTab) {
-                        try {
-                            switchTab(targetTab);
-                        } catch (error) {
-                            console.error('Error switching tab:', error, 'Target tab:', targetTab);
-                            // Still try to show the tab even if there's an error
-                            const targetTabContent = document.getElementById(targetTab + 'Tab');
-                            if (targetTabContent) {
-                                document.querySelectorAll('.tab-content').forEach(tab => {
-                                    tab.classList.remove('active');
-                                    tab.style.display = 'none';
-                                });
-                                document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-                                targetTabContent.classList.add('active');
-                                targetTabContent.style.display = targetTab === 'discover' ? 'flex' : 'block';
-                                if (targetTab === 'discover') {
-                                    targetTabContent.style.flexDirection = 'column';
-                                }
-                                item.classList.add('active');
-                            }
-                        }
-                    }
-                });
-            });
-        }
+        // REMOVED: initializeTabs() - Navigation now uses href links for page navigation
 
         // ============================================
         // TRANSLATIONS
@@ -7393,7 +7372,7 @@
             initializeUpload();
             initializeCamera();
             initializeAuth();
-            initializeTabs();
+            // REMOVED: initializeTabs() - Navigation now uses href links
             initializeSettings();
             initializeBackNavigation();
             initializeHeader();

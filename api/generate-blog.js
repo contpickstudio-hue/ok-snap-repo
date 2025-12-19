@@ -295,6 +295,13 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
         
         // Step 3: Update recipes.json (CRITICAL - must succeed)
         const recipesJsonPath = `${githubBasePath ? githubBasePath + '/' : ''}recipes.json`;
+        console.log('[createBlogFilesViaGitHub] Updating recipes.json:', {
+            recipesJsonPath: recipesJsonPath,
+            githubBasePath: githubBasePath || '(root)',
+            branch: githubBranch,
+            repo: `${owner}/${repo}`
+        });
+        
         let recipes = [];
         let recipesSha = null;
         
@@ -358,8 +365,10 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
         
         const existingIndex = recipes.findIndex(r => r.slug === slug);
         if (existingIndex >= 0) {
+            console.log(`[createBlogFilesViaGitHub] Updating existing recipe entry for slug: ${slug}`);
             recipes[existingIndex] = recipeEntry;
         } else {
+            console.log(`[createBlogFilesViaGitHub] Adding new recipe entry for slug: ${slug}, total recipes: ${recipes.length + 1}`);
             recipes.unshift(recipeEntry);
         }
         

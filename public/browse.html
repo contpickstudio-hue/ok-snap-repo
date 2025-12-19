@@ -1969,12 +1969,21 @@
             }
         }
 
-        .nav-item:hover {
+        .nav-item:hover,
+        a.nav-item:hover {
             color: var(--primary);
+            text-decoration: none;
         }
         
-        .nav-item:active {
+        .nav-item:active,
+        a.nav-item:active {
             transform: scale(0.95); /* Tap feedback */
+        }
+        
+        .nav-item:focus,
+        a.nav-item:focus {
+            text-decoration: none;
+            outline: none;
         }
 
         .nav-item.active {
