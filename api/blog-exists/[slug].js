@@ -27,9 +27,9 @@ module.exports = async (req, res) => {
 
         // Check if blog file exists by fetching from the deployed public-site
         // This is more reliable than checking file system in serverless
-        const publicSiteUrl = 'https://ok-snap-identifier.vercel.app';
-        const blogUrl = `${publicSiteUrl}/public-site/blogs/${slug}.html`;
-        const imageUrl = `${publicSiteUrl}/public-site/images/blogs/${slug}.png`;
+        const publicSiteUrl = 'https://ok-snap.com';
+        const blogUrl = `${publicSiteUrl}/blogs/${slug}.html`;
+        const imageUrl = `${publicSiteUrl}/images/blogs/${slug}.png`;
         
         try {
             // Try to fetch the blog HTML file

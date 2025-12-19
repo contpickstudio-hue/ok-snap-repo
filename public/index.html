@@ -5078,7 +5078,7 @@
                         <h3 id="appVersionLabel">App Version</h3>
                         <p id="appVersionDesc">Current version of BiteSight</p>
                     </div>
-                    <div class="version-info" id="appVersion">1.0.21</div>
+                    <div class="version-info" id="appVersion">1.0.22</div>
                 </div>
 
                 <!-- Feedback Button -->
@@ -6967,7 +6967,7 @@
             // Set app version
             const appVersionEl = document.getElementById('appVersion');
             if (appVersionEl) {
-                appVersionEl.textContent = '1.0.21';
+                appVersionEl.textContent = '1.0.22';
             }
 
             // Initialize feedback button
@@ -8963,8 +8963,8 @@
             try {
                 // Use global getApiBase function to ensure apiBase is always defined
                 const apiBase = getApiBase();
-                const publicWebsiteUrl = 'https://ok-snap-identifier.vercel.app';
-                const blogUrl = `${publicWebsiteUrl}/public-site/blogs/${slug}.html`;
+                const publicWebsiteUrl = 'https://ok-snap.com';
+                const blogUrl = `${publicWebsiteUrl}/blogs/${slug}.html`;
 
                 // Step 1: Check if blog exists (handle 404 gracefully)
                 let checkResult = { exists: false };
@@ -10998,14 +10998,14 @@
         function renderBlogCards(recipes, container) {
             if (!container) return;
             
-            const publicWebsiteUrl = 'https://ok-snap-identifier.vercel.app';
+            const publicWebsiteUrl = 'https://ok-snap.com';
             
             recipes.forEach((recipe) => {
                 const card = document.createElement('div');
                 card.className = 'blog-card';
-                card.onclick = () => openBlogPost(recipe.url || `${publicWebsiteUrl}/public-site/blogs/${recipe.slug || createSlug(recipe.name)}.html`);
+                card.onclick = () => openBlogPost(recipe.url || `${publicWebsiteUrl}/blogs/${recipe.slug || createSlug(recipe.name)}.html`);
                 
-                const imageUrl = recipe.imageUrl || recipe.image || `${publicWebsiteUrl}/public-site/images/${recipe.slug || createSlug(recipe.name)}.jpg`;
+                const imageUrl = recipe.imageUrl || recipe.image || `${publicWebsiteUrl}/images/${recipe.slug || createSlug(recipe.name)}.jpg`;
                 const excerpt = recipe.excerpt || recipe.description || 'Discover this delicious recipe and learn how to make it at home.';
                 const date = recipe.date || recipe.publishedDate || '';
                 

@@ -190,15 +190,22 @@ function saveBlogPost(dishData, blogContent, imagePath = null) {
     const slug = createSlug(dishData.name);
     const blogFilePath = path.join(blogsPath, `${slug}.html`);
     
-    // Add featured image at the top of blog content if available
-    let featuredImageHtml = '';
-    if (imagePath) {
-        featuredImageHtml = `
+        // Add featured image at the top of blog content if available
+        // Convert file path to website URL (remove /public-site prefix if present)
+        let featuredImageHtml = '';
+        if (imagePath) {
+            // Convert file path to website URL
+            const imageUrl = imagePath.startsWith('/public-site/') 
+                ? imagePath.replace('/public-site', '') 
+                : imagePath.startsWith('/') 
+                    ? imagePath 
+                    : `/${imagePath}`;
+            featuredImageHtml = `
             <div class="blog-featured-image">
-                <img src="${imagePath}" alt="${dishData.name}${dishData.nameKorean ? ` (${dishData.nameKorean})` : ''}" style="width: 100%; max-width: 800px; height: auto; border-radius: 12px; margin: 2rem auto; display: block; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+                <img src="${imageUrl}" alt="${dishData.name}${dishData.nameKorean ? ` (${dishData.nameKorean})` : ''}" style="width: 100%; max-width: 800px; height: auto; border-radius: 12px; margin: 2rem auto; display: block; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
             </div>
         `;
-    }
+        }
     
     // Create full HTML document
     const fullHtml = `<!DOCTYPE html>
@@ -274,7 +281,7 @@ function updateRecipesJson(dishData, slug) {
     const recipeEntry = {
         name: dishData.name,
         slug: slug,
-        url: `https://ok-snap-identifier.vercel.app/public-site/blogs/${slug}.html`,
+        url: `https://ok-snap.com/blogs/${slug}.html`,
         createdAt: new Date().toISOString()
     };
 
@@ -304,7 +311,7 @@ function checkBlogExists(dishName) {
             slug: slug,
             blogPath: blogFilePath,
             imagePath: fs.existsSync(imagePath) ? `/public-site/images/blogs/${slug}.png` : null,
-            blogUrl: `/public-site/blogs/${slug}.html`
+            blogUrl: `/blogs/${slug}.html`
         };
     }
     
@@ -334,14 +341,21 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
         }
         
         const baseUrl = 'https://api.github.com';
-        const publicSiteUrl = 'https://ok-snap-identifier.vercel.app';
+        const publicSiteUrl = 'https://ok-snap.com';
         
         // Create full HTML for blog post
         let featuredImageHtml = '';
+        let imageUrlForMeta = null;
         if (imagePath) {
+            // Convert file path to website URL (remove /public-site prefix if present)
+            imageUrlForMeta = imagePath.startsWith('/public-site/') 
+                ? `${publicSiteUrl}${imagePath.replace('/public-site', '')}` 
+                : imagePath.startsWith('/') 
+                    ? `${publicSiteUrl}${imagePath}` 
+                    : `${publicSiteUrl}/${imagePath}`;
             featuredImageHtml = `
             <div class="blog-featured-image">
-                <img src="${imagePath}" alt="${dishData.name}${dishData.nameKorean ? ` (${dishData.nameKorean})` : ''}" style="width: 100%; max-width: 800px; height: auto; border-radius: 12px; margin: 2rem auto; display: block; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+                <img src="${imageUrlForMeta}" alt="${dishData.name}${dishData.nameKorean ? ` (${dishData.nameKorean})` : ''}" style="width: 100%; max-width: 800px; height: auto; border-radius: 12px; margin: 2rem auto; display: block; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
             </div>
         `;
         }
@@ -353,7 +367,7 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Learn how to make ${dishData.name}${dishData.nameKorean ? ` (${dishData.nameKorean})` : ''} - Authentic Korean recipe with step-by-step instructions.">
     <meta name="keywords" content="${dishData.name}, Korean food, Korean recipe, ${dishData.nameKorean || ''}, Hansik">
-    ${imagePath ? `<meta property="og:image" content="${publicSiteUrl}${imagePath}">` : ''}
+    ${imageUrlForMeta ? `<meta property="og:image" content="${imageUrlForMeta}">` : ''}
     <title>${dishData.name} Recipe - OK-Snap</title>
     <link rel="stylesheet" href="../styles.css">
 </head>
@@ -482,7 +496,7 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
         const recipeEntry = {
             name: dishData.name,
             slug: slug,
-            url: `${publicSiteUrl}/public-site/blogs/${slug}.html`,
+            url: `${publicSiteUrl}/blogs/${slug}.html`,
             createdAt: new Date().toISOString()
         };
         
@@ -514,10 +528,20 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
             console.warn('Failed to update recipes.json, but blog was created');
         }
         
+        // Convert image path to website URL (remove /public-site prefix if present)
+        let imageUrl = null;
+        if (imagePath) {
+            imageUrl = imagePath.startsWith('/public-site/') 
+                ? `${publicSiteUrl}${imagePath.replace('/public-site', '')}` 
+                : imagePath.startsWith('/') 
+                    ? `${publicSiteUrl}${imagePath}` 
+                    : `${publicSiteUrl}/${imagePath}`;
+        }
+        
         return {
             success: true,
-            blogUrl: `${publicSiteUrl}/public-site/blogs/${slug}.html`,
-            imageUrl: imagePath ? `${publicSiteUrl}${imagePath}` : null
+            blogUrl: `${publicSiteUrl}/blogs/${slug}.html`,
+            imageUrl: imageUrl
         };
         
     } catch (error) {
@@ -555,9 +579,9 @@ module.exports = async (req, res) => {
         // Check if blog already exists
         const existingBlog = checkBlogExists(dishData.name);
         if (existingBlog) {
-            return res.status(200).json({
+                return res.status(200).json({
                 success: true,
-                blogUrl: `https://ok-snap-identifier.vercel.app${existingBlog.blogUrl}`,
+                blogUrl: `https://ok-snap.com${existingBlog.blogUrl}`,
                 slug: existingBlog.slug,
                 message: 'Blog already exists'
             });
@@ -593,9 +617,9 @@ module.exports = async (req, res) => {
             console.warn('GitHub API failed, returning content in response:', githubResult.error);
             return res.status(200).json({
                 success: true,
-                blogUrl: `https://ok-snap-identifier.vercel.app/public-site/blogs/${slug}.html`,
+                blogUrl: `https://ok-snap.com/blogs/${slug}.html`,
                 slug: slug,
-                imageUrl: imagePath ? `https://ok-snap-identifier.vercel.app${imagePath}` : null,
+                imageUrl: imagePath ? `https://ok-snap.com${imagePath}` : null,
                 blogContent: blogContent, // Include content in response for frontend display
                 note: 'Blog content included in response (GitHub upload failed)'
             });
