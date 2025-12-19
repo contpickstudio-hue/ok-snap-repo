@@ -4608,12 +4608,64 @@
     </nav>
 
     <script>
-                    </div>
-                    <div id="uploadPlaceholder">
-                        <div class="upload-icon">
-                            <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <!-- Camera body -->
-                                <rect x="20" y="30" width="40" height="30" rx="4" fill="var(--primary)" opacity="0.9"/>
+        // ============================================
+        // CONFIGURATION
+        // ============================================
+        // 
+        // ═══════════════════════════════════════════
+        // ADMOB SETUP INSTRUCTIONS
+        // ═══════════════════════════════════════════
+        // 
+        // 1. Create AdMob account: https://admob.google.com/
+        // 2. Create an app in AdMob dashboard
+        // 3. Create ad units (Banner, Interstitial, Rewarded)
+        // 4. Copy your ad unit IDs (format: ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX)
+        // 5. Replace placeholder values in ADMOB_CONFIG section below (around line 4970)
+        // 6. Install Capacitor plugin: npm install @capacitor-community/admob
+        // 7. Add AdMob App ID to capacitor.config.json
+        // 8. Replace placeholder functions with real SDK calls (see comments in AdManager section)
+        // 
+        // ═══════════════════════════════════════════
+        
+        const CONFIG = {
+            // Backend API endpoint
+            // For native apps, use Vercel URL (localhost not accessible from phone)
+            // For web, use current origin or Vercel URL
+            API_BASE: (typeof window !== 'undefined' && window.Capacitor) 
+                ? 'https://ok-snap-identifier.vercel.app'
+                : (typeof window !== 'undefined' && window.location.origin.includes('localhost'))
+                    ? window.location.origin
+                    : 'https://ok-snap-identifier.vercel.app',
+            
+            // Recipe links now point directly to recipe websites
+            // No API keys needed - using direct website search URLs
+
+            // Supabase Configuration
+            // Get your Supabase credentials from: https://app.supabase.com/
+            // Steps to get the credentials:
+            // 1. Go to https://app.supabase.com/ and create a project (or use existing)
+            // 2. Go to Project Settings > API
+            // 3. Copy the "Project URL" (SUPABASE_URL)
+            // 4. Copy the "anon public" key (SUPABASE_ANON_KEY)
+            // 5. Make sure Email authentication is enabled in Authentication > Providers
+            SUPABASE_URL: 'https://qiyprefzhprjzgemvqeu.supabase.co', // e.g., 'https://xxxxx.supabase.co'
+            SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpeXByZWZ6aHByanpnZW12cWV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MTY0NDgsImV4cCI6MjA3NTA5MjQ0OH0.RZAXhSFG3MOfAJkERaoD8Qv91_lWgkbWUBymtKjjFmU' // e.g., 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+        };
+        
+        // Global API base getter - ensures apiBase is always available
+        // This prevents "apiBase is not defined" errors in error handlers
+        function getApiBase() {
+            // Native app (Capacitor) - use production API
+            if (typeof window !== 'undefined' && window.Capacitor) {
+                return 'https://ok-snap-identifier.vercel.app';
+            }
+            // Explicit config override
+            if (CONFIG && CONFIG.API_BASE) {
+                return CONFIG.API_BASE;
+            }
+            // Check if we're on Vercel (production or preview deployment)
+            if (typeof window !== 'undefined' && window.location) {
+                const origin = window.location.origin;
                                 <rect x="22" y="32" width="36" height="26" rx="2" fill="var(--primary-light)" opacity="0.3"/>
                                 <!-- Camera lens -->
                                 <circle cx="40" cy="43" r="12" fill="white"/>
@@ -4992,153 +5044,7 @@
                 </div>
             </div>
         </div>
-
-        <!-- History Tab -->
-        <div class="tab-content" id="historyTab" style="display: flex; flex-direction: column;">
-            <div class="history-section">
-                <h2 class="section-title" id="recentDiscoveries">📜 Your Recent Discoveries</h2>
-                
-                <!-- Filter Bar -->
-                <div class="history-filter-bar" style="display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 8px;">
-                    <button class="history-filter-btn active" data-period="today" style="padding: 8px 16px; border-radius: 16px; border: none; background: var(--primary); color: white; font-weight: 600; font-size: 0.875rem; white-space: nowrap; cursor: pointer; transition: all 150ms ease;">Today</button>
-                    <button class="history-filter-btn" data-period="week" style="padding: 8px 16px; border-radius: 16px; border: 2px solid var(--secondary-dark); background: var(--background-alt); color: var(--text-primary); font-weight: 600; font-size: 0.875rem; white-space: nowrap; cursor: pointer; transition: all 150ms ease;">Week</button>
-                    <button class="history-filter-btn" data-period="month" style="padding: 8px 16px; border-radius: 16px; border: 2px solid var(--secondary-dark); background: var(--background-alt); color: var(--text-primary); font-weight: 600; font-size: 0.875rem; white-space: nowrap; cursor: pointer; transition: all 150ms ease;">Month</button>
-                </div>
-                
-                <div class="history-grid" id="historyGrid">
-                    <div class="empty-state" style="grid-column: 1 / -1;">
-                        <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" style="width: 64px; height: 64px; color: var(--text-tertiary);">
-                            <circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.1"></circle>
-                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"></circle>
-                            <line x1="12" y1="8" x2="12" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"></line>
-                            <line x1="12" y1="16" x2="12.01" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round"></line>
-                        </svg>
-                        <p id="historyEmpty" style="color: var(--text-secondary); font-size: 0.9375rem; margin-top: 12px;">Your exploration history will appear here</p>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Footer at bottom -->
-            <div class="feature-row" style="margin-top: auto; padding: 24px 16px;">
-                <div class="feature-item">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
-                        <path d="M2 17l10 5 10-5"></path>
-                        <path d="M2 12l10 5 10-5"></path>
-                    </svg>
-                    <span>Powered by AI</span>
-                </div>
-                <div class="feature-item">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                        <circle cx="12" cy="10" r="3"></circle>
-                    </svg>
-                    <span>Korean Focus</span>
-                </div>
-                <div class="feature-item">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                    </svg>
-                    <span>Cultural Stories</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- REMOVED: Duplicate tab content (Favorites, Browse, Settings) -->
-
-        <!-- Camera Modal -->
-        <div class="camera-modal" id="cameraModal">
-            <div class="camera-container">
-                <video id="cameraVideo" autoplay playsinline></video>
-                
-                <!-- Top Controls -->
-                <div class="camera-top-controls">
-                    <button class="camera-close-btn" id="closeCameraBtn" title="Close">×</button>
-                    <button class="camera-flash-btn" id="flashBtn" title="Flash">
-                        <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5">
-                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="currentColor"></polygon>
-                        </svg>
-                    </button>
-                </div>
-
-                <!-- Bottom Controls -->
-                <div class="camera-controls">
-                    <button class="camera-side-btn" id="retakeBtn" title="Retake" style="display: none;">
-                        <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5">
-                            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" stroke="currentColor" fill="none"></path>
-                            <path d="M21 3v5h-5" stroke="currentColor" fill="none"></path>
-                            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" stroke="currentColor" fill="none"></path>
-                            <path d="M3 21v-5h5" stroke="currentColor" fill="none"></path>
-                        </svg>
-                    </button>
-                    <button class="capture-btn" id="captureBtn" title="Capture photo"></button>
-                    <button class="camera-side-btn" id="flipCameraBtn" title="Flip camera">
-                        <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5">
-                            <path d="M17 1l4 4-4 4" stroke="currentColor" fill="none"></path>
-                            <path d="M3 11V9a4 4 0 0 1 4-4h14" stroke="currentColor" fill="none"></path>
-                            <path d="M7 23l-4-4 4-4" stroke="currentColor" fill="none"></path>
-                            <path d="M21 13v2a4 4 0 0 1-4 4H3" stroke="currentColor" fill="none"></path>
-                        </svg>
-                    </button>
-                </div>
-
-                <!-- Preview Container -->
-                <div class="camera-preview-container" id="cameraPreviewContainer">
-                    <img id="cameraPreviewImage" class="camera-preview-image" alt="Preview">
-                    <div class="camera-preview-controls">
-                        <button class="btn" id="usePhotoBtn" style="background: var(--primary); color: white;">Use Photo</button>
-                        <button class="btn" id="retakePhotoBtn" style="background: rgba(255, 255, 255, 0.2); color: white; border: 2px solid white;">Retake</button>
-                    </div>
-                </div>
-
-                <!-- Error Message -->
-                <div class="camera-error" id="cameraError" style="display: none;">
-                    <h3 id="cameraAccessDeniedTitle">Camera Access Denied</h3>
-                    <p id="cameraAccessDeniedMsg">Please allow camera access to use this feature.</p>
-                </div>
-            </div>
-        </div>
     </div>
-
-    <!-- Bottom Navigation -->
-    <nav class="bottom-navigation">
-        <a href="index.html" class="nav-item" id="navDiscover">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="11" cy="11" r="8"></circle>
-                <path d="m21 21-4.35-4.35"></path>
-            </svg>
-            <span id="navDiscoverText">Discover</span>
-        </a>
-        <a href="history.html" class="nav-item active" id="navHistory">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 16 14"></polyline>
-            </svg>
-            <span id="navHistoryText">History</span>
-        </a>
-        <a href="favorites.html" class="nav-item" id="navFavorites">
-            <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="currentColor"></path>
-            </svg>
-            <span id="navFavoritesText">Favorites</span>
-        </a>
-        <a href="browse.html" class="nav-item" id="navBrowse">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="7" height="7"></rect>
-                <rect x="14" y="3" width="7" height="7"></rect>
-                <rect x="14" y="14" width="7" height="7"></rect>
-                <rect x="3" y="14" width="7" height="7"></rect>
-            </svg>
-            <span id="navBrowseText">Browse</span>
-        </a>
-        <a href="settings.html" class="nav-item" id="navSettings">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 15.5C10.07 15.5 8.5 13.93 8.5 12C8.5 10.07 10.07 8.5 12 8.5C13.93 8.5 15.5 10.07 15.5 12C15.5 13.93 13.93 15.5 12 15.5ZM12 10C10.9 10 10 10.9 10 12C10 13.1 10.9 14 12 14C13.1 14 14 13.1 14 12C14 10.9 13.1 10 12 10Z" fill="currentColor"></path>
-                <path d="M19.43 12.97C19.47 12.65 19.5 12.33 19.5 12C19.5 11.67 19.47 11.35 19.43 11.03L21.54 9.37C21.73 9.22 21.78 8.95 21.66 8.73L19.66 5.27C19.54 5.05 19.27 4.96 19.05 5.05L16.56 6.05C16.04 5.65 15.5 5.32 14.87 5.07L14.5 2.42C14.46 2.18 14.25 2 14 2H10C9.75 2 9.54 2.18 9.5 2.42L9.13 5.07C8.5 5.32 7.96 5.66 7.44 6.05L4.95 5.05C4.73 4.96 4.46 5.05 4.34 5.27L2.34 8.73C2.21 8.95 2.27 9.22 2.46 9.37L4.57 11.03C4.53 11.35 4.5 11.67 4.5 12C4.5 12.33 4.53 12.65 4.57 12.97L2.46 14.63C2.27 14.78 2.21 15.05 2.34 15.27L4.34 18.73C4.46 18.95 4.73 19.03 4.95 18.95L7.44 17.95C7.96 18.34 8.5 18.68 9.13 18.93L9.5 21.58C9.54 21.82 9.75 22 10 22H14C14.25 22 14.46 21.82 14.5 21.58L14.87 18.93C15.5 18.68 16.04 18.34 16.56 17.95L19.05 18.95C19.27 19.04 19.54 18.95 19.66 18.73L21.66 15.27C21.79 15.05 21.73 14.78 21.54 14.63L19.43 12.97Z" fill="currentColor"></path>
-            </svg>
-            <span id="navSettingsText">Settings</span>
-        </a>
-    </nav>
 
     <script>
         // ============================================
