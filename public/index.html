@@ -4613,36 +4613,6 @@
 
             <!-- Result Section -->
             <div class="result-section" id="resultSection">
-                <!-- Top Actions -->
-                <div class="result-top-actions">
-                    <button class="btn" id="favoriteBtnTop" style="flex: 1; background: var(--primary); color: white;">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" style="margin-right: 8px; vertical-align: middle;">
-                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                        </svg>
-                        Save to Favorites
-                    </button>
-                        <button class="btn-secondary" id="shareBtnTop" style="flex: 1;">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" style="margin-right: 8px; vertical-align: middle;">
-                            <rect x="4" y="12" width="16" height="8" rx="2" fill="currentColor"></rect>
-                            <polyline points="16 6 12 2 8 6" stroke="white" stroke-width="2" fill="none"></polyline>
-                            <line x1="12" y1="2" x2="12" y2="15" stroke="white" stroke-width="2"></line>
-                        </svg>
-                        Share
-                    </button>
-                </div>
-                <!-- View Blog Button -->
-                <div style="margin: 1rem 0; text-align: center;">
-                    <button class="btn" id="viewBlogBtn" style="background: var(--accent); color: white; padding: 0.75rem 1.5rem;">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px; vertical-align: middle;">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                        </svg>
-                        View Full Blog
-                    </button>
-                </div>
-
                 <div class="result-header">
                     <h2 class="result-title" id="dishName"></h2>
                     <span class="confidence-badge" id="confidenceBadge"></span>
@@ -4862,6 +4832,36 @@
                 
                 <div class="action-buttons" style="margin-top: 24px;">
                     <button class="btn-primary" id="addToLogBtn" style="display: none; width: 100%;">➕ Add to Today's Log</button>
+                </div>
+
+                <!-- Action Buttons - Positioned at bottom of results -->
+                <div class="result-top-actions" style="margin-top: 24px;">
+                    <button class="btn" id="favoriteBtnTop" style="flex: 1; background: var(--primary); color: white;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" style="margin-right: 8px; vertical-align: middle;">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                        </svg>
+                        Save to Favorites
+                    </button>
+                    <button class="btn-secondary" id="shareBtnTop" style="flex: 1;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" style="margin-right: 8px; vertical-align: middle;">
+                            <rect x="4" y="12" width="16" height="8" rx="2" fill="currentColor"></rect>
+                            <polyline points="16 6 12 2 8 6" stroke="white" stroke-width="2" fill="none"></polyline>
+                            <line x1="12" y1="2" x2="12" y2="15" stroke="white" stroke-width="2"></line>
+                        </svg>
+                        Share
+                    </button>
+                </div>
+                <!-- View Blog Button -->
+                <div style="margin: 1rem 0; text-align: center;">
+                    <button class="btn" id="viewBlogBtn" style="background: var(--accent); color: white; padding: 0.75rem 1.5rem;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px; vertical-align: middle;">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                        </svg>
+                        View Full Blog
+                    </button>
                 </div>
             </div>
 
@@ -5271,6 +5271,8 @@
         let supabaseClient = null;
         let currentUser = null;
         let userScanInfo = { remaining: 3, limit: 3, level: 'guest' }; // Default for guest
+        let blogGenerationAttempted = new Set(); // Track blog generation attempts per dish to prevent duplicates
+        let blogGenerationFailed = new Set(); // Track failed blog generations to prevent retries
         
         // ============================================
         // ADMOB CONFIGURATION
@@ -5439,10 +5441,41 @@
                 
                 // Increment scan limit by 1
                 const incrementAmount = rewardResult.rewardAmount || 1;
-                const newRemaining = Math.min(
-                    (userScanInfo.remaining || 0) + incrementAmount,
-                    userScanInfo.limit || 3
-                );
+                
+                // CRITICAL: Decrement backend scan count first so backend knows about recharge
+                const apiBase = getApiBase();
+                let backendRemaining = null;
+                try {
+                    const decrementResponse = await fetch(`${apiBase}/api/decrement-scan-count`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            userId: currentUser?.id || null,
+                            decrementAmount: incrementAmount
+                        })
+                    });
+                    
+                    if (decrementResponse.ok) {
+                        const decrementResult = await decrementResponse.json();
+                        console.log('[rechargeScanLimitWithAd] Backend scan count decremented:', decrementResult);
+                        backendRemaining = decrementResult.remaining;
+                    } else {
+                        console.warn('[rechargeScanLimitWithAd] Failed to decrement backend count, continuing with local update');
+                    }
+                } catch (backendError) {
+                    console.warn('[rechargeScanLimitWithAd] Error calling backend decrement API:', backendError);
+                    // Continue with local update even if backend call fails
+                }
+                
+                // Calculate new remaining - use backend value if available, otherwise calculate locally
+                const newRemaining = backendRemaining !== null 
+                    ? backendRemaining 
+                    : Math.min(
+                        (userScanInfo.remaining || 0) + incrementAmount,
+                        userScanInfo.limit || 3
+                    );
                 
                 // Update local state
                 userScanInfo.remaining = newRemaining;
@@ -5487,6 +5520,12 @@
                 
                 // Update UI
                 updateScanLimitDisplay();
+                
+                // Re-enable analyze button if image is already selected
+                const analyzeBtn = document.getElementById('analyzeBtn');
+                if (analyzeBtn && currentImage) {
+                    analyzeBtn.disabled = false;
+                }
                 
                 // Show success message
                 const lang = getCurrentLanguage();
@@ -6229,7 +6268,24 @@
             currentRoute = tabName;
             
             // Handle result display based on tab
+            // CRITICAL: Scan results must ONLY be visible on Discover tab
             const resultSection = document.getElementById('resultSection');
+            const blogGenSection = document.getElementById('blogGenerationSection');
+            const blogDisplaySection = document.getElementById('blogDisplaySection');
+            
+            // Hide scan results when switching away from Discover tab
+            if (tabName !== 'discover') {
+                // Hide all scan result UI elements
+                if (resultSection) {
+                    resultSection.style.display = 'none';
+                }
+                if (blogGenSection) {
+                    blogGenSection.style.display = 'none';
+                }
+                if (blogDisplaySection) {
+                    blogDisplaySection.style.display = 'none';
+                }
+            }
             
             if (tabName === 'browse') {
                 // Load browse recipes when switching to this tab
@@ -7659,15 +7715,30 @@
                 const previewContainer = document.getElementById('previewContainer');
                 const previewImage = document.getElementById('previewImage');
                 const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+                const dishImage = document.getElementById('dishImage');
+                const analyzeBtn = document.getElementById('analyzeBtn');
                 
-                previewImage.src = e.target.result;
-                previewContainer.style.display = 'block';
-                uploadPlaceholder.style.display = 'none';
+                // Set preview image if element exists
+                if (previewImage) {
+                    previewImage.src = e.target.result;
+                }
+                if (previewContainer) {
+                    previewContainer.style.display = 'block';
+                }
+                if (uploadPlaceholder) {
+                    uploadPlaceholder.style.display = 'none';
+                }
                 
                 // Also set it for the result section (will be shown after analysis)
-                document.getElementById('dishImage').src = e.target.result;
+                // Only set if element exists (might be hidden if on different tab)
+                if (dishImage) {
+                    dishImage.src = e.target.result;
+                }
                 
-                document.getElementById('analyzeBtn').disabled = false;
+                // Enable analyze button
+                if (analyzeBtn) {
+                    analyzeBtn.disabled = false;
+                }
             };
             reader.readAsDataURL(file);
         }
@@ -8271,6 +8342,12 @@
                         const errorMessage = errorDetails.error || errorDetails.message || "Oops! That's all your scans for today. Come back tomorrow! 🌟";
                         showError(errorMessage);
                         showLoading(false);
+                        
+                        // Re-enable analyze button so user can try again after recharging
+                        if (analyzeBtn && currentImage) {
+                            analyzeBtn.disabled = false;
+                        }
+                        
                         return; // Stop execution, don't throw
                     }
                     
@@ -8841,6 +8918,19 @@
 
         // Generate blog post for the dish
         async function generateBlogPost(dishData) {
+            // Safeguard: Prevent multiple generation attempts for the same dish
+            const slug = createSlug(dishData.name);
+            if (blogGenerationAttempted.has(slug)) {
+                // Already attempted - silently return to avoid console spam
+                return;
+            }
+
+            // Safeguard: If generation previously failed, don't retry
+            if (blogGenerationFailed.has(slug)) {
+                // Previously failed - silently return
+                return;
+            }
+
             const blogGenSection = document.getElementById('blogGenerationSection');
             const blogDisplaySection = document.getElementById('blogDisplaySection');
             const blogProgressFill = document.getElementById('blogProgressFill');
@@ -8850,9 +8940,12 @@
             const resultSection = document.getElementById('resultSection');
 
             if (!blogGenSection || !blogDisplaySection) {
-                console.warn('Blog generation UI elements not found');
+                // Silently return if UI elements not found - don't spam console
                 return;
             }
+
+            // Mark as attempted immediately to prevent duplicate calls
+            blogGenerationAttempted.add(slug);
 
             // Hide result section and show blog generation section
             if (resultSection) resultSection.style.display = 'none';
@@ -8872,41 +8965,32 @@
             try {
                 // Use global getApiBase function to ensure apiBase is always defined
                 const apiBase = getApiBase();
-                const slug = createSlug(dishData.name);
                 const publicWebsiteUrl = 'https://ok-snap-identifier.vercel.app';
                 const blogUrl = `${publicWebsiteUrl}/public-site/blogs/${slug}.html`;
 
-                // Step 1: Check if blog exists
-                let checkResponse;
-                let checkResult;
+                // Step 1: Check if blog exists (handle 404 gracefully)
+                let checkResult = { exists: false };
                 try {
                     const checkUrl = `${apiBase}/api/blog-exists/${slug}`;
-                    console.log('Checking blog existence:', checkUrl);
-                    checkResponse = await fetch(checkUrl, {
+                    const checkResponse = await fetch(checkUrl, {
                         method: 'GET',
                         headers: {
                             'Content-Type': 'application/json'
                         }
                     });
-                    console.log('Blog check response:', {
-                        status: checkResponse.status,
-                        statusText: checkResponse.statusText,
-                        ok: checkResponse.ok,
-                        url: checkUrl
-                    });
                     
-                    if (!checkResponse.ok) {
-                        throw new Error(`Blog check failed: ${checkResponse.status} ${checkResponse.statusText}`);
+                    // Handle 404 gracefully - treat as "blog not created yet"
+                    if (checkResponse.status === 404) {
+                        checkResult = { exists: false };
+                    } else if (checkResponse.ok) {
+                        checkResult = await checkResponse.json();
+                    } else {
+                        // Other errors - treat as "blog not created yet" but log quietly
+                        checkResult = { exists: false };
                     }
-                    
-                    checkResult = await checkResponse.json();
                 } catch (checkError) {
-                    console.error('Error checking blog existence:', {
-                        message: checkError.message || checkError,
-                        name: checkError.name,
-                        url: `${apiBase}/api/blog-exists/${slug}`
-                    });
-                    // Default to needs generation if check fails
+                    // Network errors or other issues - treat as "blog not created yet"
+                    // Don't log to console to avoid spam
                     checkResult = { exists: false };
                 }
 
@@ -8920,11 +9004,9 @@
                     }
 
                     const generateUrl = `${apiBase}/api/generate-blog`;
-                    console.log('Generating blog:', generateUrl);
                     
-                    let generateResponse;
                     try {
-                        generateResponse = await fetch(generateUrl, {
+                        const generateResponse = await fetch(generateUrl, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json'
@@ -8933,27 +9015,24 @@
                                 dishData: dishData
                             })
                         });
-                        
-                        console.log('Blog generation response:', {
-                            status: generateResponse.status,
-                            statusText: generateResponse.statusText,
-                            ok: generateResponse.ok,
-                            url: generateUrl
-                        });
+
+                        // Handle 500 errors gracefully - mark as failed and stop
+                        if (generateResponse.status === 500) {
+                            blogGenerationFailed.add(slug);
+                            throw new Error('Blog generation service unavailable');
+                        }
 
                         if (!generateResponse.ok) {
-                            const errorText = await generateResponse.text().catch(() => 'Unknown error');
-                            throw new Error(`Failed to generate blog post: ${generateResponse.status} ${generateResponse.statusText} - ${errorText}`);
+                            // Other errors - mark as failed
+                            blogGenerationFailed.add(slug);
+                            throw new Error(`Blog generation failed: ${generateResponse.status}`);
                         }
 
                         const generateResult = await generateResponse.json();
                         finalBlogUrl = generateResult.blogUrl || blogUrl;
                     } catch (generateError) {
-                        console.error('Error generating blog:', {
-                            message: generateError.message || generateError,
-                            name: generateError.name,
-                            url: generateUrl
-                        });
+                        // Mark as failed to prevent future retries
+                        blogGenerationFailed.add(slug);
                         throw generateError; // Re-throw to be caught by outer catch
                     }
                 } else {
@@ -8977,7 +9056,6 @@
 
                     // Fetch blog HTML from public website
                     try {
-                        console.log('Fetching blog content from:', finalBlogUrl);
                         const blogResponse = await fetch(finalBlogUrl, {
                             method: 'GET',
                             headers: {
@@ -8985,15 +9063,8 @@
                             }
                         });
                         
-                        console.log('Blog content response:', {
-                            status: blogResponse.status,
-                            statusText: blogResponse.statusText,
-                            ok: blogResponse.ok,
-                            url: finalBlogUrl
-                        });
-                        
                         if (!blogResponse.ok) {
-                            throw new Error(`Failed to fetch blog content: ${blogResponse.status} ${blogResponse.statusText}`);
+                            throw new Error(`Failed to fetch blog content: ${blogResponse.status}`);
                         }
 
                         const html = await blogResponse.text();
@@ -9024,26 +9095,25 @@
                             blogExternalLink.textContent = 'View Full Blog Post';
                         }
                     } catch (fetchError) {
-                        console.error('Error loading blog content:', fetchError);
+                        // Silently handle fetch errors - don't spam console
                         if (blogViewer) {
-                            blogViewer.innerHTML = '<p>Error loading blog content. Please try again or click the link below.</p>';
+                            blogViewer.innerHTML = '<p>Unable to load blog content. The recipe information above is still available.</p>';
                         }
                     }
                 }, needsGeneration ? 500 : 200);
 
             } catch (error) {
+                // Gracefully handle all errors - don't break UX
                 clearInterval(progressInterval);
-                console.error('Error generating blog:', error);
                 
+                // Hide blog generation UI
                 blogGenSection.style.display = 'none';
                 
-                if (blogProgressText) {
-                    blogProgressText.textContent = 'Blog generation failed. You can still view the recipe information above.';
-                    blogProgressText.style.color = 'var(--status-error)';
-                }
-
-                // Show result section again on error
+                // Show result section again - scan results must still be visible
                 if (resultSection) resultSection.style.display = 'block';
+                
+                // Don't show error message to user - blog generation is optional
+                // The scan results are the primary content and must remain visible
             }
         }
 
@@ -9301,52 +9371,9 @@
             const recipeLinksContainer = document.getElementById('recipeLinks');
             if (!recipeLinksContainer) return;
             
-            // Use just the dish name for search - no cuisine suffix needed
-            const searchTerm = dishName;
-            
-            const encodedTerm = encodeURIComponent(searchTerm);
-            
-            // Recipe sites with their search URLs
-            const recipeSites = [
-                {
-                    name: 'Maangchi',
-                    url: `https://www.maangchi.com/search?q=${encodedTerm}`,
-                    icon: '🍳',
-                    description: 'Authentic Korean recipes'
-                },
-                {
-                    name: 'Korean Bapsang',
-                    url: `https://www.koreanbapsang.com/?s=${encodedTerm}`,
-                    icon: '🥢',
-                    description: 'Traditional Korean cooking'
-                },
-                {
-                    name: 'Serious Eats',
-                    url: `https://www.seriouseats.com/search?q=${encodedTerm}`,
-                    icon: '🍽️',
-                    description: 'Expert cooking techniques'
-                },
-                {
-                    name: 'AllRecipes',
-                    url: `https://www.allrecipes.com/search?q=${encodedTerm}`,
-                    icon: '📖',
-                    description: 'Community recipes'
-                }
-            ];
-            
-            // Create recipe cards
-            recipeLinksContainer.innerHTML = recipeSites.map(site => `
-                <a href="${site.url}" class="recipe-card" target="_blank" rel="noopener noreferrer">
-                    <div class="recipe-card-icon">${site.icon}</div>
-                    <div class="recipe-card-content">
-                        <div class="recipe-card-title">${site.name}</div>
-                        <div class="recipe-card-description">${site.description}</div>
-                    </div>
-                    <svg class="recipe-card-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="9 18 15 12 9 6"></polyline>
-                    </svg>
-                </a>
-            `).join('');
+            // Only show OK-Snap generated blogs and recipe JSON
+            // No external recipe site links
+            recipeLinksContainer.innerHTML = '';
         }
 
         // ============================================
