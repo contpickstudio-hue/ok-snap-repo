@@ -1,4 +1,0 @@
-# Netlify-style redirects (also works on Vercel)
-# Redirect /blogs/slug to /blogs/slug.html
-/blogs/:slug /blogs/:slug.html 200
-
