@@ -544,25 +544,11 @@ module.exports = async (req, res) => {
             return res.status(400).json({ error: 'dishData with name is required' });
         }
 
-        // Check if blog already exists by checking the deployed site
+        // Create slug for the blog post
         const slug = createSlug(dishData.name);
-        const publicSiteUrl = process.env.PUBLIC_SITE_URL || 'https://ok-snap.com';
-        const blogUrl = `${publicSiteUrl}/blogs/${slug}.html`;
         
-        try {
-            const checkResponse = await fetch(blogUrl, { method: 'HEAD' });
-            if (checkResponse.ok) {
-                return res.status(200).json({
-                    success: true,
-                    blogUrl: blogUrl,
-                    slug: slug,
-                    message: 'Blog already exists'
-                });
-            }
-        } catch (checkError) {
-            // Blog doesn't exist yet, continue with generation
-            console.log('Blog does not exist yet, proceeding with generation');
-        }
+        // Note: Blog existence check is handled inside createBlogFilesViaGitHub via GitHub API
+        // This avoids CORS issues when checking the deployed site
 
         // Generate blog content
         const blogContent = await generateBlogPost(dishData);
