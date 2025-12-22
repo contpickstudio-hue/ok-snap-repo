@@ -159,6 +159,10 @@ async function generateBlogImage(dishData) {
  * This allows us to create files in the repository, which triggers Vercel deployment
  */
 async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:161',message:'createBlogFilesViaGitHub entry',data:{dishName:dishData?.name,slug,hasImage:!!imagePath,blogContentLength:blogContent?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    
     const githubToken = process.env.GITHUB_TOKEN;
     const githubRepo = process.env.GITHUB_REPO; // Format: "owner/repo" e.g., "username/ok-snap"
     // Default to 'site' branch where the blog website is deployed
@@ -167,7 +171,14 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
     // If your site branch root contains blog files directly, set GITHUB_BASE_PATH to empty string
     const githubBasePath = process.env.GITHUB_BASE_PATH !== undefined ? process.env.GITHUB_BASE_PATH : 'public-site';
     
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:169',message:'GitHub config check',data:{hasToken:!!githubToken,tokenLength:githubToken?.length,repo:githubRepo,branch:githubBranch,basePath:githubBasePath},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
+    
     if (!githubToken || !githubRepo) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:172',message:'Missing GitHub credentials',data:{hasToken:!!githubToken,hasRepo:!!githubRepo},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
         return {
             success: false,
             error: 'GitHub credentials not configured. Set GITHUB_TOKEN and GITHUB_REPO environment variables.'
@@ -177,8 +188,15 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
     try {
         const [owner, repo] = githubRepo.split('/');
         if (!owner || !repo) {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:178',message:'Invalid repo format',data:{repo:githubRepo,owner,repo},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+            // #endregion
             throw new Error('Invalid GITHUB_REPO format. Use "owner/repo"');
         }
+        
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:183',message:'Parsed GitHub config',data:{owner,repo,branch:githubBranch,basePath:githubBasePath},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
         
         const baseUrl = 'https://api.github.com';
         const publicSiteUrl = 'https://ok-snap.com';
@@ -251,6 +269,11 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
         
         // Step 1: Check if blog already exists BEFORE creating
         const blogFilePath = `${githubBasePath ? githubBasePath + '/' : ''}blogs/${slug}.html`;
+        
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:254',message:'Checking blog existence',data:{blogFilePath,fullUrl:`${baseUrl}/repos/${owner}/${repo}/contents/${blogFilePath}?ref=${githubBranch}`},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
+        
         const checkBlogResponse = await fetch(`${baseUrl}/repos/${owner}/${repo}/contents/${blogFilePath}?ref=${githubBranch}`, {
             headers: {
                 'Authorization': `Bearer ${githubToken}`,
@@ -258,9 +281,16 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
             }
         });
         
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:262',message:'Blog check response',data:{status:checkBlogResponse.status,statusText:checkBlogResponse.statusText,ok:checkBlogResponse.ok},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
+        
         if (checkBlogResponse.ok) {
             // Blog already exists - skip generation
             console.log(`Blog already exists for ${dishData.name}, skipping generation`);
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:268',message:'Blog already exists, skipping',data:{slug},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+            // #endregion
             return {
                 success: true,
                 blogUrl: `${publicSiteUrl}/blogs/${slug}.html`,
@@ -270,8 +300,19 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
             };
         }
         
+        // #region agent log
+        if (!checkBlogResponse.ok) {
+            const errorText = await checkBlogResponse.text().catch(() => '');
+            fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:275',message:'Blog check failed',data:{status:checkBlogResponse.status,errorText:errorText.substring(0,200)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        }
+        // #endregion
+        
         // Step 2: Create blog HTML file (blog doesn't exist)
         const blogContentBase64 = Buffer.from(fullHtml, 'utf8').toString('base64');
+        
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:277',message:'Creating blog file',data:{blogFilePath,contentLength:blogContentBase64.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
         
         const createBlogResponse = await fetch(`${baseUrl}/repos/${owner}/${repo}/contents/${blogFilePath}`, {
             method: 'PUT',
@@ -288,13 +329,29 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
             })
         });
         
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:293',message:'Blog create response',data:{status:createBlogResponse.status,statusText:createBlogResponse.statusText,ok:createBlogResponse.ok},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
+        
         if (!createBlogResponse.ok) {
             const errorData = await createBlogResponse.json().catch(() => ({}));
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:297',message:'Blog create failed',data:{status:createBlogResponse.status,errorData},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+            // #endregion
             throw new Error(`Failed to create blog file: ${createBlogResponse.status} - ${JSON.stringify(errorData)}`);
         }
         
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:302',message:'Blog file created successfully',data:{slug},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
+        
         // Step 3: Update recipes.json (CRITICAL - must succeed)
         const recipesJsonPath = `${githubBasePath ? githubBasePath + '/' : ''}recipes.json`;
+        
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:305',message:'Starting recipes.json update',data:{recipesJsonPath,basePath:githubBasePath,branch:githubBranch},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
+        
         console.log('[createBlogFilesViaGitHub] Updating recipes.json:', {
             recipesJsonPath: recipesJsonPath,
             githubBasePath: githubBasePath || '(root)',
@@ -307,6 +364,10 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
         
         // Get existing recipes.json if it exists
         try {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:312',message:'Fetching existing recipes.json',data:{recipesJsonPath},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+            // #endregion
+            
             const getRecipesResponse = await fetch(`${baseUrl}/repos/${owner}/${repo}/contents/${recipesJsonPath}?ref=${githubBranch}`, {
                 headers: {
                     'Authorization': `Bearer ${githubToken}`,
@@ -314,6 +375,10 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
                     'User-Agent': 'ok-snap-blog-generator'
                 }
             });
+            
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:321',message:'recipes.json fetch response',data:{status:getRecipesResponse.status,ok:getRecipesResponse.ok},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+            // #endregion
             
             if (getRecipesResponse.ok) {
                 const fileData = await getRecipesResponse.json();
@@ -327,16 +392,25 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
                         recipes = [];
                         recipesSha = null; // Force create new file
                     }
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:332',message:'Parsed existing recipes.json',data:{recipeCount:recipes.length,hasSha:!!recipesSha},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+                    // #endregion
                 } catch (parseError) {
                     console.warn('Failed to parse existing recipes.json, starting fresh:', parseError.message);
                     recipes = [];
                     recipesSha = null; // Force create new file
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:337',message:'Failed to parse recipes.json',data:{error:parseError.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+                    // #endregion
                 }
             } else if (getRecipesResponse.status === 404) {
                 // File doesn't exist yet - will create new file
                 console.log('recipes.json does not exist yet, will create new file');
                 recipes = [];
                 recipesSha = null;
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:343',message:'recipes.json does not exist, will create',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+                // #endregion
             } else {
                 // Other error - log but continue
                 const errorData = await getRecipesResponse.json().catch(() => ({}));
@@ -346,12 +420,18 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
                 });
                 recipes = [];
                 recipesSha = null;
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:352',message:'recipes.json fetch failed',data:{status:getRecipesResponse.status,errorData},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                // #endregion
             }
         } catch (e) {
             // Network or other error - start fresh
             console.warn('Error fetching existing recipes.json, starting fresh:', e.message);
             recipes = [];
             recipesSha = null;
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:360',message:'Exception fetching recipes.json',data:{error:e.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+            // #endregion
         }
         
         // Update recipes array
@@ -413,6 +493,9 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
                         commitSha: responseData.commit?.sha,
                         attempt: attempt + 1
                     });
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:410',message:'recipes.json update succeeded',data:{recipeCount:recipes.length,commitSha:responseData.commit?.sha,attempt:attempt+1},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+                    // #endregion
                     break;
                 } else if (updateRecipesResponse.status === 422 && attempt < maxRetries) {
                     // 422 = SHA mismatch or file conflict - retry by fetching fresh SHA
@@ -460,8 +543,15 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
                     branch: githubBranch
                 });
                 
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:458',message:'recipes.json update failed',data:{status:updateRecipesResponse.status,attempt:attempt+1,error:recipesError},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+                // #endregion
+                
                 if (attempt === maxRetries) {
                     // Final attempt failed - this is critical, throw error
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:465',message:'recipes.json update failed all attempts',data:{status:updateRecipesResponse.status,error:recipesError},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+                    // #endregion
                     throw new Error(`Failed to update recipes.json after ${maxRetries + 1} attempts: ${updateRecipesResponse.status} - ${JSON.stringify(recipesError)}`);
                 }
             } catch (updateError) {
@@ -474,8 +564,15 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
         }
         
         if (!recipesUpdateSuccess) {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:480',message:'recipes.json update not successful',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+            // #endregion
             throw new Error('Failed to update recipes.json after all retry attempts');
         }
+        
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:485',message:'recipes.json update completed successfully',data:{recipeCount:recipes.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
         
         // Step 4: Handle image URL (image is already generated, just use the URL)
         let imageUrl = null;
@@ -509,6 +606,9 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
             githubBranch: githubBranch,
             githubBasePath: githubBasePath || '(root)'
         });
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:508',message:'GitHub API exception',data:{error:error.message,repo:githubRepo,branch:githubBranch},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+        // #endregion
         return {
             success: false,
             error: error.message || 'Unknown error creating blog files via GitHub',
@@ -540,6 +640,10 @@ module.exports = async (req, res) => {
     try {
         const { dishData } = req.body;
         
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:540',message:'API handler entry',data:{hasDishData:!!dishData,dishName:dishData?.name},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        
         if (!dishData || !dishData.name) {
             return res.status(400).json({ error: 'dishData with name is required' });
         }
@@ -547,11 +651,19 @@ module.exports = async (req, res) => {
         // Create slug for the blog post
         const slug = createSlug(dishData.name);
         
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:549',message:'Slug created',data:{slug,dishName:dishData.name},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
+        
         // Note: Blog existence check is handled inside createBlogFilesViaGitHub via GitHub API
         // This avoids CORS issues when checking the deployed site
 
         // Generate blog content
         const blogContent = await generateBlogPost(dishData);
+        
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:557',message:'Blog content generated',data:{contentLength:blogContent?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
         
         // Generate image (optional - don't fail if image generation fails)
         let imagePath = null;
@@ -564,6 +676,10 @@ module.exports = async (req, res) => {
         // Use GitHub API to create blog files in the repository
         // This will trigger a new Vercel deployment for public-site
         const githubResult = await createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug);
+        
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:570',message:'GitHub result',data:{success:githubResult.success,error:githubResult.error},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+        // #endregion
         
         if (githubResult.success) {
             return res.status(200).json({
@@ -579,6 +695,9 @@ module.exports = async (req, res) => {
                 error: githubResult.error,
                 details: githubResult.details
             });
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:585',message:'GitHub API failed, returning fallback',data:{error:githubResult.error,details:githubResult.details},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+            // #endregion
             return res.status(200).json({
                 success: true,
                 blogUrl: `https://ok-snap.com/blogs/${slug}.html`,
@@ -592,6 +711,9 @@ module.exports = async (req, res) => {
         }
     } catch (err) {
         console.error('Blog generation error:', err);
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:600',message:'Exception in handler',data:{error:err.message,stack:err.stack?.substring(0,200)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+        // #endregion
         return res.status(500).json({ 
             error: 'Failed to generate blog post',
             message: err.message || 'Unknown error'
