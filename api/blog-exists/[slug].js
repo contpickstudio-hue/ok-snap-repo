@@ -65,25 +65,68 @@ module.exports = async (req, res) => {
                 // #endregion
                 
                 if (githubResponse.ok) {
-                    // Blog exists in GitHub - check if deployed site is accessible
+                    // Blog exists in GitHub - MUST also check if deployed site is accessible
+                    let deployed = false;
+                    let deployedStatus = null;
                     let imageExists = false;
                     try {
-                        const imageResponse = await fetch(imageUrl, { method: 'HEAD' });
-                        imageExists = imageResponse.ok;
+                        const deployedResponse = await fetch(blogUrl, { 
+                            method: 'HEAD',
+                            headers: {
+                                'User-Agent': 'OK-Snap-Blog-Checker'
+                            }
+                        });
+                        deployed = deployedResponse.ok;
+                        deployedStatus = deployedResponse.status;
+                        
+                        // #region agent log
+                        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'blog-exists/[slug].js:78',message:'Deployed site check',data:{slug,deployed,status:deployedStatus,blogUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+                        // #endregion
+                        
+                        if (deployed) {
+                            try {
+                                const imageResponse = await fetch(imageUrl, { method: 'HEAD' });
+                                imageExists = imageResponse.ok;
+                            } catch (e) {
+                                // Image doesn't exist, that's okay
+                            }
+                        }
                     } catch (e) {
-                        // Image doesn't exist, that's okay
+                        // Deployed site check failed - blog exists in GitHub but not deployed yet
+                        // #region agent log
+                        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'blog-exists/[slug].js:95',message:'Deployed site check failed',data:{error:e.message,slug},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+                        // #endregion
                     }
                     
                     // #region agent log
-                    fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'blog-exists/[slug].js:65',message:'Blog exists in GitHub',data:{slug,blogUrl,imageExists},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+                    fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'blog-exists/[slug].js:100',message:'Blog check result',data:{slug,blogUrl,deployed,imageExists},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
                     // #endregion
                     
-                    return res.status(200).json({
-                        exists: true,
-                        slug: slug,
-                        blogUrl: blogUrl,
-                        imageUrl: imageExists ? imageUrl : null
-                    });
+                    // Only return exists: true if actually deployed (accessible on live site)
+                    if (deployed) {
+                        // #region agent log
+                        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'blog-exists/[slug].js:105',message:'Blog exists and is deployed',data:{slug,blogUrl,imageExists},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+                        // #endregion
+                        
+                        return res.status(200).json({
+                            exists: true,
+                            slug: slug,
+                            blogUrl: blogUrl,
+                            imageUrl: imageExists ? imageUrl : null
+                        });
+                    } else {
+                        // Blog exists in GitHub but not deployed yet
+                        // #region agent log
+                        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'blog-exists/[slug].js:118',message:'Blog in GitHub but not deployed',data:{slug,status:deployedStatus},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+                        // #endregion
+                        
+                        return res.status(200).json({
+                            exists: false,
+                            slug: slug,
+                            pending: true, // Indicates blog is created but not deployed yet
+                            message: 'Blog is being prepared. Please check back in a few minutes.'
+                        });
+                    }
                 }
             } catch (githubError) {
                 // #region agent log
