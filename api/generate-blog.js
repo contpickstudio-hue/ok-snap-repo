@@ -341,9 +341,19 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
             throw new Error(`Failed to create blog file: ${createBlogResponse.status} - ${JSON.stringify(errorData)}`);
         }
         
+        const createBlogData = await createBlogResponse.json();
+        const blogCommitSha = createBlogData.commit?.sha;
         // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:302',message:'Blog file created successfully',data:{slug},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:302',message:'Blog file created successfully',data:{slug,commitSha:blogCommitSha},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
         // #endregion
+        
+        // Automatically promote deployment to production (non-blocking)
+        if (blogCommitSha) {
+            const { promoteDeploymentToProduction } = require('./promote-deployment');
+            promoteDeploymentToProduction(blogCommitSha, githubBranch).catch(err => {
+                console.warn('[generate-blog] Failed to promote blog deployment (non-critical):', err.message);
+            });
+        }
         
         // Step 3: Update recipes.json (CRITICAL - must succeed)
         const recipesJsonPath = `${githubBasePath ? githubBasePath + '/' : ''}recipes.json`;
@@ -486,16 +496,26 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
                 if (updateRecipesResponse.ok) {
                     recipesUpdateSuccess = true;
                     const responseData = await updateRecipesResponse.json();
+                    const commitSha = responseData.commit?.sha;
                     console.log('Successfully updated recipes.json:', {
                         recipesJsonPath: recipesJsonPath,
                         branch: githubBranch,
                         recipeCount: recipes.length,
-                        commitSha: responseData.commit?.sha,
+                        commitSha: commitSha,
                         attempt: attempt + 1
                     });
                     // #region agent log
-                    fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:410',message:'recipes.json update succeeded',data:{recipeCount:recipes.length,commitSha:responseData.commit?.sha,attempt:attempt+1},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+                    fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:410',message:'recipes.json update succeeded',data:{recipeCount:recipes.length,commitSha:commitSha,attempt:attempt+1},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
                     // #endregion
+                    
+                    // Automatically promote deployment to production (non-blocking)
+                    if (commitSha) {
+                        const { promoteDeploymentToProduction } = require('./promote-deployment');
+                        promoteDeploymentToProduction(commitSha, githubBranch).catch(err => {
+                            console.warn('[generate-blog] Failed to promote deployment (non-critical):', err.message);
+                        });
+                    }
+                    
                     break;
                 } else if (updateRecipesResponse.status === 422 && attempt < maxRetries) {
                     // 422 = SHA mismatch or file conflict - retry by fetching fresh SHA

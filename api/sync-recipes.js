@@ -211,17 +211,26 @@ module.exports = async (req, res) => {
         }
         
         const responseData = await updateResponse.json();
+        const commitSha = responseData.commit?.sha;
         
         console.log('[sync-recipes] Successfully synced recipes.json:', {
             recipesCount: recipes.length,
-            commitSha: responseData.commit?.sha
+            commitSha: commitSha
         });
+        
+        // Automatically promote deployment to production (non-blocking)
+        if (commitSha) {
+            const { promoteDeploymentToProduction } = require('./promote-deployment');
+            promoteDeploymentToProduction(commitSha, githubBranch).catch(err => {
+                console.warn('[sync-recipes] Failed to promote deployment (non-critical):', err.message);
+            });
+        }
         
         return res.status(200).json({
             success: true,
             message: `Successfully synced ${recipes.length} recipes to recipes.json`,
             recipesCount: recipes.length,
-            commitSha: responseData.commit?.sha,
+            commitSha: commitSha,
             recipes: recipes.map(r => ({ slug: r.slug, title: r.title }))
         });
         
