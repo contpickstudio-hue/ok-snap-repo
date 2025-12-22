@@ -125,18 +125,32 @@
             
             // No recipes found from any source
             if (recipes.length === 0) {
-                console.warn('No recipes found from any source. Check that recipes.json exists and contains blog entries.');
-                console.log('Debug info:', {
-                    currentHost: window.location.hostname,
-                    currentOrigin: window.location.origin,
-                    triedSources: [
-                        'recipes.json (relative)',
-                        '/api/recipes-json',
-                        'https://www.ok-snap.com/recipes.json',
-                        'https://ok-snap.com/recipes.json'
-                    ]
+                console.warn('No recipes found from any source. Attempting automatic sync...');
+                
+                // Try to trigger automatic sync if recipes.json is empty
+                const apiBase = window.location.origin.includes('localhost') 
+                    ? window.location.origin 
+                    : 'https://ok-snap-identifier.vercel.app';
+                
+                // Trigger sync in background (don't wait for it)
+                fetch(`${apiBase}/api/sync-recipes`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(response => {
+                    if (response.ok) {
+                        console.log('Automatic sync triggered. Recipes will appear after deployment (1-2 minutes).');
+                        // Retry loading recipes after a short delay
+                        setTimeout(() => {
+                            loadBlogPosts();
+                        }, 5000);
+                    }
+                }).catch(error => {
+                    console.log('Sync trigger failed (non-critical):', error);
                 });
-                postsGrid.innerHTML = '<p class="no-posts">No recipes yet. Check back soon!</p>';
+                
+                postsGrid.innerHTML = '<p class="no-posts">No recipes yet. Syncing recipes... Please refresh in a moment.</p>';
             }
         }
         
