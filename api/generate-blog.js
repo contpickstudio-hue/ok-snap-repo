@@ -592,10 +592,47 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
             basePath: githubBasePath || '(root)'
         });
         
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:492',message:'Blog creation complete',data:{blogUrl:`${publicSiteUrl}/blogs/${slug}.html`,blogFilePath,recipesJsonPath,branch:githubBranch,basePath:githubBasePath},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
+        // #endregion
+        
+        // Verify the file was actually created by checking it exists
+        try {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:499',message:'Verifying blog file exists',data:{blogFilePath},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+            // #endregion
+            
+            const verifyResponse = await fetch(`${baseUrl}/repos/${owner}/${repo}/contents/${blogFilePath}?ref=${githubBranch}`, {
+                headers: {
+                    'Authorization': `Bearer ${githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+            
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:510',message:'Blog file verification',data:{status:verifyResponse.status,ok:verifyResponse.ok,path:blogFilePath},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+            // #endregion
+            
+            if (!verifyResponse.ok) {
+                // #region agent log
+                const verifyError = await verifyResponse.text().catch(() => '');
+                fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:516',message:'Blog file verification failed',data:{status:verifyResponse.status,error:verifyError.substring(0,200)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+                // #endregion
+                console.warn(`Warning: Blog file verification failed. File may not exist at ${blogFilePath}`);
+            }
+        } catch (verifyError) {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:522',message:'Blog file verification exception',data:{error:verifyError.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+            // #endregion
+            console.warn('Warning: Could not verify blog file creation:', verifyError.message);
+        }
+        
         return {
             success: true,
             blogUrl: `${publicSiteUrl}/blogs/${slug}.html`,
-            imageUrl: imageUrl
+            imageUrl: imageUrl,
+            blogFilePath: blogFilePath,
+            branch: githubBranch
         };
         
     } catch (error) {

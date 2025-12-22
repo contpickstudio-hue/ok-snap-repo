@@ -21,6 +21,10 @@ module.exports = async (req, res) => {
         // Extract slug from query parameter (Vercel dynamic routes use req.query)
         const slug = req.query.slug;
         
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'blog-exists/[slug].js:22',message:'Blog exists check entry',data:{slug},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+        // #endregion
+        
         if (!slug) {
             return res.status(400).json({ error: 'Slug parameter is required' });
         }
@@ -31,6 +35,10 @@ module.exports = async (req, res) => {
         const blogUrl = `${publicSiteUrl}/blogs/${slug}.html`;
         const imageUrl = `${publicSiteUrl}/images/blogs/${slug}.png`;
         
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'blog-exists/[slug].js:33',message:'Checking deployed blog URL',data:{blogUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+        // #endregion
+        
         try {
             // Try to fetch the blog HTML file
             const blogResponse = await fetch(blogUrl, {
@@ -39,6 +47,10 @@ module.exports = async (req, res) => {
                     'User-Agent': 'OK-Snap-Blog-Checker'
                 }
             });
+            
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'blog-exists/[slug].js:44',message:'Blog URL fetch response',data:{status:blogResponse.status,ok:blogResponse.ok,url:blogUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+            // #endregion
             
             if (blogResponse.ok) {
                 // Check if image exists
@@ -50,6 +62,10 @@ module.exports = async (req, res) => {
                     // Image doesn't exist, that's okay
                 }
                 
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'blog-exists/[slug].js:58',message:'Blog exists',data:{slug,blogUrl,imageExists},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+                // #endregion
+                
                 return res.status(200).json({
                     exists: true,
                     slug: slug,
@@ -57,6 +73,9 @@ module.exports = async (req, res) => {
                     imageUrl: imageExists ? imageUrl : null
                 });
             } else {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'blog-exists/[slug].js:68',message:'Blog does not exist on deployed site',data:{slug,status:blogResponse.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+                // #endregion
                 return res.status(200).json({
                     exists: false,
                     slug: slug
@@ -64,6 +83,9 @@ module.exports = async (req, res) => {
             }
         } catch (fetchError) {
             // If fetch fails, assume blog doesn't exist
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'blog-exists/[slug].js:75',message:'Blog fetch exception',data:{error:fetchError.message,slug},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+            // #endregion
             return res.status(200).json({
                 exists: false,
                 slug: slug
