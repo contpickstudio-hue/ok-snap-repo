@@ -8139,6 +8139,16 @@
             const alternativesSection = document.getElementById('alternativesSection');
             const alternativeChips = document.getElementById('alternativeChips');
 
+            // Exit early if required elements don't exist
+            if (!resultSection || !dishName || !confidenceBadge) {
+                console.error('displayResult: Required elements not found', {
+                    resultSection: !!resultSection,
+                    dishName: !!dishName,
+                    confidenceBadge: !!confidenceBadge
+                });
+                return;
+            }
+
             // Set dish name - display in user's language
             if (dishData.isKorean && dishData.nameKorean) {
                 // For Korean dishes, show both translated name and Korean name
@@ -8623,15 +8633,41 @@
                             if (verifyResponse.ok) {
                                 const verifyResult = await verifyResponse.json();
                                 if (verifyResult.exists) {
-                                    // Blog exists - show link
-                                    if (blogViewer) {
-                                        blogViewer.innerHTML = '<p>Blog post is ready! Click the button below to view the full recipe on ok-snap.com.</p>';
-                                    }
-                                    
-                                    if (blogExternalLink) {
-                                        blogExternalLink.href = finalBlogUrl;
-                                        blogExternalLink.textContent = 'View Full Blog Post';
-                                        blogExternalLink.style.display = 'inline-block';
+                                    if (verifyResult.deployed) {
+                                        // Blog exists and is deployed - show link
+                                        if (blogViewer) {
+                                            blogViewer.innerHTML = '<p>Blog post is ready! Click the button below to view the full recipe on ok-snap.com.</p>';
+                                        }
+                                        
+                                        if (blogExternalLink) {
+                                            blogExternalLink.href = finalBlogUrl;
+                                            blogExternalLink.textContent = 'View Full Blog Post';
+                                            blogExternalLink.style.display = 'inline-block';
+                                        }
+                                    } else {
+                                        // Blog exists in repository but not deployed yet
+                                        if (blogViewer) {
+                                            blogViewer.innerHTML = '<p>Blog post is being deployed. This usually takes 1-2 minutes. Please check back shortly.</p>';
+                                        }
+                                        if (blogExternalLink) {
+                                            blogExternalLink.style.display = 'none';
+                                        }
+                                        // Retry after 30 seconds
+                                        setTimeout(() => {
+                                            const retryUrl = `${apiBase}/api/blog-exists/${slug}`;
+                                            fetch(retryUrl).then(r => r.json()).then(result => {
+                                                if (result.exists && result.deployed) {
+                                                    if (blogViewer) {
+                                                        blogViewer.innerHTML = '<p>Blog post is ready! Click the button below to view the full recipe on ok-snap.com.</p>';
+                                                    }
+                                                    if (blogExternalLink) {
+                                                        blogExternalLink.href = finalBlogUrl;
+                                                        blogExternalLink.textContent = 'View Full Blog Post';
+                                                        blogExternalLink.style.display = 'inline-block';
+                                                    }
+                                                }
+                                            }).catch(() => {});
+                                        }, 30000);
                                     }
                                 } else {
                                     // Blog doesn't exist - hide link
