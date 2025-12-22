@@ -8895,11 +8895,40 @@
                             finalBlogUrl = `${publicWebsiteUrl}/blogs/${slug}.html`;
                         }
                         
-                        // Verify blog exists before showing link
+                        // Verify blog exists before showing link (use API endpoint to avoid CORS)
                         try {
-                            const verifyResponse = await fetch(finalBlogUrl, { method: 'HEAD' });
+                            const verifyApiUrl = `${apiBase}/api/blog-exists/${slug}`;
+                            const verifyResponse = await fetch(verifyApiUrl, {
+                                method: 'GET',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                }
+                            });
+                            
                             if (verifyResponse.ok) {
-                                // Blog exists - show link
+                                const verifyResult = await verifyResponse.json();
+                                if (verifyResult.exists) {
+                                    // Blog exists - show link
+                                    if (blogViewer) {
+                                        blogViewer.innerHTML = '<p>Blog post is ready! Click the button below to view the full recipe on ok-snap.com.</p>';
+                                    }
+                                    
+                                    if (blogExternalLink) {
+                                        blogExternalLink.href = finalBlogUrl;
+                                        blogExternalLink.textContent = 'View Full Blog Post';
+                                        blogExternalLink.style.display = 'inline-block';
+                                    }
+                                } else {
+                                    // Blog doesn't exist - hide link
+                                    if (blogViewer) {
+                                        blogViewer.innerHTML = '<p>Blog post is being prepared. Please check back later.</p>';
+                                    }
+                                    if (blogExternalLink) {
+                                        blogExternalLink.style.display = 'none';
+                                    }
+                                }
+                            } else {
+                                // API error - show link anyway (blog might exist but API check failed)
                                 if (blogViewer) {
                                     blogViewer.innerHTML = '<p>Blog post is ready! Click the button below to view the full recipe on ok-snap.com.</p>';
                                 }
@@ -8909,17 +8938,9 @@
                                     blogExternalLink.textContent = 'View Full Blog Post';
                                     blogExternalLink.style.display = 'inline-block';
                                 }
-                            } else {
-                                // Blog doesn't exist - hide link
-                                if (blogViewer) {
-                                    blogViewer.innerHTML = '<p>Blog post is being prepared. Please check back later.</p>';
-                                }
-                                if (blogExternalLink) {
-                                    blogExternalLink.style.display = 'none';
-                                }
                             }
                         } catch (verifyError) {
-                            // Verification failed - show link anyway (might be CORS issue)
+                            // Verification failed - show link anyway (might be network issue)
                             if (blogViewer) {
                                 blogViewer.innerHTML = '<p>Blog post is ready! Click the button below to view the full recipe on ok-snap.com.</p>';
                             }
