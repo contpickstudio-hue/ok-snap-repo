@@ -8745,6 +8745,10 @@
                 let checkResult = { exists: false };
                 try {
                     const checkUrl = `${apiBase}/api/blog-exists/${slug}`;
+                    console.log('[client] Initial blog check:', { slug, checkUrl });
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:8747',message:'Initial blog check request',data:{slug,checkUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
+                    // #endregion
                     const checkResponse = await fetch(checkUrl, {
                         method: 'GET',
                         headers: {
@@ -8755,15 +8759,24 @@
                     // Handle 404 gracefully - treat as "blog not created yet"
                     if (checkResponse.status === 404) {
                         checkResult = { exists: false };
+                        console.log('[client] Blog check returned 404');
                     } else if (checkResponse.ok) {
                         checkResult = await checkResponse.json();
+                        console.log('[client] Blog check result:', checkResult);
+                        // #region agent log
+                        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:8759',message:'Initial blog check response',data:{slug,checkResult,status:checkResponse.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
+                        // #endregion
                     } else {
                         // Other errors - treat as "blog not created yet" but log quietly
                         checkResult = { exists: false };
+                        console.log('[client] Blog check failed with status:', checkResponse.status);
                     }
                 } catch (checkError) {
                     // Network errors or other issues - treat as "blog not created yet"
-                    // Don't log to console to avoid spam
+                    console.error('[client] Blog check error:', checkError);
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:8765',message:'Initial blog check error',data:{slug,error:checkError.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
+                    // #endregion
                     checkResult = { exists: false };
                 }
 
@@ -8923,9 +8936,20 @@
                             
                             if (verifyResponse.ok) {
                                 const verifyResult = await verifyResponse.json();
+                                
+                                // #region agent log
+                                fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:8925',message:'Blog exists API response',data:{slug,verifyResult,verifyResponseStatus:verifyResponse.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
+                                // #endregion
+                                
+                                console.log('[client] Blog exists check result:', { slug, verifyResult, finalBlogUrl });
+                                
                                 if (verifyResult.exists) {
                                     if (verifyResult.deployed) {
                                         // Blog exists and is deployed - show link
+                                        console.log('[client] Blog exists and deployed - showing link');
+                                        // #region agent log
+                                        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:8927',message:'Showing blog link',data:{slug,blogUrl:finalBlogUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
+                                        // #endregion
                                         if (blogViewer) {
                                             blogViewer.innerHTML = '<p>Blog post is ready! Click the button below to view the full recipe on ok-snap.com.</p>';
                                         }
@@ -8937,6 +8961,10 @@
                                         }
                                     } else {
                                         // Blog exists in repository but not deployed yet
+                                        console.log('[client] Blog exists but not deployed yet');
+                                        // #region agent log
+                                        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:8938',message:'Blog not deployed yet',data:{slug,pending:verifyResult.pending},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
+                                        // #endregion
                                         if (blogViewer) {
                                             blogViewer.innerHTML = '<p>Blog post is being deployed. This usually takes 1-2 minutes. Please check back shortly.</p>';
                                         }
@@ -8962,6 +8990,10 @@
                                     }
                                 } else {
                                     // Blog doesn't exist - hide link
+                                    console.log('[client] Blog does not exist');
+                                    // #region agent log
+                                    fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:8963',message:'Blog does not exist',data:{slug,pending:verifyResult.pending},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
+                                    // #endregion
                                     if (blogViewer) {
                                         blogViewer.innerHTML = '<p>Blog post is being prepared. Please check back later.</p>';
                                     }
