@@ -1,4 +1,10 @@
 {
+  "git": {
+    "deploymentEnabled": {
+      "main": true,
+      "site": false
+    }
+  },
   "crons": [
     {
       "path": "/api/sync-recipes",
