@@ -10419,6 +10419,11 @@
             const favorites = JSON.parse(localStorage.getItem('biteSightFavorites') || '[]');
             const favoritesGrid = document.getElementById('favoritesGrid');
             
+            // Exit early if favoritesGrid doesn't exist (not on favorites page)
+            if (!favoritesGrid) {
+                return;
+            }
+            
             if (favorites.length === 0) {
                 favoritesGrid.innerHTML = `
                     <div class="empty-state" style="grid-column: 1 / -1;">
