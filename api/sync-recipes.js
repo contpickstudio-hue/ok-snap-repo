@@ -218,6 +218,42 @@ module.exports = async (req, res) => {
             commitSha: commitSha
         });
         
+        // Also store in Supabase (no deployment needed!)
+        try {
+            const supabaseUrl = process.env.SUPABASE_URL;
+            const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+            
+            if (supabaseUrl && supabaseKey) {
+                const recipesToStore = recipes.map(recipe => ({
+                    slug: recipe.slug,
+                    title: recipe.title || recipe.name,
+                    name: recipe.name || recipe.title,
+                    url: recipe.url,
+                    created_at: new Date(recipe.createdAt).toISOString()
+                }));
+                
+                // Store directly in Supabase using REST API
+                const storeResponse = await fetch(`${supabaseUrl}/rest/v1/recipes`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': supabaseKey,
+                        'Authorization': `Bearer ${supabaseKey}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'resolution=merge-duplicates,return=representation'
+                    },
+                    body: JSON.stringify(recipesToStore)
+                });
+                
+                if (storeResponse && storeResponse.ok) {
+                    console.log('[sync-recipes] Recipes also stored in Supabase successfully');
+                } else if (storeResponse && (storeResponse.status === 404 || storeResponse.status === 406)) {
+                    console.warn('[sync-recipes] Supabase recipes table does not exist. See SUPABASE_SETUP.md for setup instructions.');
+                }
+            }
+        } catch (supabaseError) {
+            console.warn('[sync-recipes] Supabase storage failed (non-critical):', supabaseError.message);
+        }
+        
         // Automatically promote deployment to production (non-blocking)
         if (commitSha) {
             const { promoteDeploymentToProduction } = require('./promote-deployment');
@@ -228,7 +264,7 @@ module.exports = async (req, res) => {
         
         return res.status(200).json({
             success: true,
-            message: `Successfully synced ${recipes.length} recipes to recipes.json`,
+            message: `Successfully synced ${recipes.length} recipes to recipes.json and Supabase`,
             recipesCount: recipes.length,
             commitSha: commitSha,
             recipes: recipes.map(r => ({ slug: r.slug, title: r.title }))

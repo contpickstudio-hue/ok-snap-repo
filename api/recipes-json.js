@@ -13,7 +13,41 @@ module.exports = async (req, res) => {
     }
     
     try {
-        // Try www.ok-snap.com first (production domain)
+        // First, try to fetch from Supabase (no deployment needed!)
+        const supabaseUrl = process.env.SUPABASE_URL;
+        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+        
+        if (supabaseUrl && supabaseKey) {
+            try {
+                const supabaseResponse = await fetch(`${supabaseUrl}/rest/v1/recipes?select=*&order=created_at.desc`, {
+                    headers: {
+                        'apikey': supabaseKey,
+                        'Authorization': `Bearer ${supabaseKey}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (supabaseResponse.ok) {
+                    const supabaseData = await supabaseResponse.json();
+                    if (Array.isArray(supabaseData) && supabaseData.length > 0) {
+                        // Transform to match expected format
+                        const recipes = supabaseData.map(recipe => ({
+                            slug: recipe.slug,
+                            title: recipe.title,
+                            name: recipe.name || recipe.title,
+                            url: recipe.url,
+                            createdAt: recipe.created_at ? new Date(recipe.created_at).toISOString().split('T')[0] : recipe.created_at
+                        }));
+                        console.log('Loaded recipes from Supabase:', recipes.length);
+                        return res.status(200).json(recipes);
+                    }
+                }
+            } catch (supabaseError) {
+                console.log('Supabase fetch failed, falling back to recipes.json:', supabaseError.message);
+            }
+        }
+        
+        // Fallback: Try www.ok-snap.com (production domain)
         let response = await fetch('https://www.ok-snap.com/recipes.json');
         if (!response.ok) {
             // Fallback to ok-snap.com (without www)

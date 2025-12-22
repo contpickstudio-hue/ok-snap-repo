@@ -462,6 +462,45 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
             recipes.unshift(recipeEntry);
         }
         
+        // Store recipe in Supabase (no deployment needed!)
+        try {
+            const supabaseUrl = process.env.SUPABASE_URL;
+            const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+            
+            if (supabaseUrl && supabaseKey) {
+                const recipeToStore = {
+                    slug: recipeEntry.slug,
+                    title: recipeEntry.title,
+                    name: recipeEntry.name,
+                    url: recipeEntry.url,
+                    created_at: new Date(recipeEntry.createdAt).toISOString()
+                };
+                
+                // Store directly in Supabase using REST API
+                const storeResponse = await fetch(`${supabaseUrl}/rest/v1/recipes`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': supabaseKey,
+                        'Authorization': `Bearer ${supabaseKey}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'resolution=merge-duplicates,return=representation'
+                    },
+                    body: JSON.stringify(recipeToStore)
+                }).catch(err => {
+                    console.warn('[generate-blog] Failed to store recipe in Supabase (non-critical):', err.message);
+                    return null;
+                });
+                
+                if (storeResponse && storeResponse.ok) {
+                    console.log('[generate-blog] Recipe stored in Supabase successfully');
+                } else if (storeResponse && (storeResponse.status === 404 || storeResponse.status === 406)) {
+                    console.warn('[generate-blog] Supabase recipes table does not exist. See SUPABASE_SETUP.md for setup instructions.');
+                }
+            }
+        } catch (supabaseError) {
+            console.warn('[generate-blog] Supabase storage failed (non-critical, GitHub storage still works):', supabaseError.message);
+        }
+        
         let recipesContentBase64 = Buffer.from(JSON.stringify(recipes, null, 2), 'utf8').toString('base64');
         
         // Update recipes.json with retry logic
