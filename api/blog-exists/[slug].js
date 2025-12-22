@@ -21,10 +21,6 @@ module.exports = async (req, res) => {
         // Extract slug from query parameter (Vercel dynamic routes use req.query)
         const slug = req.query.slug;
         
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'blog-exists/[slug].js:22',message:'Blog exists check entry',data:{slug},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-        // #endregion
-        
         if (!slug) {
             return res.status(400).json({ error: 'Slug parameter is required' });
         }
@@ -38,10 +34,6 @@ module.exports = async (req, res) => {
         const blogUrl = `${publicSiteUrl}/blogs/${slug}.html`;
         const imageUrl = `${publicSiteUrl}/images/blogs/${slug}.png`;
         
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'blog-exists/[slug].js:33',message:'Checking blog existence',data:{slug,githubRepo,githubBranch,githubBasePath},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-        // #endregion
-        
         // First try GitHub API if credentials are available (more reliable)
         if (githubToken && githubRepo) {
             try {
@@ -49,29 +41,12 @@ module.exports = async (req, res) => {
                 const blogFilePath = `${githubBasePath ? githubBasePath + '/' : ''}blogs/${slug}.html`;
                 const githubUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${blogFilePath}?ref=${githubBranch}`;
                 
-                // #region agent log
-                fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'blog-exists/[slug].js:42',message:'Checking GitHub for blog file',data:{blogFilePath,githubUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-                // #endregion
-                
                 const githubResponse = await fetch(githubUrl, {
                     headers: {
                         'Authorization': `Bearer ${githubToken}`,
                         'Accept': 'application/vnd.github.v3+json'
                     }
                 });
-                
-                // Log to Vercel console
-                console.log('[blog-exists] GitHub API check:', {
-                    slug,
-                    blogFilePath,
-                    githubUrl,
-                    status: githubResponse.status,
-                    ok: githubResponse.ok
-                });
-                
-                // #region agent log
-                fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'blog-exists/[slug].js:52',message:'GitHub API response',data:{status:githubResponse.status,ok:githubResponse.ok},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-                // #endregion
                 
                 if (githubResponse.ok) {
                     // Blog exists in GitHub - MUST also check if deployed site is accessible
@@ -81,11 +56,6 @@ module.exports = async (req, res) => {
                     try {
                         // Use GET instead of HEAD to ensure the actual page is accessible
                         // Some servers return 200 for HEAD but 404 for GET
-                        console.log('[blog-exists] Starting deployed site check:', { slug, blogUrl });
-                        // #region agent log
-                        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'blog-exists/[slug].js:81',message:'Starting deployed site check',data:{slug,blogUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-                        // #endregion
-                        
                         const deployedResponse = await fetch(blogUrl, { 
                             method: 'GET',
                             headers: {
@@ -95,22 +65,6 @@ module.exports = async (req, res) => {
                         });
                         deployed = deployedResponse.ok && deployedResponse.status === 200;
                         deployedStatus = deployedResponse.status;
-                        
-                        // Log to Vercel console (visible in Vercel dashboard)
-                        console.log('[blog-exists] Deployed site check result:', {
-                            slug,
-                            blogUrl,
-                            deployed,
-                            status: deployedStatus,
-                            ok: deployedResponse.ok,
-                            statusText: deployedResponse.statusText,
-                            contentType: deployedResponse.headers.get('content-type'),
-                            headers: Object.fromEntries(deployedResponse.headers.entries())
-                        });
-                        
-                        // #region agent log
-                        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'blog-exists/[slug].js:95',message:'Deployed site check result',data:{slug,deployed,status:deployedStatus,ok:deployedResponse.ok,blogUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-                        // #endregion
                         
                         if (deployed) {
                             try {
@@ -122,29 +76,10 @@ module.exports = async (req, res) => {
                         }
                     } catch (e) {
                         // Deployed site check failed - blog exists in GitHub but not deployed yet
-                        console.error('[blog-exists] Deployed site check failed:', {
-                            slug,
-                            blogUrl,
-                            error: e.message,
-                            errorType: e.constructor.name,
-                            stack: e.stack
-                        });
-                        // #region agent log
-                        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'blog-exists/[slug].js:95',message:'Deployed site check failed',data:{error:e.message,slug},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-                        // #endregion
                     }
-                    
-                    // #region agent log
-                    fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'blog-exists/[slug].js:100',message:'Blog check result',data:{slug,blogUrl,deployed,imageExists},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-                    // #endregion
                     
                     // Only return exists: true if actually deployed (accessible on live site)
                     if (deployed) {
-                        console.log('[blog-exists] Blog exists and is deployed:', { slug, blogUrl, imageExists });
-                        // #region agent log
-                        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'blog-exists/[slug].js:105',message:'Blog exists and is deployed',data:{slug,blogUrl,imageExists},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-                        // #endregion
-                        
                         return res.status(200).json({
                             exists: true,
                             deployed: true, // Explicitly set deployed flag for client-side checks
@@ -154,16 +89,6 @@ module.exports = async (req, res) => {
                         });
                     } else {
                         // Blog exists in GitHub but not deployed yet
-                        console.warn('[blog-exists] Blog in GitHub but not deployed:', {
-                            slug,
-                            status: deployedStatus,
-                            blogUrl,
-                            message: 'Blog file exists in GitHub repository but is not yet accessible on the deployed site. This usually means Vercel deployment is in progress or needs to be triggered.'
-                        });
-                        // #region agent log
-                        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'blog-exists/[slug].js:118',message:'Blog in GitHub but not deployed',data:{slug,status:deployedStatus},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-                        // #endregion
-                        
                         return res.status(200).json({
                             exists: false,
                             slug: slug,
@@ -175,9 +100,6 @@ module.exports = async (req, res) => {
                     }
                 }
             } catch (githubError) {
-                // #region agent log
-                fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'blog-exists/[slug].js:77',message:'GitHub check failed, trying deployed site',data:{error:githubError.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-                // #endregion
                 // Fall through to deployed site check
             }
         }
@@ -191,10 +113,6 @@ module.exports = async (req, res) => {
                     'User-Agent': 'OK-Snap-Blog-Checker'
                 }
             });
-            
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'blog-exists/[slug].js:90',message:'Deployed site check response',data:{status:blogResponse.status,ok:blogResponse.ok,url:blogUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-            // #endregion
             
             if (blogResponse.ok) {
                 let imageExists = false;
@@ -212,18 +130,12 @@ module.exports = async (req, res) => {
                     imageUrl: imageExists ? imageUrl : null
                 });
             } else {
-                // #region agent log
-                fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'blog-exists/[slug].js:110',message:'Blog does not exist on deployed site',data:{slug,status:blogResponse.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-                // #endregion
                 return res.status(200).json({
                     exists: false,
                     slug: slug
                 });
             }
         } catch (fetchError) {
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'blog-exists/[slug].js:119',message:'Blog check exception',data:{error:fetchError.message,slug},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-            // #endregion
             return res.status(200).json({
                 exists: false,
                 slug: slug
