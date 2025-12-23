@@ -5,6 +5,12 @@
       "site": false
     }
   },
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/api/index.js"
+    }
+  ],
   "crons": [
     {
       "path": "/api/sync-recipes",
