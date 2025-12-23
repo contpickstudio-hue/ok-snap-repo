@@ -1,6 +1,12 @@
 {
   "version": 2,
   "public": true,
+  "git": {
+    "deploymentEnabled": {
+      "main": false,
+      "site": true
+    }
+  },
   "rewrites": [
     {
       "source": "/blogs/:slug",
