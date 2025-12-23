@@ -347,104 +347,10 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
         fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:302',message:'Blog file created successfully',data:{slug,commitSha:blogCommitSha},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
         // #endregion
         
-        // Automatically promote deployment to production (non-blocking)
-        if (blogCommitSha) {
-            const { promoteDeploymentToProduction } = require('./promote-deployment');
-            promoteDeploymentToProduction(blogCommitSha, githubBranch).catch(err => {
-                console.warn('[generate-blog] Failed to promote blog deployment (non-critical):', err.message);
-            });
-        }
+        // Note: Blog HTML file commit will trigger Vercel deployment automatically
+        // Recipe data is stored in Supabase, so no additional deployment promotion needed
         
-        // Step 3: Update recipes.json (CRITICAL - must succeed)
-        const recipesJsonPath = `${githubBasePath ? githubBasePath + '/' : ''}recipes.json`;
-        
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:305',message:'Starting recipes.json update',data:{recipesJsonPath,basePath:githubBasePath,branch:githubBranch},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
-        
-        console.log('[createBlogFilesViaGitHub] Updating recipes.json:', {
-            recipesJsonPath: recipesJsonPath,
-            githubBasePath: githubBasePath || '(root)',
-            branch: githubBranch,
-            repo: `${owner}/${repo}`
-        });
-        
-        let recipes = [];
-        let recipesSha = null;
-        
-        // Get existing recipes.json if it exists
-        try {
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:312',message:'Fetching existing recipes.json',data:{recipesJsonPath},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-            // #endregion
-            
-            const getRecipesResponse = await fetch(`${baseUrl}/repos/${owner}/${repo}/contents/${recipesJsonPath}?ref=${githubBranch}`, {
-                headers: {
-                    'Authorization': `Bearer ${githubToken}`,
-                    'Accept': 'application/vnd.github.v3+json',
-                    'User-Agent': 'ok-snap-blog-generator'
-                }
-            });
-            
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:321',message:'recipes.json fetch response',data:{status:getRecipesResponse.status,ok:getRecipesResponse.ok},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-            // #endregion
-            
-            if (getRecipesResponse.ok) {
-                const fileData = await getRecipesResponse.json();
-                recipesSha = fileData.sha;
-                const content = Buffer.from(fileData.content, 'base64').toString('utf8');
-                // Handle empty file or invalid JSON
-                try {
-                    recipes = JSON.parse(content);
-                    if (!Array.isArray(recipes)) {
-                        console.warn('recipes.json exists but is not an array, resetting to empty array');
-                        recipes = [];
-                        recipesSha = null; // Force create new file
-                    }
-                    // #region agent log
-                    fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:332',message:'Parsed existing recipes.json',data:{recipeCount:recipes.length,hasSha:!!recipesSha},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-                    // #endregion
-                } catch (parseError) {
-                    console.warn('Failed to parse existing recipes.json, starting fresh:', parseError.message);
-                    recipes = [];
-                    recipesSha = null; // Force create new file
-                    // #region agent log
-                    fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:337',message:'Failed to parse recipes.json',data:{error:parseError.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-                    // #endregion
-                }
-            } else if (getRecipesResponse.status === 404) {
-                // File doesn't exist yet - will create new file
-                console.log('recipes.json does not exist yet, will create new file');
-                recipes = [];
-                recipesSha = null;
-                // #region agent log
-                fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:343',message:'recipes.json does not exist, will create',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-                // #endregion
-            } else {
-                // Other error - log but continue
-                const errorData = await getRecipesResponse.json().catch(() => ({}));
-                console.warn('Failed to fetch existing recipes.json, starting fresh:', {
-                    status: getRecipesResponse.status,
-                    error: errorData
-                });
-                recipes = [];
-                recipesSha = null;
-                // #region agent log
-                fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:352',message:'recipes.json fetch failed',data:{status:getRecipesResponse.status,errorData},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-                // #endregion
-            }
-        } catch (e) {
-            // Network or other error - start fresh
-            console.warn('Error fetching existing recipes.json, starting fresh:', e.message);
-            recipes = [];
-            recipesSha = null;
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:360',message:'Exception fetching recipes.json',data:{error:e.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-            // #endregion
-        }
-        
-        // Update recipes array
+        // Step 3: Store recipe in Supabase (no GitHub commit = no Vercel deployment!)
         const recipeEntry = {
             slug: slug,
             title: dishData.name,
@@ -453,14 +359,10 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
             createdAt: new Date().toISOString().split('T')[0] // Format: YYYY-MM-DD
         };
         
-        const existingIndex = recipes.findIndex(r => r.slug === slug);
-        if (existingIndex >= 0) {
-            console.log(`[createBlogFilesViaGitHub] Updating existing recipe entry for slug: ${slug}`);
-            recipes[existingIndex] = recipeEntry;
-        } else {
-            console.log(`[createBlogFilesViaGitHub] Adding new recipe entry for slug: ${slug}, total recipes: ${recipes.length + 1}`);
-            recipes.unshift(recipeEntry);
-        }
+        console.log('[createBlogFilesViaGitHub] Storing recipe in Supabase:', {
+            slug: recipeEntry.slug,
+            title: recipeEntry.title
+        });
         
         // Store recipe in Supabase (no deployment needed!)
         try {
@@ -487,151 +389,25 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
                     },
                     body: JSON.stringify(recipeToStore)
                 }).catch(err => {
-                    console.warn('[generate-blog] Failed to store recipe in Supabase (non-critical):', err.message);
+                    console.warn('[generate-blog] Failed to store recipe in Supabase:', err.message);
                     return null;
                 });
                 
                 if (storeResponse && storeResponse.ok) {
-                    console.log('[generate-blog] Recipe stored in Supabase successfully');
+                    console.log('[generate-blog] Recipe stored in Supabase successfully - no deployment needed!');
                 } else if (storeResponse && (storeResponse.status === 404 || storeResponse.status === 406)) {
                     console.warn('[generate-blog] Supabase recipes table does not exist. See SUPABASE_SETUP.md for setup instructions.');
+                } else if (storeResponse) {
+                    const errorText = await storeResponse.text().catch(() => 'Unknown error');
+                    console.error('[generate-blog] Failed to store recipe in Supabase:', storeResponse.status, errorText);
                 }
+            } else {
+                console.warn('[generate-blog] Supabase credentials not configured. Recipe not stored in database.');
             }
         } catch (supabaseError) {
-            console.warn('[generate-blog] Supabase storage failed (non-critical, GitHub storage still works):', supabaseError.message);
+            console.error('[generate-blog] Supabase storage failed:', supabaseError.message);
+            // Don't throw - blog file was created successfully, recipe storage is secondary
         }
-        
-        let recipesContentBase64 = Buffer.from(JSON.stringify(recipes, null, 2), 'utf8').toString('base64');
-        
-        // Update recipes.json with retry logic
-        let updateRecipesResponse = null;
-        let recipesUpdateSuccess = false;
-        const maxRetries = 2;
-        
-        for (let attempt = 0; attempt <= maxRetries; attempt++) {
-            try {
-                const updateBody = {
-                    message: `Update recipes.json: Add ${dishData.name}`,
-                    content: recipesContentBase64,
-                    branch: githubBranch
-                };
-                
-                // Only include SHA if file exists (for updates)
-                if (recipesSha) {
-                    updateBody.sha = recipesSha;
-                }
-                
-                updateRecipesResponse = await fetch(`${baseUrl}/repos/${owner}/${repo}/contents/${recipesJsonPath}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': `Bearer ${githubToken}`,
-                        'Accept': 'application/vnd.github.v3+json',
-                        'Content-Type': 'application/json',
-                        'User-Agent': 'ok-snap-blog-generator'
-                    },
-                    body: JSON.stringify(updateBody)
-                });
-                
-                if (updateRecipesResponse.ok) {
-                    recipesUpdateSuccess = true;
-                    const responseData = await updateRecipesResponse.json();
-                    const commitSha = responseData.commit?.sha;
-                    console.log('Successfully updated recipes.json:', {
-                        recipesJsonPath: recipesJsonPath,
-                        branch: githubBranch,
-                        recipeCount: recipes.length,
-                        commitSha: commitSha,
-                        attempt: attempt + 1
-                    });
-                    // #region agent log
-                    fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:410',message:'recipes.json update succeeded',data:{recipeCount:recipes.length,commitSha:commitSha,attempt:attempt+1},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-                    // #endregion
-                    
-                    // Automatically promote deployment to production (non-blocking)
-                    if (commitSha) {
-                        const { promoteDeploymentToProduction } = require('./promote-deployment');
-                        promoteDeploymentToProduction(commitSha, githubBranch).catch(err => {
-                            console.warn('[generate-blog] Failed to promote deployment (non-critical):', err.message);
-                        });
-                    }
-                    
-                    break;
-                } else if (updateRecipesResponse.status === 422 && attempt < maxRetries) {
-                    // 422 = SHA mismatch or file conflict - retry by fetching fresh SHA
-                    console.warn(`recipes.json update failed (422) on attempt ${attempt + 1}, fetching fresh SHA and retrying...`);
-                    try {
-                        const retryGetResponse = await fetch(`${baseUrl}/repos/${owner}/${repo}/contents/${recipesJsonPath}?ref=${githubBranch}`, {
-                            headers: {
-                                'Authorization': `Bearer ${githubToken}`,
-                                'Accept': 'application/vnd.github.v3+json',
-                                'User-Agent': 'ok-snap-blog-generator'
-                            }
-                        });
-                        if (retryGetResponse.ok) {
-                            const retryFileData = await retryGetResponse.json();
-                            recipesSha = retryFileData.sha;
-                            const retryContent = Buffer.from(retryFileData.content, 'base64').toString('utf8');
-                            try {
-                                recipes = JSON.parse(retryContent);
-                                if (!Array.isArray(recipes)) recipes = [];
-                            } catch (e) {
-                                recipes = [];
-                            }
-                            // Re-add the recipe entry
-                            const retryExistingIndex = recipes.findIndex(r => r.slug === slug);
-                            if (retryExistingIndex >= 0) {
-                                recipes[retryExistingIndex] = recipeEntry;
-                            } else {
-                                recipes.unshift(recipeEntry);
-                            }
-                            recipesContentBase64 = Buffer.from(JSON.stringify(recipes, null, 2), 'utf8').toString('base64');
-                            continue; // Retry with fresh SHA
-                        }
-                    } catch (retryError) {
-                        console.error('Failed to fetch fresh SHA for retry:', retryError);
-                    }
-                }
-                
-                // If we get here, the update failed
-                const recipesError = await updateRecipesResponse.json().catch(() => ({}));
-                console.error(`Failed to update recipes.json (attempt ${attempt + 1}):`, {
-                    status: updateRecipesResponse.status,
-                    statusText: updateRecipesResponse.statusText,
-                    error: recipesError,
-                    recipesJsonPath: recipesJsonPath,
-                    branch: githubBranch
-                });
-                
-                // #region agent log
-                fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:458',message:'recipes.json update failed',data:{status:updateRecipesResponse.status,attempt:attempt+1,error:recipesError},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-                // #endregion
-                
-                if (attempt === maxRetries) {
-                    // Final attempt failed - this is critical, throw error
-                    // #region agent log
-                    fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:465',message:'recipes.json update failed all attempts',data:{status:updateRecipesResponse.status,error:recipesError},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-                    // #endregion
-                    throw new Error(`Failed to update recipes.json after ${maxRetries + 1} attempts: ${updateRecipesResponse.status} - ${JSON.stringify(recipesError)}`);
-                }
-            } catch (updateError) {
-                if (attempt === maxRetries) {
-                    // Final attempt failed
-                    throw new Error(`Failed to update recipes.json: ${updateError.message}`);
-                }
-                console.warn(`recipes.json update attempt ${attempt + 1} failed:`, updateError.message);
-            }
-        }
-        
-        if (!recipesUpdateSuccess) {
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:480',message:'recipes.json update not successful',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-            // #endregion
-            throw new Error('Failed to update recipes.json after all retry attempts');
-        }
-        
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:485',message:'recipes.json update completed successfully',data:{recipeCount:recipes.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
         
         // Step 4: Handle image URL (image is already generated, just use the URL)
         let imageUrl = null;
@@ -646,13 +422,13 @@ async function createBlogFilesViaGitHub(dishData, blogContent, imagePath, slug) 
             slug: slug,
             imageUrl: imageUrl,
             blogFilePath: blogFilePath,
-            recipesJsonPath: recipesJsonPath,
             branch: githubBranch,
-            basePath: githubBasePath || '(root)'
+            basePath: githubBasePath || '(root)',
+            note: 'Recipe stored in Supabase (no recipes.json commit needed)'
         });
         
         // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:492',message:'Blog creation complete',data:{blogUrl:`${publicSiteUrl}/blogs/${slug}.html`,blogFilePath,recipesJsonPath,branch:githubBranch,basePath:githubBasePath},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:492',message:'Blog creation complete',data:{blogUrl:`${publicSiteUrl}/blogs/${slug}.html`,blogFilePath,branch:githubBranch,basePath:githubBasePath},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
         // #endregion
         
         // Verify the file was actually created by checking it exists

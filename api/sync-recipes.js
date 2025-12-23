@@ -154,71 +154,8 @@ module.exports = async (req, res) => {
         
         console.log(`[sync-recipes] Extracted ${recipes.length} recipes from blog files`);
         
-        // Step 3: Get existing recipes.json SHA (if it exists)
-        let recipesSha = null;
-        try {
-            const getRecipesResponse = await fetch(
-                `${baseUrl}/repos/${owner}/${repo}/contents/${recipesJsonPath}?ref=${githubBranch}`,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${githubToken}`,
-                        'Accept': 'application/vnd.github.v3+json',
-                        'User-Agent': 'ok-snap-recipe-sync'
-                    }
-                }
-            );
-            
-            if (getRecipesResponse.ok) {
-                const fileData = await getRecipesResponse.json();
-                recipesSha = fileData.sha;
-            }
-        } catch (error) {
-            // File doesn't exist yet, that's okay
-            console.log('[sync-recipes] recipes.json does not exist yet, will create new file');
-        }
-        
-        // Step 4: Update recipes.json
-        const recipesContent = JSON.stringify(recipes, null, 2);
-        const recipesContentBase64 = Buffer.from(recipesContent, 'utf8').toString('base64');
-        
-        const updateBody = {
-            message: `Sync recipes.json: Update with ${recipes.length} recipes from existing blogs`,
-            content: recipesContentBase64,
-            branch: githubBranch
-        };
-        
-        if (recipesSha) {
-            updateBody.sha = recipesSha;
-        }
-        
-        const updateResponse = await fetch(
-            `${baseUrl}/repos/${owner}/${repo}/contents/${recipesJsonPath}`,
-            {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${githubToken}`,
-                    'Accept': 'application/vnd.github.v3+json',
-                    'Content-Type': 'application/json',
-                    'User-Agent': 'ok-snap-recipe-sync'
-                },
-                body: JSON.stringify(updateBody)
-            }
-        );
-        
-        if (!updateResponse.ok) {
-            const errorData = await updateResponse.json().catch(() => ({}));
-            throw new Error(`Failed to update recipes.json: ${updateResponse.status} - ${JSON.stringify(errorData)}`);
-        }
-        
-        const responseData = await updateResponse.json();
-        const commitSha = responseData.commit?.sha;
-        
-        console.log('[sync-recipes] Successfully synced recipes.json:', {
-            recipesCount: recipes.length,
-            commitSha: commitSha
-        });
-        
-        // Also store in Supabase (no deployment needed!)
+        // Step 3: Store recipes in Supabase (no GitHub commit = no Vercel deployment!)
+        let supabaseSuccess = false;
         try {
             const supabaseUrl = process.env.SUPABASE_URL;
             const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
@@ -245,28 +182,33 @@ module.exports = async (req, res) => {
                 });
                 
                 if (storeResponse && storeResponse.ok) {
-                    console.log('[sync-recipes] Recipes also stored in Supabase successfully');
+                    supabaseSuccess = true;
+                    console.log('[sync-recipes] Recipes stored in Supabase successfully - no deployment needed!');
                 } else if (storeResponse && (storeResponse.status === 404 || storeResponse.status === 406)) {
                     console.warn('[sync-recipes] Supabase recipes table does not exist. See SUPABASE_SETUP.md for setup instructions.');
+                } else if (storeResponse) {
+                    const errorText = await storeResponse.text().catch(() => 'Unknown error');
+                    console.error('[sync-recipes] Failed to store recipes in Supabase:', storeResponse.status, errorText);
                 }
+            } else {
+                console.warn('[sync-recipes] Supabase credentials not configured. Recipes not stored in database.');
             }
         } catch (supabaseError) {
-            console.warn('[sync-recipes] Supabase storage failed (non-critical):', supabaseError.message);
+            console.error('[sync-recipes] Supabase storage failed:', supabaseError.message);
         }
         
-        // Automatically promote deployment to production (non-blocking)
-        if (commitSha) {
-            const { promoteDeploymentToProduction } = require('./promote-deployment');
-            promoteDeploymentToProduction(commitSha, githubBranch).catch(err => {
-                console.warn('[sync-recipes] Failed to promote deployment (non-critical):', err.message);
+        if (!supabaseSuccess) {
+            return res.status(500).json({
+                error: 'Failed to store recipes in Supabase',
+                message: 'Supabase storage failed. Check your SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.',
+                recipesCount: recipes.length
             });
         }
         
         return res.status(200).json({
             success: true,
-            message: `Successfully synced ${recipes.length} recipes to recipes.json and Supabase`,
+            message: `Successfully synced ${recipes.length} recipes to Supabase (no deployment needed!)`,
             recipesCount: recipes.length,
-            commitSha: commitSha,
             recipes: recipes.map(r => ({ slug: r.slug, title: r.title }))
         });
         
