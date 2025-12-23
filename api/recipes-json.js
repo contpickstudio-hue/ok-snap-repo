@@ -19,7 +19,8 @@ module.exports = async (req, res) => {
         
         if (supabaseUrl && supabaseKey) {
             try {
-                const supabaseResponse = await fetch(`${supabaseUrl}/rest/v1/recipes?select=*&order=created_at.desc`, {
+                // Try fetching from blogs table first (primary source)
+                const blogsResponse = await fetch(`${supabaseUrl}/rest/v1/blogs?select=slug,title,name,name_korean,image_url,created_at&order=created_at.desc`, {
                     headers: {
                         'apikey': supabaseKey,
                         'Authorization': `Bearer ${supabaseKey}`,
@@ -27,18 +28,43 @@ module.exports = async (req, res) => {
                     }
                 });
                 
-                if (supabaseResponse.ok) {
-                    const supabaseData = await supabaseResponse.json();
-                    if (Array.isArray(supabaseData) && supabaseData.length > 0) {
+                if (blogsResponse.ok) {
+                    const blogsData = await blogsResponse.json();
+                    if (Array.isArray(blogsData) && blogsData.length > 0) {
                         // Transform to match expected format
-                        const recipes = supabaseData.map(recipe => ({
+                        const recipes = blogsData.map(blog => ({
+                            slug: blog.slug,
+                            title: blog.title || blog.name,
+                            name: blog.name || blog.title,
+                            url: `https://ok-snap.com/blog.html?slug=${blog.slug}`,
+                            createdAt: blog.created_at ? new Date(blog.created_at).toISOString().split('T')[0] : blog.created_at
+                        }));
+                        console.log('Loaded recipes from Supabase blogs table:', recipes.length);
+                        return res.status(200).json(recipes);
+                    }
+                }
+                
+                // Fallback to recipes table if blogs table is empty
+                const recipesResponse = await fetch(`${supabaseUrl}/rest/v1/recipes?select=*&order=created_at.desc`, {
+                    headers: {
+                        'apikey': supabaseKey,
+                        'Authorization': `Bearer ${supabaseKey}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (recipesResponse.ok) {
+                    const recipesData = await recipesResponse.json();
+                    if (Array.isArray(recipesData) && recipesData.length > 0) {
+                        // Transform to match expected format
+                        const recipes = recipesData.map(recipe => ({
                             slug: recipe.slug,
                             title: recipe.title,
                             name: recipe.name || recipe.title,
                             url: recipe.url,
                             createdAt: recipe.created_at ? new Date(recipe.created_at).toISOString().split('T')[0] : recipe.created_at
                         }));
-                        console.log('Loaded recipes from Supabase:', recipes.length);
+                        console.log('Loaded recipes from Supabase recipes table:', recipes.length);
                         return res.status(200).json(recipes);
                     }
                 }
