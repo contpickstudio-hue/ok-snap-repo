@@ -23,18 +23,30 @@
     </header>
 
     <main class="main">
-        <section class="page-header">
-            <div class="container">
-                <h1 class="page-title">Recipe Blog</h1>
-                <p class="page-subtitle">Discover authentic Korean recipes and cooking stories</p>
+        <!-- Blog Listing View -->
+        <section id="blogListing" class="blog-listing">
+            <div class="page-header">
+                <div class="container">
+                    <h1 class="page-title">Recipe Blog</h1>
+                    <p class="page-subtitle">Discover authentic Korean recipes and cooking stories</p>
+                </div>
             </div>
+
+            <section class="blog-section">
+                <div class="container">
+                    <div class="posts-grid" id="blogPosts">
+                        <!-- Posts will be loaded dynamically from Supabase -->
+                    </div>
+                </div>
+            </section>
         </section>
 
-        <section class="blog-section">
+        <!-- Individual Blog Post View -->
+        <section id="blogPostView" class="blog-post-view" style="display: none;">
             <div class="container">
-                <div class="posts-grid" id="blogPosts">
-                    <!-- Posts will be loaded dynamically -->
-                </div>
+                <article class="blog-post" id="blogPostContent">
+                    <!-- Blog content will be loaded dynamically from Supabase -->
+                </article>
             </div>
         </section>
     </main>
@@ -47,134 +59,165 @@
 
     <script src="scripts.js"></script>
     <script>
-        // Load blog posts
+        // Get API base URL
+        function getApiBase() {
+            return window.location.origin.includes('localhost') 
+                ? window.location.origin 
+                : 'https://ok-snap-identifier.vercel.app';
+        }
+
+        // Check if we should show a single blog post (from URL query parameter)
+        function checkForBlogPost() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const slug = urlParams.get('slug');
+            
+            if (slug) {
+                loadBlogPost(slug);
+            } else {
+                loadBlogPosts();
+            }
+        }
+
+        // Load blog posts list from Supabase
         async function loadBlogPosts() {
             const postsGrid = document.getElementById('blogPosts');
+            const blogListing = document.getElementById('blogListing');
+            const blogPostView = document.getElementById('blogPostView');
             
-            // Try multiple sources in order of preference (Supabase first!)
-            let recipes = [];
+            // Show listing, hide post view
+            if (blogListing) blogListing.style.display = 'block';
+            if (blogPostView) blogPostView.style.display = 'none';
             
-            // 1. Try to fetch from API endpoint first (fetches from Supabase - no deployment needed!)
             try {
-                // Determine API base URL
-                const apiBase = window.location.origin.includes('localhost') 
-                    ? window.location.origin 
-                    : 'https://ok-snap-identifier.vercel.app';
+                const apiBase = getApiBase();
+                const response = await fetch(`${apiBase}/api/blogs`);
                 
-                const apiResponse = await fetch(`${apiBase}/api/recipes-json`);
-                if (apiResponse.ok) {
-                    const apiRecipes = await apiResponse.json();
-                    if (Array.isArray(apiRecipes) && apiRecipes.length > 0) {
-                        recipes = apiRecipes;
-                        console.log('Loaded recipes from Supabase via API:', recipes.length);
-                        renderBlogPosts(recipes);
-                        return;
-                    }
-                }
-            } catch (error) {
-                console.log('Failed to fetch from API endpoint (Supabase):', error);
-            }
-            
-            // 2. Fallback: Try to fetch recipes.json from current domain
-            try {
-                const response = await fetch('recipes.json');
                 if (response.ok) {
-                    const data = await response.json();
-                    if (Array.isArray(data) && data.length > 0) {
-                        recipes = data;
-                        console.log('Loaded recipes from recipes.json (fallback):', recipes.length);
-                        renderBlogPosts(recipes);
+                    const blogs = await response.json();
+                    if (Array.isArray(blogs) && blogs.length > 0) {
+                        console.log(`[blog.html] Loaded ${blogs.length} blogs from Supabase`);
+                        renderBlogPosts(blogs);
                         return;
                     }
                 }
             } catch (error) {
-                console.log('Failed to fetch recipes.json from current domain:', error);
+                console.error('[blog.html] Failed to fetch blogs from Supabase:', error);
             }
             
-            // 3. Fallback: Try to fetch directly from www.ok-snap.com (production site)
+            // Fallback: Try recipes-json API
             try {
-                const wwwResponse = await fetch('https://www.ok-snap.com/recipes.json');
-                if (wwwResponse.ok) {
-                    const wwwRecipes = await wwwResponse.json();
-                    if (Array.isArray(wwwRecipes) && wwwRecipes.length > 0) {
-                        recipes = wwwRecipes;
-                        console.log('Loaded recipes from www.ok-snap.com (fallback):', recipes.length);
+                const apiBase = getApiBase();
+                const response = await fetch(`${apiBase}/api/recipes-json`);
+                
+                if (response.ok) {
+                    const recipes = await response.json();
+                    if (Array.isArray(recipes) && recipes.length > 0) {
+                        console.log(`[blog.html] Loaded ${recipes.length} recipes from recipes-json API`);
                         renderBlogPosts(recipes);
                         return;
                     }
                 }
             } catch (error) {
-                console.log('Failed to fetch from www.ok-snap.com:', error);
+                console.error('[blog.html] Failed to fetch from recipes-json:', error);
             }
             
-            // 4. Fallback: Try to fetch from ok-snap.com (without www)
+            // No blogs found
+            postsGrid.innerHTML = '<p class="no-posts">No blog posts yet. Check back soon!</p>';
+        }
+        
+        // Load a single blog post from Supabase
+        async function loadBlogPost(slug) {
+            const blogListing = document.getElementById('blogListing');
+            const blogPostView = document.getElementById('blogPostView');
+            const blogPostContent = document.getElementById('blogPostContent');
+            
+            // Show post view, hide listing
+            if (blogListing) blogListing.style.display = 'none';
+            if (blogPostView) blogPostView.style.display = 'block';
+            
             try {
-                const directResponse = await fetch('https://ok-snap.com/recipes.json');
-                if (directResponse.ok) {
-                    const directRecipes = await directResponse.json();
-                    if (Array.isArray(directRecipes) && directRecipes.length > 0) {
-                        recipes = directRecipes;
-                        console.log('Loaded recipes from ok-snap.com (fallback):', recipes.length);
-                        renderBlogPosts(recipes);
-                        return;
-                    }
+                const apiBase = getApiBase();
+                const response = await fetch(`${apiBase}/api/blogs/${slug}`);
+                
+                if (response.ok) {
+                    const blog = await response.json();
+                    console.log('[blog.html] Loaded blog post from Supabase:', blog.slug);
+                    renderBlogPost(blog);
+                } else if (response.status === 404) {
+                    blogPostContent.innerHTML = `
+                        <div class="blog-post-header">
+                            <h1 class="blog-post-title">Blog Post Not Found</h1>
+                            <p>The blog post you're looking for doesn't exist.</p>
+                            <a href="blog.html" class="btn btn-secondary">Back to Blog</a>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(`Failed to fetch blog: ${response.status}`);
                 }
             } catch (error) {
-                console.log('Failed to fetch from ok-snap.com:', error);
-            }
-            
-            // No recipes found from any source
-            if (recipes.length === 0) {
-                console.warn('No recipes found from any source. Attempting automatic sync...');
-                
-                // Try to trigger automatic sync to populate Supabase
-                const apiBase = window.location.origin.includes('localhost') 
-                    ? window.location.origin 
-                    : 'https://ok-snap-identifier.vercel.app';
-                
-                // Trigger sync in background (don't wait for it)
-                fetch(`${apiBase}/api/sync-recipes`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }).then(response => {
-                    if (response.ok) {
-                        console.log('Automatic sync triggered. Recipes will appear in Supabase shortly.');
-                        // Retry loading recipes after a short delay
-                        setTimeout(() => {
-                            loadBlogPosts();
-                        }, 5000);
-                    }
-                }).catch(error => {
-                    console.log('Sync trigger failed (non-critical):', error);
-                });
-                
-                postsGrid.innerHTML = '<p class="no-posts">No recipes yet. Syncing recipes from existing blogs... Please refresh in a moment.</p>';
+                console.error('[blog.html] Failed to fetch blog post:', error);
+                blogPostContent.innerHTML = `
+                    <div class="blog-post-header">
+                        <h1 class="blog-post-title">Error Loading Blog Post</h1>
+                        <p>${error.message}</p>
+                        <a href="blog.html" class="btn btn-secondary">Back to Blog</a>
+                    </div>
+                `;
             }
         }
         
-        // Render blog posts
-        function renderBlogPosts(recipes) {
+        // Render blog posts list
+        function renderBlogPosts(blogs) {
             const postsGrid = document.getElementById('blogPosts');
-            postsGrid.innerHTML = recipes.map(recipe => {
-                const slug = recipe.slug || (recipe.name ? recipe.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : '');
-                const title = recipe.title || recipe.name || 'Untitled Recipe';
-                const date = recipe.createdAt ? new Date(recipe.createdAt).toLocaleDateString() : 'Date unknown';
+            postsGrid.innerHTML = blogs.map(blog => {
+                const slug = blog.slug || (blog.name ? blog.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : '');
+                const title = blog.title || blog.name || 'Untitled Recipe';
+                const date = blog.createdAt ? new Date(blog.createdAt).toLocaleDateString() : 'Date unknown';
+                const imageUrl = blog.imageUrl || blog.image_url;
                 
                 return `
                     <article class="post-card">
+                        ${imageUrl ? `<div class="post-image"><img src="${imageUrl}" alt="${title}" loading="lazy"></div>` : ''}
                         <div class="post-content">
-                            <h2 class="post-title"><a href="blogs/${slug}.html">${title}</a></h2>
+                            <h2 class="post-title"><a href="blog.html?slug=${slug}">${title}</a></h2>
+                            ${blog.nameKorean ? `<p class="post-subtitle">${blog.nameKorean}</p>` : ''}
                             <p class="post-date">Published: ${date}</p>
-                            <a href="blogs/${slug}.html" class="btn btn-secondary">Read More</a>
+                            <a href="blog.html?slug=${slug}" class="btn btn-secondary">Read More</a>
                         </div>
                     </article>
                 `;
             }).join('');
         }
         
-        loadBlogPosts();
+        // Render single blog post
+        function renderBlogPost(blog) {
+            const blogPostContent = document.getElementById('blogPostContent');
+            const date = blog.createdAt ? new Date(blog.createdAt).toLocaleDateString() : 'Date unknown';
+            
+            blogPostContent.innerHTML = `
+                <div class="blog-post-header">
+                    <h1 class="blog-post-title">${blog.title || blog.name}${blog.nameKorean ? ` (${blog.nameKorean})` : ''}</h1>
+                    <div class="blog-post-meta">
+                        <span>Published: ${date}</span>
+                        ${blog.cuisine ? `<span> • ${blog.cuisine}</span>` : ''}
+                    </div>
+                </div>
+                ${blog.imageUrl || blog.image_url ? `
+                    <div class="blog-featured-image">
+                        <img src="${blog.imageUrl || blog.image_url}" alt="${blog.title || blog.name}" style="width: 100%; max-width: 800px; height: auto; border-radius: 12px; margin: 2rem auto; display: block; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+                    </div>
+                ` : ''}
+                <div class="blog-post-content">
+                    ${blog.content || '<p>Content not available.</p>'}
+                </div>
+                <div class="blog-post-footer" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #eee;">
+                    <a href="blog.html" class="btn btn-secondary">← Back to Blog</a>
+                </div>
+            `;
+        }
+        
+        // Initialize on page load
+        checkForBlogPost();
     </script>
 </body>
 </html>
