@@ -55,7 +55,10 @@ module.exports = async (req, res) => {
         // Remove leading /api if present
         route = path.replace(/^\/api\/?/, '') || '';
         
-        console.log(`[api-router] Route: ${route}, Method: ${req.method}, URL: ${req.url}, Query:`, req.query);
+        // Remove trailing slash
+        route = route.replace(/\/$/, '');
+        
+        console.log(`[api-router] Route: "${route}", Method: ${req.method}, URL: ${req.url}, Query:`, req.query);
     
         // Route to appropriate handler based on path
         if (route === 'identify' && req.method === 'POST') {
@@ -67,7 +70,17 @@ module.exports = async (req, res) => {
         }
         
         if (route === 'generate-blog' && req.method === 'POST') {
-            return await generateBlogHandler(req, res);
+            console.log('[api-router] Routing to generate-blog handler');
+            if (!generateBlogHandler) {
+                throw new Error('generateBlogHandler not loaded');
+            }
+            try {
+                return await generateBlogHandler(req, res);
+            } catch (handlerError) {
+                console.error('[api-router] generate-blog handler error:', handlerError);
+                console.error('[api-router] generate-blog handler stack:', handlerError.stack);
+                throw handlerError;
+            }
         }
         
         if (route === 'recipes-json' && req.method === 'GET') {

@@ -285,6 +285,7 @@ async function storeBlogInSupabase(dishData, blogContent, imagePath, slug) {
 
 // Vercel serverless function handler
 module.exports = async (req, res) => {
+    // Note: CORS headers are already set by the router, but we set them here too for safety
     // === GLOBAL CORS HEADERS ===
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -300,7 +301,13 @@ module.exports = async (req, res) => {
     }
 
     try {
+        console.log('[generate-blog] Handler called, parsing request body...');
         const { dishData } = req.body;
+        
+        if (!dishData) {
+            console.error('[generate-blog] No dishData in request body');
+            console.log('[generate-blog] Request body:', JSON.stringify(req.body).substring(0, 200));
+        }
         
         // #region agent log
         fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:540',message:'API handler entry',data:{hasDishData:!!dishData,dishName:dishData?.name},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
