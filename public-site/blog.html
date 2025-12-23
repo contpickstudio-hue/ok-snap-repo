@@ -51,26 +51,10 @@
         async function loadBlogPosts() {
             const postsGrid = document.getElementById('blogPosts');
             
-            // Try multiple sources in order of preference
+            // Try multiple sources in order of preference (Supabase first!)
             let recipes = [];
             
-            // 1. Try to fetch recipes.json from current domain
-            try {
-                const response = await fetch('recipes.json');
-                if (response.ok) {
-                    const data = await response.json();
-                    if (Array.isArray(data) && data.length > 0) {
-                        recipes = data;
-                        console.log('Loaded recipes from recipes.json:', recipes.length);
-                        renderBlogPosts(recipes);
-                        return;
-                    }
-                }
-            } catch (error) {
-                console.log('Failed to fetch recipes.json from current domain:', error);
-            }
-            
-            // 2. Try to fetch from API endpoint (for CORS-safe access)
+            // 1. Try to fetch from API endpoint first (fetches from Supabase - no deployment needed!)
             try {
                 // Determine API base URL
                 const apiBase = window.location.origin.includes('localhost') 
@@ -82,23 +66,39 @@
                     const apiRecipes = await apiResponse.json();
                     if (Array.isArray(apiRecipes) && apiRecipes.length > 0) {
                         recipes = apiRecipes;
-                        console.log('Loaded recipes from API endpoint:', recipes.length);
+                        console.log('Loaded recipes from Supabase via API:', recipes.length);
                         renderBlogPosts(recipes);
                         return;
                     }
                 }
             } catch (error) {
-                console.log('Failed to fetch from API endpoint:', error);
+                console.log('Failed to fetch from API endpoint (Supabase):', error);
             }
             
-            // 3. Try to fetch directly from www.ok-snap.com (production site)
+            // 2. Fallback: Try to fetch recipes.json from current domain
+            try {
+                const response = await fetch('recipes.json');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (Array.isArray(data) && data.length > 0) {
+                        recipes = data;
+                        console.log('Loaded recipes from recipes.json (fallback):', recipes.length);
+                        renderBlogPosts(recipes);
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.log('Failed to fetch recipes.json from current domain:', error);
+            }
+            
+            // 3. Fallback: Try to fetch directly from www.ok-snap.com (production site)
             try {
                 const wwwResponse = await fetch('https://www.ok-snap.com/recipes.json');
                 if (wwwResponse.ok) {
                     const wwwRecipes = await wwwResponse.json();
                     if (Array.isArray(wwwRecipes) && wwwRecipes.length > 0) {
                         recipes = wwwRecipes;
-                        console.log('Loaded recipes from www.ok-snap.com:', recipes.length);
+                        console.log('Loaded recipes from www.ok-snap.com (fallback):', recipes.length);
                         renderBlogPosts(recipes);
                         return;
                     }
@@ -107,14 +107,14 @@
                 console.log('Failed to fetch from www.ok-snap.com:', error);
             }
             
-            // 4. Try to fetch from ok-snap.com (without www)
+            // 4. Fallback: Try to fetch from ok-snap.com (without www)
             try {
                 const directResponse = await fetch('https://ok-snap.com/recipes.json');
                 if (directResponse.ok) {
                     const directRecipes = await directResponse.json();
                     if (Array.isArray(directRecipes) && directRecipes.length > 0) {
                         recipes = directRecipes;
-                        console.log('Loaded recipes from ok-snap.com:', recipes.length);
+                        console.log('Loaded recipes from ok-snap.com (fallback):', recipes.length);
                         renderBlogPosts(recipes);
                         return;
                     }
@@ -127,7 +127,7 @@
             if (recipes.length === 0) {
                 console.warn('No recipes found from any source. Attempting automatic sync...');
                 
-                // Try to trigger automatic sync if recipes.json is empty
+                // Try to trigger automatic sync to populate Supabase
                 const apiBase = window.location.origin.includes('localhost') 
                     ? window.location.origin 
                     : 'https://ok-snap-identifier.vercel.app';
@@ -140,7 +140,7 @@
                     }
                 }).then(response => {
                     if (response.ok) {
-                        console.log('Automatic sync triggered. Recipes will appear after deployment (1-2 minutes).');
+                        console.log('Automatic sync triggered. Recipes will appear in Supabase shortly.');
                         // Retry loading recipes after a short delay
                         setTimeout(() => {
                             loadBlogPosts();
@@ -150,7 +150,7 @@
                     console.log('Sync trigger failed (non-critical):', error);
                 });
                 
-                postsGrid.innerHTML = '<p class="no-posts">No recipes yet. Syncing recipes... Please refresh in a moment.</p>';
+                postsGrid.innerHTML = '<p class="no-posts">No recipes yet. Syncing recipes from existing blogs... Please refresh in a moment.</p>';
             }
         }
         
