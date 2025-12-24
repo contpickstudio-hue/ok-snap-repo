@@ -2,6 +2,7 @@
 // This scans the blogs directory and updates recipes.json with all blog entries
 
 module.exports = async (req, res) => {
+    const { debugLog } = require('../lib/logger');
     // CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -11,23 +12,23 @@ module.exports = async (req, res) => {
         return res.status(200).end();
     }
     
+    const { ErrorResponse } = require('../lib/error-response');
+    
     // Allow both GET and POST for flexibility (GET for cron jobs, POST for manual triggers)
     if (req.method !== 'POST' && req.method !== 'GET') {
-        return res.status(405).json({ error: 'Method not allowed. Use GET or POST.' });
+        return ErrorResponse.methodNotAllowed(res, 'Method not allowed. Use GET or POST.');
     }
     
     try {
+        const config = require('../lib/config');
         const githubToken = process.env.GITHUB_TOKEN;
         const githubRepo = process.env.GITHUB_REPO;
         const githubBranch = process.env.GITHUB_BRANCH || 'site';
         const githubBasePath = process.env.GITHUB_BASE_PATH !== undefined ? process.env.GITHUB_BASE_PATH : 'public-site';
-        const publicSiteUrl = 'https://ok-snap.com';
+        const publicSiteUrl = config.getPublicSiteUrl();
         
         if (!githubToken || !githubRepo) {
-            return res.status(500).json({ 
-                error: 'GitHub credentials not configured',
-                message: 'GITHUB_TOKEN and GITHUB_REPO must be set in environment variables'
-            });
+            return ErrorResponse.configurationError(res, 'GITHUB_TOKEN and GITHUB_REPO must be set in environment variables');
         }
         
         const [owner, repo] = githubRepo.split('/');
@@ -35,7 +36,7 @@ module.exports = async (req, res) => {
         const blogsPath = `${githubBasePath ? githubBasePath + '/' : ''}blogs`;
         const recipesJsonPath = `${githubBasePath ? githubBasePath + '/' : ''}recipes.json`;
         
-        console.log('[sync-recipes] Starting sync process:', {
+        debugLog('[sync-recipes] Starting sync process:', {
             blogsPath,
             recipesJsonPath,
             branch: githubBranch
@@ -73,13 +74,9 @@ module.exports = async (req, res) => {
                 ? files.filter(file => file.type === 'file' && file.name.endsWith('.html'))
                 : [];
             
-            console.log(`[sync-recipes] Found ${blogFiles.length} blog files`);
+            debugLog(`[sync-recipes] Found ${blogFiles.length} blog files`);
         } catch (error) {
-            console.error('[sync-recipes] Error listing blog files:', error);
-            return res.status(500).json({
-                error: 'Failed to list blog files',
-                message: error.message
-            });
+            return ErrorResponse.externalServiceError(res, 'Failed to list blog files from GitHub', error);
         }
         
         if (blogFiles.length === 0) {
@@ -152,7 +149,7 @@ module.exports = async (req, res) => {
         // Sort by date (newest first)
         recipes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         
-        console.log(`[sync-recipes] Extracted ${recipes.length} recipes from blog files`);
+        debugLog(`[sync-recipes] Extracted ${recipes.length} recipes from blog files`);
         
         // Step 3: Store recipes in Supabase (no GitHub commit = no Vercel deployment!)
         let supabaseSuccess = false;
@@ -183,7 +180,7 @@ module.exports = async (req, res) => {
                 
                 if (storeResponse && storeResponse.ok) {
                     supabaseSuccess = true;
-                    console.log('[sync-recipes] Recipes stored in Supabase successfully - no deployment needed!');
+                    debugLog('[sync-recipes] Recipes stored in Supabase successfully - no deployment needed!');
                 } else if (storeResponse && (storeResponse.status === 404 || storeResponse.status === 406)) {
                     console.warn('[sync-recipes] Supabase recipes table does not exist. See SUPABASE_SETUP.md for setup instructions.');
                 } else if (storeResponse) {
@@ -198,11 +195,7 @@ module.exports = async (req, res) => {
         }
         
         if (!supabaseSuccess) {
-            return res.status(500).json({
-                error: 'Failed to store recipes in Supabase',
-                message: 'Supabase storage failed. Check your SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.',
-                recipesCount: recipes.length
-            });
+            return ErrorResponse.databaseError(res, 'Supabase storage failed. Check your SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.', null);
         }
         
         return res.status(200).json({
@@ -213,11 +206,7 @@ module.exports = async (req, res) => {
         });
         
     } catch (error) {
-        console.error('[sync-recipes] Error:', error);
-        return res.status(500).json({
-            error: 'Failed to sync recipes',
-            message: error.message
-        });
+        return ErrorResponse.internalServerError(res, 'Failed to sync recipes', error);
     }
 };
 

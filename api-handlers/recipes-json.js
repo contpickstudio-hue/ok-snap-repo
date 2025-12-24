@@ -1,5 +1,8 @@
 // API route to fetch recipes.json from ok-snap.com with CORS headers
 module.exports = async (req, res) => {
+    const config = require('../lib/config');
+    const { debugLog } = require('../lib/logger');
+    const publicSiteUrl = config.getPublicSiteUrl();
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -8,8 +11,10 @@ module.exports = async (req, res) => {
         return res.status(200).end();
     }
     
+    const { ErrorResponse } = require('../lib/error-response');
+    
     if (req.method !== 'GET') {
-        return res.status(405).json({ error: 'Method not allowed' });
+        return ErrorResponse.methodNotAllowed(res);
     }
     
     try {
@@ -36,10 +41,10 @@ module.exports = async (req, res) => {
                             slug: blog.slug,
                             title: blog.title || blog.name,
                             name: blog.name || blog.title,
-                            url: `https://ok-snap.com/blog.html?slug=${blog.slug}`,
+                            url: `${publicSiteUrl}/blog.html?slug=${blog.slug}`,
                             createdAt: blog.created_at ? new Date(blog.created_at).toISOString().split('T')[0] : blog.created_at
                         }));
-                        console.log('Loaded recipes from Supabase blogs table:', recipes.length);
+                        debugLog('Loaded recipes from Supabase blogs table:', recipes.length);
                         return res.status(200).json(recipes);
                     }
                 }
@@ -64,25 +69,26 @@ module.exports = async (req, res) => {
                             url: recipe.url,
                             createdAt: recipe.created_at ? new Date(recipe.created_at).toISOString().split('T')[0] : recipe.created_at
                         }));
-                        console.log('Loaded recipes from Supabase recipes table:', recipes.length);
+                        debugLog('Loaded recipes from Supabase recipes table:', recipes.length);
                         return res.status(200).json(recipes);
                     }
                 }
             } catch (supabaseError) {
-                console.log('Supabase fetch failed, falling back to recipes.json:', supabaseError.message);
+                debugLog('Supabase fetch failed, falling back to recipes.json:', supabaseError.message);
             }
         }
         
-        // Fallback: Try www.ok-snap.com (production domain)
-        let response = await fetch('https://www.ok-snap.com/recipes.json');
+        // Fallback: Try www subdomain first, then base domain
+        const wwwUrl = publicSiteUrl.replace('://', '://www.');
+        let response = await fetch(`${wwwUrl}/recipes.json`);
         if (!response.ok) {
-            // Fallback to ok-snap.com (without www)
-            response = await fetch('https://ok-snap.com/recipes.json');
+            // Fallback to base domain
+            response = await fetch(`${publicSiteUrl}/recipes.json`);
         }
         
         if (!response.ok) {
             // Return empty array if file doesn't exist yet
-            console.log('recipes.json not found on deployed site, returning empty array');
+            debugLog('recipes.json not found on deployed site, returning empty array');
             return res.status(200).json([]);
         }
         

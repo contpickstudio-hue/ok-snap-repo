@@ -142,7 +142,7 @@ async function generateBlogImage(dishData) {
         const imageUrl = data.data[0].url;
         
         // Return image URL - will be uploaded to GitHub, not saved locally
-        console.log(`Generated image URL for ${dishData.name}`);
+        debugLog(`Generated image URL for ${dishData.name}`);
         return imageUrl; // Return URL instead of file path
     } catch (error) {
         console.warn('Image generation failed, continuing without image:', error);
@@ -159,7 +159,10 @@ async function generateBlogImage(dishData) {
  * This is the ONLY way blogs are stored - Supabase is the single source of truth
  */
 async function storeBlogInSupabase(dishData, blogContent, imagePath, slug) {
-    const publicSiteUrl = 'https://ok-snap.com';
+    const config = require('../lib/config');
+    const { encodeSlugForUrl } = require('../lib/slug-validation');
+    const { debugLog } = require('../lib/logger');
+    const publicSiteUrl = config.getPublicSiteUrl();
     
     try {
         // Step 1: Check if blog already exists in Supabase
@@ -173,8 +176,9 @@ async function storeBlogInSupabase(dishData, blogContent, imagePath, slug) {
             };
         }
         
-        // Check if blog already exists
-        const checkResponse = await fetch(`${supabaseUrl}/rest/v1/blogs?slug=eq.${slug}&select=slug`, {
+        // Check if blog already exists (encode slug for Supabase REST URL)
+        const encodedSlug = encodeSlugForUrl(slug);
+        const checkResponse = await fetch(`${supabaseUrl}/rest/v1/blogs?slug=eq.${encodedSlug}&select=slug`, {
             headers: {
                 'apikey': supabaseKey,
                 'Authorization': `Bearer ${supabaseKey}`,
@@ -185,10 +189,10 @@ async function storeBlogInSupabase(dishData, blogContent, imagePath, slug) {
         if (checkResponse.ok) {
             const existing = await checkResponse.json();
             if (Array.isArray(existing) && existing.length > 0) {
-                console.log(`[storeBlogInSupabase] Blog already exists for ${dishData.name}, skipping`);
+                debugLog(`[storeBlogInSupabase] Blog already exists for ${dishData.name}, skipping`);
                 return {
                     success: true,
-                    blogUrl: `${publicSiteUrl}/blog.html?slug=${slug}`,
+                    blogUrl: `${publicSiteUrl}/blog.html?slug=${encodedSlug}`,
                     slug: slug,
                     skipped: true,
                     message: 'Blog already exists'
@@ -210,7 +214,7 @@ async function storeBlogInSupabase(dishData, blogContent, imagePath, slug) {
             created_at: new Date().toISOString()
         };
         
-        console.log('[storeBlogInSupabase] Storing blog in Supabase:', {
+        debugLog('[storeBlogInSupabase] Storing blog in Supabase:', {
             slug: blogToStore.slug,
             title: blogToStore.title,
             contentLength: blogContent.length
@@ -234,14 +238,14 @@ async function storeBlogInSupabase(dishData, blogContent, imagePath, slug) {
         }
         
         const storedBlog = await blogStoreResponse.json();
-        console.log('[storeBlogInSupabase] Blog stored successfully in Supabase - NO deployment needed!');
+        debugLog('[storeBlogInSupabase] Blog stored successfully in Supabase - NO deployment needed!');
         
         // Step 3: Store recipe metadata in recipes table (for listings)
         const recipeEntry = {
             slug: slug,
             title: dishData.name,
             name: dishData.name,
-            url: `${publicSiteUrl}/blog.html?slug=${slug}`,
+            url: `${publicSiteUrl}/blog.html?slug=${encodedSlug}`,
             created_at: new Date().toISOString()
         };
         
@@ -260,12 +264,12 @@ async function storeBlogInSupabase(dishData, blogContent, imagePath, slug) {
         });
         
         if (recipeStoreResponse && recipeStoreResponse.ok) {
-            console.log('[storeBlogInSupabase] Recipe metadata stored successfully');
+            debugLog('[storeBlogInSupabase] Recipe metadata stored successfully');
         }
         
         return {
             success: true,
-            blogUrl: `${publicSiteUrl}/blog.html?slug=${slug}`,
+            blogUrl: `${publicSiteUrl}/blog.html?slug=${encodedSlug}`,
             imageUrl: imagePath || null,
             slug: slug,
             message: 'Blog stored in Supabase - available immediately, no deployment needed!'
@@ -296,40 +300,31 @@ module.exports = async (req, res) => {
         return res.status(200).end();
     }
 
+    const { ErrorResponse } = require('../lib/error-response');
+    const { debugLog } = require('../lib/logger');
+    
     if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
+        return ErrorResponse.methodNotAllowed(res);
     }
 
     try {
-        console.log('[generate-blog] Handler called, parsing request body...');
+        debugLog('[generate-blog] Handler called, parsing request body...');
         const { dishData } = req.body;
         
         if (!dishData) {
             console.error('[generate-blog] No dishData in request body');
-            console.log('[generate-blog] Request body:', JSON.stringify(req.body).substring(0, 200));
+            debugLog('[generate-blog] Request body:', JSON.stringify(req.body).substring(0, 200));
         }
         
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:540',message:'API handler entry',data:{hasDishData:!!dishData,dishName:dishData?.name},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
-        
         if (!dishData || !dishData.name) {
-            return res.status(400).json({ error: 'dishData with name is required' });
+            return ErrorResponse.badRequest(res, 'dishData with name is required');
         }
 
         // Create slug for the blog post
         const slug = createSlug(dishData.name);
         
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:549',message:'Slug created',data:{slug,dishName:dishData.name},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-        // #endregion
-        
         // Generate blog content
         const blogContent = await generateBlogPost(dishData);
-        
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:557',message:'Blog content generated',data:{contentLength:blogContent?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         
         // Generate image (optional - don't fail if image generation fails)
         let imagePath = null;
@@ -342,10 +337,6 @@ module.exports = async (req, res) => {
         // Store blog in Supabase (NO GitHub commits, NO deployments!)
         const supabaseResult = await storeBlogInSupabase(dishData, blogContent, imagePath, slug);
         
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:570',message:'Supabase storage result',data:{success:supabaseResult.success,error:supabaseResult.error},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-        // #endregion
-        
         if (supabaseResult.success) {
             return res.status(200).json({
                 success: true,
@@ -355,22 +346,10 @@ module.exports = async (req, res) => {
                 message: 'Blog post created and stored in Supabase. Available immediately - no deployment needed!'
             });
         } else {
-            console.error('Supabase storage failed:', supabaseResult.error);
-            return res.status(500).json({
-                success: false,
-                error: 'Failed to store blog in Supabase',
-                message: supabaseResult.error || 'Unknown error'
-            });
+            return ErrorResponse.databaseError(res, 'Failed to store blog in Supabase', new Error(supabaseResult.error || 'Unknown error'));
         }
     } catch (err) {
-        console.error('Blog generation error:', err);
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/0410967d-f074-48d8-be31-33e3d143eccb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'generate-blog.js:600',message:'Exception in handler',data:{error:err.message,stack:err.stack?.substring(0,200)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-        // #endregion
-        return res.status(500).json({ 
-            error: 'Failed to generate blog post',
-            message: err.message || 'Unknown error'
-        });
+        return ErrorResponse.internalServerError(res, 'Failed to generate blog post', err);
     }
 };
 

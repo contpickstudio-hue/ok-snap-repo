@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const { debugLog } = require('./lib/logger');
 require('dotenv').config();
 
 // ============================================
@@ -41,8 +42,19 @@ app.set('trust proxy', true);
 // SECURITY MIDDLEWARE
 // ============================================
 // CORS configuration
+// Use ALLOWED_ORIGINS env var if set, otherwise use safe defaults (never wildcard *)
+const config = require('./lib/config');
+const defaultCorsOrigins = [
+    config.getPublicSiteUrl(),
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'http://localhost:8080'
+];
+
 const corsOptions = {
-    origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*',
+    origin: process.env.ALLOWED_ORIGINS
+        ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()).filter(o => o.length > 0)
+        : defaultCorsOrigins,
     credentials: true,
     optionsSuccessStatus: 200
 };
@@ -66,242 +78,43 @@ app.use(express.json({ limit: '10mb' })); // Reduced from 50mb for security
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // ============================================
-// RATE LIMITING (Simple in-memory store)
+// RATE LIMITING (Persistent storage via Supabase)
 // ============================================
-const rateLimitStore = new Map();
-const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
-const RATE_LIMIT_MAX_REQUESTS = 20; // 20 requests per window per IP
+const rateLimitStorage = require('./lib/rate-limit-storage');
 
-function rateLimit(req, res, next) {
+async function rateLimit(req, res, next) {
     const ip = req.ip || req.connection.remoteAddress;
-    const now = Date.now();
     
-    // Clean old entries
-    if (rateLimitStore.size > 1000) {
-        for (const [key, value] of rateLimitStore.entries()) {
-            if (now - value.resetTime > RATE_LIMIT_WINDOW) {
-                rateLimitStore.delete(key);
-            }
+    try {
+        const result = await rateLimitStorage.checkRateLimit(ip);
+        
+        if (!result.allowed) {
+            return res.status(429).json({ 
+                error: 'Too many requests. Please try again later.',
+                retryAfter: result.retryAfter
+            });
         }
+        
+        next();
+    } catch (error) {
+        // On error, allow request to proceed (fail open)
+        console.error('[rateLimit] Error checking rate limit:', error);
+        next();
     }
-    
-    const record = rateLimitStore.get(ip);
-    
-    if (!record) {
-        rateLimitStore.set(ip, {
-            count: 1,
-            resetTime: now + RATE_LIMIT_WINDOW
-        });
-        return next();
-    }
-    
-    if (now > record.resetTime) {
-        record.count = 1;
-        record.resetTime = now + RATE_LIMIT_WINDOW;
-        return next();
-    }
-    
-    if (record.count >= RATE_LIMIT_MAX_REQUESTS) {
-        return res.status(429).json({ 
-            error: 'Too many requests. Please try again later.',
-            retryAfter: Math.ceil((record.resetTime - now) / 1000)
-        });
-    }
-    
-    record.count++;
-    next();
 }
 
 // ============================================
 // DAILY SCAN LIMITS BY USER LEVEL
+// (Using persistent storage via rate-limit-storage module)
 // ============================================
-const scanLimits = {
-    guest: 3,      // Not logged in
-    free: 5        // Logged in user
-};
-
-const dailyScansStore = new Map(); // key: userId or IP, value: { count, date, level }
-const guestScansByIp = new Map(); // Track guest scans by IP for bonus on login
-
-function getTodayDateString() {
-    return new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+// Functions are now async and use Supabase for persistence
+async function checkDailyScanLimit(userId, userIp) {
+    return await rateLimitStorage.checkDailyScanLimit(userId, userIp);
 }
 
-function getUserLevel(userId) {
-    if (!userId) return 'guest';
-    return 'free';
+async function getRemainingScans(userId, userIp) {
+    return await rateLimitStorage.getRemainingScans(userId, userIp);
 }
-
-// Give bonus scans when user logs in after using guest scans
-function applyLoginBonus(userId, userIp) {
-    const today = getTodayDateString();
-    const guestKey = `ip_${userIp}`;
-    const userKey = userId;
-    
-    // Check if user already has a record (already got bonus)
-    const existingUserRecord = dailyScansStore.get(userKey);
-    if (existingUserRecord && existingUserRecord.date === today && existingUserRecord.bonusApplied) {
-        return { bonusApplied: false }; // Already got bonus
-    }
-    
-    // Check if user used guest scans today
-    const guestRecord = guestScansByIp.get(guestKey);
-    if (guestRecord && guestRecord.date === today && guestRecord.count > 0) {
-        // User logged in after using guest scans - give bonus scans
-        const guestScansUsed = guestRecord.count;
-        const bonusScans = 5; // Additional scans when logging in
-        
-        // Calculate: if they used X guest scans, they get 5 bonus scans
-        // So remaining = min(5, guestScansUsed + 5) - guestScansUsed = min(5, 5 - guestScansUsed)
-        // Actually simpler: they used X scans as guest, now they have 5 limit, so remaining = 5 - X
-        // But we want to give them 5 bonus, so: remaining = min(5, X + 5) - X = min(5, 5 - X)
-        // Even simpler: remaining = 5 - guestScansUsed (but cap at 5 bonus)
-        const remainingAfterBonus = Math.min(scanLimits.free, guestScansUsed + bonusScans);
-        const newCount = scanLimits.free - remainingAfterBonus;
-        
-        // Set user record with transferred guest scans + bonus
-        dailyScansStore.set(userKey, {
-            count: newCount,
-            date: today,
-            level: 'free',
-            bonusApplied: true
-        });
-        
-        // Clear guest record for this IP (so they don't get bonus again)
-        guestScansByIp.delete(guestKey);
-        
-        return { bonusApplied: true, guestScansUsed, bonusScans, remaining: remainingAfterBonus };
-    }
-    
-    return { bonusApplied: false };
-}
-
-function checkDailyScanLimit(userId, userIp) {
-    const today = getTodayDateString();
-    const userLevel = getUserLevel(userId);
-    const limit = scanLimits[userLevel];
-    
-    // Use userId if logged in, otherwise use IP
-    const key = userId || `ip_${userIp}`;
-    
-    // If user just logged in, apply bonus scans
-    if (userId && userIp) {
-        const bonusResult = applyLoginBonus(userId, userIp);
-        if (bonusResult.bonusApplied) {
-            // Re-fetch the record after bonus application
-            const record = dailyScansStore.get(key);
-            if (record && record.date === today) {
-                const remaining = limit - record.count;
-                return { 
-                    allowed: remaining > 0, 
-                    remaining: Math.max(0, remaining), 
-                    limit,
-                    level: userLevel,
-                    bonusApplied: true
-                };
-            }
-        }
-    }
-    
-    const record = dailyScansStore.get(key);
-    
-    // Reset if it's a new day
-    if (!record || record.date !== today) {
-        dailyScansStore.set(key, {
-            count: 1,
-            date: today,
-            level: userLevel
-        });
-        
-        // Track guest scans separately
-        if (!userId) {
-            guestScansByIp.set(`ip_${userIp}`, {
-                count: 1,
-                date: today
-            });
-        }
-        
-        return { allowed: true, remaining: limit - 1, limit, level: userLevel };
-    }
-    
-    // Check if limit exceeded
-    if (record.count >= limit) {
-        return { 
-            allowed: false, 
-            remaining: 0, 
-            limit,
-            level: userLevel,
-            resetTime: getMidnightResetTime()
-        };
-    }
-    
-    // Increment count
-    record.count++;
-    dailyScansStore.set(key, record);
-    
-    // Track guest scans separately
-    if (!userId) {
-        const guestKey = `ip_${userIp}`;
-        const guestRecord = guestScansByIp.get(guestKey);
-        if (guestRecord && guestRecord.date === today) {
-            guestRecord.count++;
-        } else {
-            guestScansByIp.set(guestKey, {
-                count: 1,
-                date: today
-            });
-        }
-    }
-    
-    return { 
-        allowed: true, 
-        remaining: limit - record.count, 
-        limit,
-        level: userLevel
-    };
-}
-
-function getMidnightResetTime() {
-    const now = new Date();
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(0, 0, 0, 0);
-    return tomorrow.toISOString();
-}
-
-function getRemainingScans(userId, userIp) {
-    const today = getTodayDateString();
-    const userLevel = getUserLevel(userId);
-    const limit = scanLimits[userLevel];
-    const key = userId || `ip_${userIp}`;
-    
-    // If user just logged in, apply bonus scans
-    if (userId && userIp) {
-        applyLoginBonus(userId, userIp);
-    }
-    
-    const record = dailyScansStore.get(key);
-    
-    if (!record || record.date !== today) {
-        return { remaining: limit, limit, level: userLevel };
-    }
-    
-    return { 
-        remaining: Math.max(0, limit - record.count), 
-        limit,
-        level: userLevel
-    };
-}
-
-// Clean up old entries daily (runs every hour)
-setInterval(() => {
-    const today = getTodayDateString();
-    for (const [key, value] of dailyScansStore.entries()) {
-        if (value.date !== today) {
-            dailyScansStore.delete(key);
-        }
-    }
-}, 60 * 60 * 1000); // Every hour
 
 // Serve static files from www directory
 app.use(express.static(path.join(__dirname, 'www')));
@@ -318,7 +131,7 @@ app.get('/health', (req, res) => {
 });
 
 // Get remaining scans endpoint
-app.get('/api/scan-limit', (req, res) => {
+app.get('/api/scan-limit', async (req, res) => {
     const userId = req.query.userId || null;
     // Get IP address - try multiple methods for accuracy
     const userIp = req.ip || 
@@ -327,13 +140,21 @@ app.get('/api/scan-limit', (req, res) => {
                    req.socket.remoteAddress ||
                    '127.0.0.1'; // Fallback for localhost
     
-    console.log(`[scan-limit] userId: ${userId || 'guest'}, IP: ${userIp}`);
+    debugLog(`[scan-limit] userId: ${userId || 'guest'}, IP: ${userIp}`);
     
-    const remainingInfo = getRemainingScans(userId, userIp);
-    
-    console.log(`[scan-limit] Returning:`, remainingInfo);
-    
-    res.json(remainingInfo);
+    try {
+        const remainingInfo = await getRemainingScans(userId, userIp);
+        debugLog(`[scan-limit] Returning:`, remainingInfo);
+        res.json(remainingInfo);
+    } catch (error) {
+        console.error('[scan-limit] Error:', error);
+        // Return default values on error
+        res.json({ 
+            remaining: rateLimitStorage.scanLimits.guest, 
+            limit: rateLimitStorage.scanLimits.guest, 
+            level: 'guest' 
+        });
+    }
 });
 
 // ============================================
@@ -391,7 +212,7 @@ async function handleImageAnalysis(req, res) {
                        '127.0.0.1'; // Fallback for localhost
         
         // Check daily scan limit
-        const limitCheck = checkDailyScanLimit(userId, userIp);
+        const limitCheck = await checkDailyScanLimit(userId, userIp);
         
         if (!limitCheck.allowed) {
             const userLevel = limitCheck.level;
@@ -505,7 +326,7 @@ All responses must be in ${targetLanguage || 'English'}.`
         const data = await response.json();
         
         // Include remaining scans in response
-        const remainingInfo = getRemainingScans(userId, userIp);
+        const remainingInfo = await getRemainingScans(userId, userIp);
         res.json({
             ...data,
             scanInfo: {
@@ -543,6 +364,7 @@ app.use((err, req, res, next) => {
 
 // Blog generation endpoint
 const blogGenerator = require('./api/generate-blog');
+const config = require('./lib/config');
 
 app.post('/api/generate-blog', rateLimit, async (req, res) => {
     try {
@@ -556,12 +378,13 @@ app.post('/api/generate-blog', rateLimit, async (req, res) => {
         const existingBlog = blogGenerator.checkBlogExists(dishData.name);
         
         if (existingBlog) {
-            console.log(`Blog post already exists for ${dishData.name}, reusing existing post`);
+            debugLog(`Blog post already exists for ${dishData.name}, reusing existing post`);
             
             // Update recipes.json metadata (in case it's missing)
             const recipeEntry = blogGenerator.updateRecipesJson(dishData, existingBlog.slug);
             
-            const blogUrl = `https://ok-snap-identifier.vercel.app/public-site/blogs/${existingBlog.slug}.html`;
+            const apiBaseUrl = config.getApiBaseUrl(req);
+            const blogUrl = `${apiBaseUrl}/public-site/blogs/${existingBlog.slug}.html`;
             return res.json({
                 success: true,
                 slug: existingBlog.slug,
@@ -573,7 +396,7 @@ app.post('/api/generate-blog', rateLimit, async (req, res) => {
         }
 
         // Generate new blog post and image
-        console.log(`Generating new blog post for ${dishData.name}`);
+        debugLog(`Generating new blog post for ${dishData.name}`);
         
         // Generate image first (in parallel with blog content for efficiency)
         const [blogContent, imagePath] = await Promise.all([
@@ -590,7 +413,8 @@ app.post('/api/generate-blog', rateLimit, async (req, res) => {
         // Update recipes.json
         const recipeEntry = blogGenerator.updateRecipesJson(dishData, slug);
         
-        const blogUrl = `https://ok-snap-identifier.vercel.app/public-site/blogs/${slug}.html`;
+        const apiBaseUrl = config.getApiBaseUrl(req);
+        const blogUrl = `${apiBaseUrl}/public-site/blogs/${slug}.html`;
         res.json({
             success: true,
             slug: slug,
@@ -615,7 +439,8 @@ app.get('/api/blog-exists/:slug', (req, res) => {
         const { slug } = req.params;
         const blogPath = path.join(__dirname, 'public-site', 'blogs', `${slug}.html`);
         const exists = fs.existsSync(blogPath);
-        const blogUrl = `https://ok-snap-identifier.vercel.app/public-site/blogs/${slug}.html`;
+        const apiBaseUrl = config.getApiBaseUrl(req);
+        const blogUrl = `${apiBaseUrl}/public-site/blogs/${slug}.html`;
         
         res.json({
             exists: exists,
@@ -651,12 +476,12 @@ app.get('*', (req, res) => {
 // GRACEFUL SHUTDOWN
 // ============================================
 process.on('SIGTERM', () => {
-    console.log('\nSIGTERM received. Shutting down gracefully...');
+    debugLog('\nSIGTERM received. Shutting down gracefully...');
     process.exit(0);
 });
 
 process.on('SIGINT', () => {
-    console.log('\nSIGINT received. Shutting down gracefully...');
+    debugLog('\nSIGINT received. Shutting down gracefully...');
     process.exit(0);
 });
 

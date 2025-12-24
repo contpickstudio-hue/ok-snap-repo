@@ -10,8 +10,10 @@ module.exports = async (req, res) => {
         return res.status(200).end();
     }
 
+    const { ErrorResponse } = require('../lib/error-response');
+    
     if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
+        return ErrorResponse.methodNotAllowed(res);
     }
 
     try {
@@ -27,58 +29,14 @@ module.exports = async (req, res) => {
         const result = await decrementScanCount(finalUserId, finalUserIp, decrementAmount);
         return res.status(200).json(result);
     } catch (err) {
-        console.error('Decrement scan count API error:', err);
-        return res.status(500).json({ error: 'Failed to decrement scan count' });
+        return ErrorResponse.internalServerError(res, 'Failed to decrement scan count', err);
     }
 }
 
-const scanLimits = {
-    guest: 3,
-    free: 5
-};
-
-function getTodayDateString() {
-    return new Date().toISOString().split('T')[0];
-}
-
-function getUserLevel(userId) {
-    if (!userId) return 'guest';
-    return 'free';
-}
-
-// In-memory store (shared with identify.js logic)
-// NOTE: In serverless, this is per-instance. For production, use Vercel KV or database
-const dailyScansStore = new Map();
+// Use persistent rate limiting storage via shared module
+const rateLimitStorage = require('../lib/rate-limit-storage');
 
 async function decrementScanCount(userId, userIp, decrementAmount) {
-    const today = getTodayDateString();
-    const userLevel = getUserLevel(userId);
-    const limit = scanLimits[userLevel];
-    const key = userId || `ip_${userIp}`;
-    
-    const record = dailyScansStore.get(key);
-    
-    if (!record || record.date !== today) {
-        // No record exists - can't decrement, but return success
-        return { 
-            success: true, 
-            remaining: limit, 
-            limit, 
-            level: userLevel,
-            message: 'No scan count to decrement'
-        };
-    }
-    
-    // Decrement the count (but don't go below 0)
-    record.count = Math.max(0, record.count - decrementAmount);
-    dailyScansStore.set(key, record);
-    
-    return {
-        success: true,
-        remaining: Math.max(0, limit - record.count),
-        limit,
-        level: userLevel,
-        count: record.count
-    };
+    return await rateLimitStorage.decrementScanCount(userId, userIp, decrementAmount);
 }
 

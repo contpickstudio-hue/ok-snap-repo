@@ -2,6 +2,8 @@
 // Returns full blog content for rendering
 
 module.exports = async (req, res) => {
+    const { validateSlug, encodeSlugForUrl } = require('../lib/slug-validation');
+    const { ErrorResponse } = require('../lib/error-response');
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -11,7 +13,7 @@ module.exports = async (req, res) => {
     }
     
     if (req.method !== 'GET') {
-        return res.status(405).json({ error: 'Method not allowed. Use GET.' });
+        return ErrorResponse.methodNotAllowed(res, 'Method not allowed. Use GET.');
     }
     
     try {
@@ -19,21 +21,26 @@ module.exports = async (req, res) => {
         const slug = req.query.slug;
         
         if (!slug) {
-            return res.status(400).json({ error: 'Slug parameter is required' });
+            return ErrorResponse.badRequest(res, 'Slug parameter is required');
+        }
+        
+        // Validate slug format
+        try {
+            validateSlug(slug, 'slug');
+        } catch (validationError) {
+            return ErrorResponse.validationError(res, validationError.message, validationError);
         }
         
         const supabaseUrl = process.env.SUPABASE_URL;
         const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
         
         if (!supabaseUrl || !supabaseKey) {
-            return res.status(500).json({ 
-                error: 'Supabase not configured',
-                message: 'SUPABASE_URL and SUPABASE_ANON_KEY must be set'
-            });
+            return ErrorResponse.configurationError(res, 'SUPABASE_URL and SUPABASE_ANON_KEY must be set');
         }
         
-        // Fetch blog from Supabase
-        const response = await fetch(`${supabaseUrl}/rest/v1/blogs?slug=eq.${slug}&select=*`, {
+        // Fetch blog from Supabase (encode slug for URL)
+        const encodedSlug = encodeSlugForUrl(slug);
+        const response = await fetch(`${supabaseUrl}/rest/v1/blogs?slug=eq.${encodedSlug}&select=*`, {
             headers: {
                 'apikey': supabaseKey,
                 'Authorization': `Bearer ${supabaseKey}`,
@@ -43,28 +50,19 @@ module.exports = async (req, res) => {
         
         if (!response.ok) {
             const errorText = await response.text().catch(() => 'Unknown error');
-            console.error('[blogs-slug] Error fetching blog:', response.status, errorText);
+            const error = new Error(`Supabase API error: ${response.status} - ${errorText}`);
             
             if (response.status === 404 || response.status === 406) {
-                return res.status(404).json({ 
-                    error: 'Blog not found',
-                    message: `Blog with slug "${slug}" does not exist`
-                });
+                return ErrorResponse.notFound(res, `Blog with slug "${slug}" does not exist`, error);
             }
             
-            return res.status(500).json({ 
-                error: 'Failed to fetch blog',
-                message: errorText 
-            });
+            return ErrorResponse.databaseError(res, 'Failed to fetch blog from database', error);
         }
         
         const blogs = await response.json();
         
         if (!Array.isArray(blogs) || blogs.length === 0) {
-            return res.status(404).json({ 
-                error: 'Blog not found',
-                message: `Blog with slug "${slug}" does not exist`
-            });
+            return ErrorResponse.notFound(res, `Blog with slug "${slug}" does not exist`);
         }
         
         const blog = blogs[0];
@@ -85,11 +83,7 @@ module.exports = async (req, res) => {
         });
         
     } catch (error) {
-        console.error('[blogs-slug] Error:', error);
-        return res.status(500).json({
-            error: 'Failed to fetch blog',
-            message: error.message
-        });
+        return ErrorResponse.internalServerError(res, 'Failed to fetch blog', error);
     }
 };
 

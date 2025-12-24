@@ -4676,92 +4676,38 @@
             // Check if we're on Vercel (production or preview deployment)
             if (typeof window !== 'undefined' && window.location) {
                 const origin = window.location.origin;
-                        <img id="previewImage" class="preview-image" alt="Preview">
-                        <button type="button" class="remove-preview" id="removePreview" title="Remove image">×</button>
-                    </div>
-                    <div id="uploadPlaceholder">
-                        <div class="upload-icon">
-                            <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <!-- Camera body -->
-                                <rect x="20" y="30" width="40" height="30" rx="4" fill="var(--primary)" opacity="0.9"/>
-                                <rect x="22" y="32" width="36" height="26" rx="2" fill="var(--primary-light)" opacity="0.3"/>
-                                <!-- Camera lens -->
-                                <circle cx="40" cy="43" r="12" fill="white"/>
-                                <circle cx="40" cy="43" r="10" fill="var(--primary)"/>
-                                <circle cx="40" cy="43" r="6" fill="var(--primary-dark)"/>
-                                <!-- Flash -->
-                                <rect x="50" y="32" width="6" height="4" rx="1" fill="var(--primary-light)"/>
-                                <!-- Food bowl silhouette -->
-                                <ellipse cx="40" cy="58" rx="18" ry="6" fill="var(--primary)" opacity="0.8"/>
-                                <path d="M22 58 Q22 54 26 54 L54 54 Q58 54 58 58" stroke="var(--primary)" stroke-width="2" fill="none"/>
-                                <!-- Food elements -->
-                                <circle cx="35" cy="56" r="2" fill="var(--accent)"/>
-                                <circle cx="40" cy="56" r="2" fill="var(--primary)"/>
-                                <circle cx="45" cy="56" r="2" fill="var(--accent)"/>
-                            </svg>
-                        </div>
-                        <div class="upload-text" id="uploadText" style="font-family: 'Poppins', 'Inter', sans-serif; font-weight: 700; margin-bottom: 12px;">Discover Your Dish</div>
-                        <div class="upload-hint" id="uploadHint" style="font-weight: 500;">Tap to upload or use camera • Korean dishes emphasized</div>
-                    </div>
-                    <input type="file" id="fileInput" accept="image/*">
-                </div>
-                <div class="upload-options">
-                    <!-- Calorie Log Summary Widget -->
-                    <!-- Calorie Log Widget REMOVED - replaced with Browse tab -->
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <span style="font-size: 1.25rem;">📊</span>
-                                <div>
-                                    <div style="font-size: 0.875rem; color: var(--text-secondary); font-weight: 500;">Calories Today</div>
-                                    <div style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); font-family: 'Poppins', sans-serif;" id="calorieWidgetText">0 / 2000</div>
-                                </div>
-                            </div>
-                            <div style="flex: 1; margin-left: 12px;">
-                                <div style="width: 100%; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden;">
-                                    <div id="calorieWidgetProgress" style="height: 100%; background: linear-gradient(90deg, var(--primary) 0%, var(--primary-dark) 100%); border-radius: 4px; transition: width 0.3s ease; width: 0%;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Login/Signup Banner for Guest Users -->
-                    <div id="guestLoginBanner" style="display: none; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); padding: 16px; border-radius: 16px; margin-bottom: 12px; color: white; box-shadow: 0 2px 8px var(--shadow-interactive);">
-                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
-                            <div style="flex: 1;">
-                                <div style="font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; font-family: 'Poppins', sans-serif;">Create an account</div>
-                                <div style="font-size: 0.8rem; opacity: 0.95;">Save history & sync across devices</div>
-                            </div>
-                            <button onclick="document.getElementById('loginModal').classList.add('active')" style="background: white; color: var(--primary-dark); border: none; padding: 8px 16px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer; font-family: 'Poppins', sans-serif; white-space: nowrap;">
-                                Login
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="scan-limit-info" id="scanLimitDisplay" style="text-align: center; margin-bottom: 8px; font-size: 0.75rem; color: var(--text-secondary);">
-                        3/3 scans (Guest)
-                    </div>
-                    <button class="btn-secondary" id="rechargeScanBtn" style="width: 100%; margin-bottom: 8px; font-size: 0.85rem;" onclick="rechargeScanLimitWithAd()">
-                        📺 Watch Ad to Recharge
-                    </button>
-                    <button class="btn" id="analyzeBtn" disabled>Discover Your Dish</button>
-                        <button class="camera-btn" id="cameraBtn">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5">
-                            <rect x="3" y="6" width="18" height="13" rx="2" fill="currentColor"></rect>
-                            <rect x="5" y="4" width="4" height="2" rx="0.5" fill="currentColor"></rect>
-                            <rect x="15" y="4" width="4" height="2" rx="0.5" fill="currentColor"></rect>
-                            <circle cx="12" cy="13" r="4" fill="white"></circle>
-                            <circle cx="12" cy="13" r="2" fill="currentColor"></circle>
-                        </svg>
-                        <span id="cameraBtnText">Use Camera</span>
-                    </button>
-                </div>
-                </div>
-            </div>
+                // If on Vercel preview deployment, use its own API endpoints
+                // Preview URLs: https://ok-snap-identifier-*-*.vercel.app
+                if (origin.includes('vercel.app')) {
+                    return origin; // Use same origin for API calls
+                }
+                // Localhost development
+                if (origin.includes('localhost')) {
+                    return origin;
+                }
+            }
+            // Final fallback to production
+            return 'https://ok-snap-identifier.vercel.app';
+        }
+        
+        // Global public site URL getter
+        function getPublicSiteUrl() {
+            // If config loaded from endpoint, use it
+            if (CONFIG && CONFIG.PUBLIC_SITE_URL) {
+                return CONFIG.PUBLIC_SITE_URL;
+            }
+            // Fallback to default
+            return 'https://ok-snap.com';
+        }
+        
+        // Expose globally for error handlers
+        window.getApiBase = getApiBase;
+        window.getPublicSiteUrl = getPublicSiteUrl;
 
-            <!-- Loading State -->
-            <div class="loading" id="loading">
-                <button class="loading-close-btn" id="cancelLoadingBtn" title="Cancel (or press ESC)" onclick="cancelAnalysis()" style="z-index: 1600;">×</button>
-                <div class="loading-content">
+        // ============================================
+        // STATE MANAGEMENT
+        // ============================================
+        let currentImage = null;
                     <div class="loading-animation">
                         <div class="loading-dot"></div>
                         <div class="loading-dot"></div>
@@ -5085,14 +5031,9 @@
         // ═══════════════════════════════════════════
         
         const CONFIG = {
-            // Backend API endpoint
-            // For native apps, use Vercel URL (localhost not accessible from phone)
-            // For web, use current origin or Vercel URL
-            API_BASE: (typeof window !== 'undefined' && window.Capacitor) 
-                ? 'https://ok-snap-identifier.vercel.app'
-                : (typeof window !== 'undefined' && window.location.origin.includes('localhost'))
-                    ? window.location.origin
-                    : 'https://ok-snap-identifier.vercel.app',
+            // Backend API endpoint - will be loaded from /api/config endpoint or use fallbacks
+            API_BASE: null, // Loaded asynchronously from config endpoint
+            PUBLIC_SITE_URL: null, // Loaded asynchronously from config endpoint
             
             // Recipe links now point directly to recipe websites
             // No API keys needed - using direct website search URLs
@@ -5109,17 +5050,42 @@
             SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpeXByZWZ6aHByanpnZW12cWV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MTY0NDgsImV4cCI6MjA3NTA5MjQ0OH0.RZAXhSFG3MOfAJkERaoD8Qv91_lWgkbWUBymtKjjFmU' // e.g., 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
         };
         
+        // Load configuration from API endpoint (non-blocking)
+        (async function loadConfig() {
+            try {
+                // Determine base URL for config endpoint
+                let configBaseUrl = 'https://ok-snap-identifier.vercel.app';
+                if (typeof window !== 'undefined' && window.location) {
+                    const origin = window.location.origin;
+                    if (origin.includes('localhost') || origin.includes('vercel.app')) {
+                        configBaseUrl = origin;
+                    }
+                }
+                const response = await fetch(`${configBaseUrl}/api/config`);
+                if (response.ok) {
+                    const configData = await response.json();
+                    if (configData.API_BASE_URL) CONFIG.API_BASE = configData.API_BASE_URL;
+                    if (configData.PUBLIC_SITE_URL) CONFIG.PUBLIC_SITE_URL = configData.PUBLIC_SITE_URL;
+                }
+            } catch (error) {
+                // Silently fail - will use fallback logic
+                console.debug('Config endpoint not available, using fallbacks');
+            }
+        })();
+        
         // Global API base getter - ensures apiBase is always available
         // This prevents "apiBase is not defined" errors in error handlers
         function getApiBase() {
+            // If config loaded from endpoint, use it
+            if (CONFIG && CONFIG.API_BASE) {
+                return CONFIG.API_BASE;
+            }
+            
             // Native app (Capacitor) - use production API
             if (typeof window !== 'undefined' && window.Capacitor) {
                 return 'https://ok-snap-identifier.vercel.app';
             }
-            // Explicit config override
-            if (CONFIG && CONFIG.API_BASE) {
-                return CONFIG.API_BASE;
-            }
+            
             // Check if we're on Vercel (production or preview deployment)
             if (typeof window !== 'undefined' && window.location) {
                 const origin = window.location.origin;
@@ -5137,8 +5103,19 @@
             return 'https://ok-snap-identifier.vercel.app';
         }
         
+        // Global public site URL getter
+        function getPublicSiteUrl() {
+            // If config loaded from endpoint, use it
+            if (CONFIG && CONFIG.PUBLIC_SITE_URL) {
+                return CONFIG.PUBLIC_SITE_URL;
+            }
+            // Fallback to default
+            return 'https://ok-snap.com';
+        }
+        
         // Expose globally for error handlers
         window.getApiBase = getApiBase;
+        window.getPublicSiteUrl = getPublicSiteUrl;
 
         // ============================================
         // STATE MANAGEMENT
@@ -5150,10 +5127,6 @@
         let userScanInfo = { remaining: 3, limit: 3, level: 'guest' }; // Default for guest
         let blogGenerationAttempted = new Set(); // Track blog generation attempts per dish to prevent duplicates
         let blogGenerationFailed = new Set(); // Track failed blog generations to prevent retries
-        
-        // ============================================
-        // ADMOB CONFIGURATION
-        // ============================================
         // STEP 1: Get your AdMob ad unit IDs from https://admob.google.com/
         // STEP 2: Replace the placeholder values below with your actual ad unit IDs
         // STEP 3: Install Capacitor AdMob plugin: npm install @capacitor-community/admob
@@ -8578,7 +8551,7 @@
             try {
                 // Use global getApiBase function to ensure apiBase is always defined
                 const apiBase = getApiBase();
-                const publicWebsiteUrl = 'https://ok-snap.com';
+                const publicWebsiteUrl = getPublicSiteUrl();
                 // Use new Supabase format: /blog.html?slug=xxx (blogs are in Supabase, not static files)
                 const blogUrl = `${publicWebsiteUrl}/blog.html?slug=${slug}`;
 
@@ -8769,7 +8742,7 @@
                                     }
                                     
                                     // Update URL to use new format: /blog.html?slug=xxx
-                                    const blogUrl = `https://ok-snap.com/blog.html?slug=${slug}`;
+                                    const blogUrl = `${getPublicSiteUrl()}/blog.html?slug=${slug}`;
                                     
                                     if (blogExternalLink) {
                                         blogExternalLink.href = blogUrl;

@@ -2,6 +2,10 @@
 // Returns existence status and blog URL
 
 module.exports = async (req, res) => {
+    const config = require('../lib/config');
+    const { validateSlug, encodeSlugForUrl } = require('../lib/slug-validation');
+    const { ErrorResponse } = require('../lib/error-response');
+    const publicSiteUrl = config.getPublicSiteUrl();
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -11,7 +15,7 @@ module.exports = async (req, res) => {
     }
     
     if (req.method !== 'GET') {
-        return res.status(405).json({ error: 'Method not allowed' });
+        return ErrorResponse.methodNotAllowed(res);
     }
     
     try {
@@ -19,23 +23,33 @@ module.exports = async (req, res) => {
         const slug = req.query.slug;
         
         if (!slug) {
-            return res.status(400).json({ error: 'Slug parameter is required' });
+            return ErrorResponse.badRequest(res, 'Slug parameter is required');
+        }
+        
+        // Validate slug format
+        try {
+            validateSlug(slug, 'slug');
+        } catch (validationError) {
+            return ErrorResponse.validationError(res, validationError.message, validationError);
         }
         
         const supabaseUrl = process.env.SUPABASE_URL;
         const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
         
+        // Encode slug for use in URLs (both Supabase queries and response URLs)
+        const encodedSlug = encodeSlugForUrl(slug);
+        
         if (!supabaseUrl || !supabaseKey) {
             // If Supabase not configured, return exists: false (graceful degradation)
             return res.status(200).json({
                 exists: false,
-                url: `https://ok-snap.com/blog.html?slug=${slug}`,
+                url: `${publicSiteUrl}/blog.html?slug=${encodedSlug}`,
                 slug: slug
             });
         }
         
-        // Check if blog exists in Supabase
-        const response = await fetch(`${supabaseUrl}/rest/v1/blogs?slug=eq.${slug}&select=slug`, {
+        // Check if blog exists in Supabase (encode slug for REST URL)
+        const response = await fetch(`${supabaseUrl}/rest/v1/blogs?slug=eq.${encodedSlug}&select=slug`, {
             headers: {
                 'apikey': supabaseKey,
                 'Authorization': `Bearer ${supabaseKey}`,
@@ -52,17 +66,19 @@ module.exports = async (req, res) => {
         return res.status(200).json({
             exists: exists,
             deployed: exists, // Blogs in Supabase are always "deployed" (available immediately)
-            url: `https://ok-snap.com/blog.html?slug=${slug}`,
+            url: `${publicSiteUrl}/blog.html?slug=${encodedSlug}`,
             slug: slug
         });
         
     } catch (error) {
         console.error('[blog-exists-slug] Error:', error);
         // Return exists: false on error (graceful degradation)
+        const errorSlug = req.query.slug || 'unknown';
+        const encodedErrorSlug = errorSlug === 'unknown' ? 'unknown' : encodeSlugForUrl(errorSlug);
         return res.status(200).json({
             exists: false,
-            url: `https://ok-snap.com/blog.html?slug=${req.query.slug || 'unknown'}`,
-            slug: req.query.slug || 'unknown'
+            url: `${publicSiteUrl}/blog.html?slug=${encodedErrorSlug}`,
+            slug: errorSlug
         });
     }
 };

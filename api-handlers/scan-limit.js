@@ -11,8 +11,10 @@ module.exports = async (req, res) => {
         return res.status(200).end();
     }
 
+    const { ErrorResponse } = require('../lib/error-response');
+    
     if (req.method !== 'GET') {
-        return res.status(405).json({ error: 'Method not allowed' });
+        return ErrorResponse.methodNotAllowed(res);
     }
 
     try {
@@ -29,49 +31,14 @@ module.exports = async (req, res) => {
         const remainingInfo = await getRemainingScans(userId, userIp);
         return res.status(200).json(remainingInfo);
     } catch (err) {
-        console.error('Scan limit API error:', err);
-        return res.status(500).json({ error: 'Scan limit check failed' });
+        return ErrorResponse.internalServerError(res, 'Failed to check scan limit', err);
     }
 }
 
-const scanLimits = {
-    guest: 3,
-    free: 5
-};
-
-function getTodayDateString() {
-    return new Date().toISOString().split('T')[0];
-}
-
-function getUserLevel(userId) {
-    if (!userId) return 'guest';
-    return 'free';
-}
-
-// In-memory store (for serverless, consider using Vercel KV or similar)
-// NOTE: This is separate from identify.js store - serverless functions don't share memory
-// For production, use Vercel KV or a database for shared state
-const dailyScansStore = new Map();
-const guestScansByIp = new Map();
+// Use persistent rate limiting storage via shared module
+const rateLimitStorage = require('../lib/rate-limit-storage');
 
 async function getRemainingScans(userId, userIp) {
-    const today = getTodayDateString();
-    const userLevel = getUserLevel(userId);
-    const limit = scanLimits[userLevel];
-    const key = userId || `ip_${userIp}`;
-    
-    const record = dailyScansStore.get(key);
-    
-    // If no record or different day, user has full limit remaining
-    if (!record || record.date !== today) {
-        return { remaining: limit, limit, level: userLevel };
-    }
-    
-    // Return remaining scans (limit - count used)
-    return { 
-        remaining: Math.max(0, limit - record.count), 
-        limit,
-        level: userLevel
-    };
+    return await rateLimitStorage.getRemainingScans(userId, userIp);
 }
 

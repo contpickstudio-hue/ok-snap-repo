@@ -2,6 +2,7 @@
 // This reduces the number of serverless functions to stay within Vercel Hobby plan limits (12 max)
 
 const { setCorsHeaders, handlePreflight } = require('./_cors');
+const { debugLog } = require('../lib/logger');
 
 // Import route handlers from api-handlers directory
 // This keeps them out of the api/ directory so Vercel doesn't create separate functions
@@ -21,7 +22,7 @@ try {
     // Handle files with brackets in path - renamed to avoid Node.js issues
     blogExistsHandler = require('../api-handlers/blog-exists-slug');
     blogsSlugHandler = require('../api-handlers/blogs-slug');
-    console.log('[api-router] All handlers loaded successfully');
+    debugLog('[api-router] All handlers loaded successfully');
 } catch (requireError) {
     console.error('[api-router] Failed to load handlers:', requireError);
     throw requireError;
@@ -58,11 +59,11 @@ module.exports = async (req, res) => {
         // Remove trailing slash
         route = route.replace(/\/$/, '');
         
-        console.log(`[api-router] Route: "${route}", Method: ${req.method}, URL: ${req.url}, Query:`, req.query);
+        debugLog(`[api-router] Route: "${route}", Method: ${req.method}, URL: ${req.url}, Query:`, req.query);
     
         // Route to appropriate handler based on path
         if (route === 'identify' && req.method === 'POST') {
-            console.log('[api-router] Routing to identify handler');
+            debugLog('[api-router] Routing to identify handler');
             if (!identifyHandler) {
                 throw new Error('identifyHandler not loaded');
             }
@@ -70,7 +71,7 @@ module.exports = async (req, res) => {
         }
         
         if (route === 'generate-blog' && req.method === 'POST') {
-            console.log('[api-router] Routing to generate-blog handler');
+            debugLog('[api-router] Routing to generate-blog handler');
             if (!generateBlogHandler) {
                 throw new Error('generateBlogHandler not loaded');
             }

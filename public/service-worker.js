@@ -26,9 +26,9 @@ self.addEventListener('fetch', (event) => {
   // Check for:
   // 1. API endpoints (/api/*)
   // 2. External domains (different hostname)
-  // 3. Vercel API endpoints (ok-snap-identifier.vercel.app)
+  // 3. API endpoints and external domains (don't cache)
   if (url.pathname.startsWith('/api/') || 
-      url.hostname.includes('ok-snap-identifier.vercel.app') ||
+      url.hostname.includes('vercel.app') ||
       (url.hostname !== self.location.hostname && url.hostname !== 'localhost')) {
     // For API calls and external requests, don't intercept
     // Let the browser handle them directly to avoid CORS issues

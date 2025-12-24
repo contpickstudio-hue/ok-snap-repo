@@ -23,8 +23,10 @@ module.exports = async (req, res) => {
     // ============================================
     // POST REQUEST HANDLING
     // ============================================
+    const { ErrorResponse } = require('../lib/error-response');
+    
     if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
+        return ErrorResponse.methodNotAllowed(res);
     }
 
     try {
@@ -48,8 +50,10 @@ module.exports = async (req, res) => {
                 message = "Oops! That's all your scans for today. Come back tomorrow for more food discoveries! 🌟";
             }
             
+            // Rate limit response with additional fields for frontend compatibility
             return res.status(429).json({ 
-                error: message,
+                success: false,
+                error: 'SCAN_LIMIT_EXCEEDED',
                 message: message,
                 limitExceeded: true,
                 limit: scanLimitCheck.limit,
@@ -61,35 +65,34 @@ module.exports = async (req, res) => {
 
         // Validate image data
         if (!imageData || typeof imageData !== 'string') {
-            return res.status(400).json({ error: 'Image data is required and must be a string' });
+            return ErrorResponse.badRequest(res, 'Image data is required and must be a string');
         }
         
         if (!imageData.startsWith('data:image/')) {
-            return res.status(400).json({ error: 'Invalid image format. Expected data URL.' });
+            return ErrorResponse.badRequest(res, 'Invalid image format. Expected data URL.');
         }
 
         const base64Data = imageData.split(',')[1];
         if (!base64Data) {
-            return res.status(400).json({ error: 'Invalid image data format' });
+            return ErrorResponse.badRequest(res, 'Invalid image data format');
         }
 
         const sizeInBytes = (base64Data.length * 3) / 4;
         const maxSize = 10 * 1024 * 1024; // 10MB
         
         if (sizeInBytes > maxSize) {
-            return res.status(400).json({ error: 'Image too large. Maximum size is 10MB.' });
+            return ErrorResponse.badRequest(res, 'Image too large. Maximum size is 10MB.');
         }
 
         // Validate language
         const allowedLanguages = ['English', 'Korean (한국어)', 'Spanish (Español)', 'French (Français)', 'Chinese (中文)'];
         if (targetLanguage && !allowedLanguages.includes(targetLanguage)) {
-            return res.status(400).json({ error: 'Invalid language specified' });
+            return ErrorResponse.badRequest(res, 'Invalid language specified');
         }
 
         const OPENAI_KEY = process.env.OPENAI_API_KEY;
         if (!OPENAI_KEY) {
-            console.error('OPENAI_API_KEY is not set in environment variables');
-            return res.status(500).json({ error: 'Server configuration error' });
+            return ErrorResponse.configurationError(res, 'OPENAI_API_KEY is not configured');
         }
 
         // Add timeout to prevent hanging requests
@@ -172,7 +175,8 @@ All responses must be in ${targetLanguage || 'English'}.`
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({ error: { message: 'Unknown error' } }));
-                return res.status(response.status).json({ error: errorData.error?.message || 'OpenAI API error' });
+                const error = new Error(`OpenAI API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+                return ErrorResponse.externalServiceError(res, 'Failed to process image with AI service', error);
             }
 
             const data = await response.json();
@@ -192,8 +196,7 @@ All responses must be in ${targetLanguage || 'English'}.`
             
             // Handle timeout specifically
             if (fetchError.name === 'AbortError') {
-                console.error('OpenAI API request timed out');
-                return res.status(504).json({ error: 'Request timeout. The image analysis took too long. Please try again with a smaller image.' });
+                return ErrorResponse.gatewayTimeout(res, 'Request timeout. The image analysis took too long. Please try again with a smaller image.', fetchError);
             }
             
             // Handle other fetch errors
@@ -209,83 +212,18 @@ All responses must be in ${targetLanguage || 'English'}.`
             return;
         }
         
-        return res.status(500).json({ error: 'Identify failed' });
+        return ErrorResponse.internalServerError(res, 'Failed to identify dish', err);
     }
 }
 
-// Shared scan limit logic (simplified for serverless - in production use external store)
-const scanLimits = {
-    guest: 3,
-    free: 5
-};
-
-function getTodayDateString() {
-    return new Date().toISOString().split('T')[0];
-}
-
-function getUserLevel(userId) {
-    if (!userId) return 'guest';
-    return 'free';
-}
-
-// In-memory store (for serverless, consider using Vercel KV or similar)
-const dailyScansStore = new Map();
-const guestScansByIp = new Map();
+// Use persistent rate limiting storage via shared module
+const rateLimitStorage = require('../lib/rate-limit-storage');
 
 async function checkDailyScanLimit(userId, userIp) {
-    const today = getTodayDateString();
-    const userLevel = getUserLevel(userId);
-    const limit = scanLimits[userLevel];
-    const key = userId || `ip_${userIp}`;
-    
-    const record = dailyScansStore.get(key);
-    
-    if (!record || record.date !== today) {
-        dailyScansStore.set(key, {
-            count: 1,
-            date: today,
-            level: userLevel
-        });
-        return { allowed: true, remaining: limit - 1, limit, level: userLevel };
-    }
-    
-    if (record.count >= limit) {
-        return { 
-            allowed: false, 
-            remaining: 0, 
-            limit,
-            level: userLevel,
-            resetTime: new Date(new Date().setDate(new Date().getDate() + 1)).setHours(0, 0, 0, 0)
-        };
-    }
-    
-    record.count++;
-    dailyScansStore.set(key, record);
-    
-    return { 
-        allowed: true, 
-        remaining: limit - record.count, 
-        limit,
-        level: userLevel
-    };
+    return await rateLimitStorage.checkDailyScanLimit(userId, userIp);
 }
 
 async function getRemainingScans(userId, userIp) {
-    const today = getTodayDateString();
-    const userLevel = getUserLevel(userId);
-    const limit = scanLimits[userLevel];
-    const key = userId || `ip_${userIp}`;
-    
-    const record = dailyScansStore.get(key);
-    
-    if (!record || record.date !== today) {
-        return { remaining: limit, limit, level: userLevel };
-    }
-    
-    return { 
-        remaining: Math.max(0, limit - record.count), 
-        limit,
-        level: userLevel
-    };
+    return await rateLimitStorage.getRemainingScans(userId, userIp);
 }
 

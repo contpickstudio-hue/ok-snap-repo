@@ -4666,27 +4666,33 @@
             // Check if we're on Vercel (production or preview deployment)
             if (typeof window !== 'undefined' && window.location) {
                 const origin = window.location.origin;
-                                <rect x="22" y="32" width="36" height="26" rx="2" fill="var(--primary-light)" opacity="0.3"/>
-                                <!-- Camera lens -->
-                                <circle cx="40" cy="43" r="12" fill="white"/>
-                                <circle cx="40" cy="43" r="10" fill="var(--primary)"/>
-                                <circle cx="40" cy="43" r="6" fill="var(--primary-dark)"/>
-                                <!-- Flash -->
-                                <rect x="50" y="32" width="6" height="4" rx="1" fill="var(--primary-light)"/>
-                                <!-- Food bowl silhouette -->
-                                <ellipse cx="40" cy="58" rx="18" ry="6" fill="var(--primary)" opacity="0.8"/>
-                                <path d="M22 58 Q22 54 26 54 L54 54 Q58 54 58 58" stroke="var(--primary)" stroke-width="2" fill="none"/>
-                                <!-- Food elements -->
-                                <circle cx="35" cy="56" r="2" fill="var(--accent)"/>
-                                <circle cx="40" cy="56" r="2" fill="var(--primary)"/>
-                                <circle cx="45" cy="56" r="2" fill="var(--accent)"/>
-                            </svg>
-                        </div>
-                        <div class="upload-text" id="uploadText" style="font-family: 'Poppins', 'Inter', sans-serif; font-weight: 700; margin-bottom: 12px;">Discover Your Dish</div>
-                        <div class="upload-hint" id="uploadHint" style="font-weight: 500;">Tap to upload or use camera • Korean dishes emphasized</div>
-                    </div>
-                    <input type="file" id="fileInput" accept="image/*">
-                </div>
+                // If on Vercel preview deployment, use its own API endpoints
+                // Preview URLs: https://ok-snap-identifier-*-*.vercel.app
+                if (origin.includes('vercel.app')) {
+                    return origin; // Use same origin for API calls
+                }
+                // Localhost development
+                if (origin.includes('localhost')) {
+                    return origin;
+                }
+            }
+            // Final fallback to production
+            return 'https://ok-snap-identifier.vercel.app';
+        }
+        
+        // Global public site URL getter
+        function getPublicSiteUrl() {
+            // If config loaded from endpoint, use it
+            if (CONFIG && CONFIG.PUBLIC_SITE_URL) {
+                return CONFIG.PUBLIC_SITE_URL;
+            }
+            // Fallback to default
+            return 'https://ok-snap.com';
+        }
+        
+        // Expose globally for error handlers
+        window.getApiBase = getApiBase;
+        window.getPublicSiteUrl = getPublicSiteUrl;
                 <div class="upload-options">
                     <!-- Calorie Log Summary Widget -->
                     <!-- Calorie Log Widget REMOVED - replaced with Browse tab -->
@@ -5118,9 +5124,27 @@
             // Final fallback to production
             return 'https://ok-snap-identifier.vercel.app';
         }
+                // Final fallback to production
+                return 'https://ok-snap-identifier.vercel.app';
+            }
+            
+            // Final fallback to production
+            return 'https://ok-snap-identifier.vercel.app';
+        }
+        
+        // Global public site URL getter
+        function getPublicSiteUrl() {
+            // If config loaded from endpoint, use it
+            if (CONFIG && CONFIG.PUBLIC_SITE_URL) {
+                return CONFIG.PUBLIC_SITE_URL;
+            }
+            // Fallback to default
+            return 'https://ok-snap.com';
+        }
         
         // Expose globally for error handlers
         window.getApiBase = getApiBase;
+        window.getPublicSiteUrl = getPublicSiteUrl;
 
         // ============================================
         // STATE MANAGEMENT
@@ -8673,7 +8697,7 @@
             try {
                 // Use global getApiBase function to ensure apiBase is always defined
                 const apiBase = getApiBase();
-                const publicWebsiteUrl = 'https://ok-snap.com';
+                const publicWebsiteUrl = getPublicSiteUrl();
                 // Use new Supabase format: /blog.html?slug=xxx (blogs are in Supabase, not static files)
                 const blogUrl = `${publicWebsiteUrl}/blog.html?slug=${slug}`;
 
@@ -8863,7 +8887,7 @@
                                     }
                                     
                                     // Update URL to use new format: /blog.html?slug=xxx
-                                    const blogUrl = `https://ok-snap.com/blog.html?slug=${slug}`;
+                                    const blogUrl = `${getPublicSiteUrl()}/blog.html?slug=${slug}`;
                                     
                                     if (blogExternalLink) {
                                         blogExternalLink.href = blogUrl;

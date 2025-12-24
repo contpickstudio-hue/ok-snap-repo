@@ -5162,14 +5162,9 @@
         // ═══════════════════════════════════════════
         
         const CONFIG = {
-            // Backend API endpoint
-            // For native apps, use Vercel URL (localhost not accessible from phone)
-            // For web, use current origin or Vercel URL
-            API_BASE: (typeof window !== 'undefined' && window.Capacitor) 
-                ? 'https://ok-snap-identifier.vercel.app'
-                : (typeof window !== 'undefined' && window.location.origin.includes('localhost'))
-                    ? window.location.origin
-                    : 'https://ok-snap-identifier.vercel.app',
+            // Backend API endpoint - will be loaded from /api/config endpoint or use fallbacks
+            API_BASE: null, // Loaded asynchronously from config endpoint
+            PUBLIC_SITE_URL: null, // Loaded asynchronously from config endpoint
             
             // Recipe links now point directly to recipe websites
             // No API keys needed - using direct website search URLs
@@ -5186,17 +5181,42 @@
             SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpeXByZWZ6aHByanpnZW12cWV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MTY0NDgsImV4cCI6MjA3NTA5MjQ0OH0.RZAXhSFG3MOfAJkERaoD8Qv91_lWgkbWUBymtKjjFmU' // e.g., 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
         };
         
+        // Load configuration from API endpoint (non-blocking)
+        (async function loadConfig() {
+            try {
+                // Determine base URL for config endpoint
+                let configBaseUrl = 'https://ok-snap-identifier.vercel.app';
+                if (typeof window !== 'undefined' && window.location) {
+                    const origin = window.location.origin;
+                    if (origin.includes('localhost') || origin.includes('vercel.app')) {
+                        configBaseUrl = origin;
+                    }
+                }
+                const response = await fetch(`${configBaseUrl}/api/config`);
+                if (response.ok) {
+                    const configData = await response.json();
+                    if (configData.API_BASE_URL) CONFIG.API_BASE = configData.API_BASE_URL;
+                    if (configData.PUBLIC_SITE_URL) CONFIG.PUBLIC_SITE_URL = configData.PUBLIC_SITE_URL;
+                }
+            } catch (error) {
+                // Silently fail - will use fallback logic
+                console.debug('Config endpoint not available, using fallbacks');
+            }
+        })();
+        
         // Global API base getter - ensures apiBase is always available
         // This prevents "apiBase is not defined" errors in error handlers
         function getApiBase() {
+            // If config loaded from endpoint, use it
+            if (CONFIG && CONFIG.API_BASE) {
+                return CONFIG.API_BASE;
+            }
+            
             // Native app (Capacitor) - use production API
             if (typeof window !== 'undefined' && window.Capacitor) {
                 return 'https://ok-snap-identifier.vercel.app';
             }
-            // Explicit config override
-            if (CONFIG && CONFIG.API_BASE) {
-                return CONFIG.API_BASE;
-            }
+            
             // Check if we're on Vercel (production or preview deployment)
             if (typeof window !== 'undefined' && window.location) {
                 const origin = window.location.origin;
@@ -5214,8 +5234,19 @@
             return 'https://ok-snap-identifier.vercel.app';
         }
         
+        // Global public site URL getter
+        function getPublicSiteUrl() {
+            // If config loaded from endpoint, use it
+            if (CONFIG && CONFIG.PUBLIC_SITE_URL) {
+                return CONFIG.PUBLIC_SITE_URL;
+            }
+            // Fallback to default
+            return 'https://ok-snap.com';
+        }
+        
         // Expose globally for error handlers
         window.getApiBase = getApiBase;
+        window.getPublicSiteUrl = getPublicSiteUrl;
 
         // ============================================
         // STATE MANAGEMENT
@@ -8895,7 +8926,7 @@
             try {
                 // Use global getApiBase function to ensure apiBase is always defined
                 const apiBase = getApiBase();
-                const publicWebsiteUrl = 'https://ok-snap.com';
+                const publicWebsiteUrl = getPublicSiteUrl();
                 // Use new Supabase format: /blog.html?slug=xxx (blogs are in Supabase, not static files)
                 const blogUrl = `${publicWebsiteUrl}/blog.html?slug=${slug}`;
 
@@ -9086,7 +9117,7 @@
                                     }
                                     
                                     // Update URL to use new format: /blog.html?slug=xxx
-                                    const blogUrl = `https://ok-snap.com/blog.html?slug=${slug}`;
+                                    const blogUrl = `${getPublicSiteUrl()}/blog.html?slug=${slug}`;
                                     
                                     if (blogExternalLink) {
                                         blogExternalLink.href = blogUrl;

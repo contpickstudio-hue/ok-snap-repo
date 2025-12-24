@@ -13,14 +13,26 @@
  * @param {Object} res - Response object
  */
 function setCorsHeaders(req, res) {
+    const config = require('../lib/config');
     const origin = req.headers.origin;
-    const allowedOrigins = [
-        'https://ok-snap-identifier.vercel.app',
-        'https://ok-snap-repo.vercel.app',
+    
+    // Get base URLs for fallback defaults
+    const apiBaseUrl = config.getApiBaseUrl(req);
+    const publicSiteUrl = config.getPublicSiteUrl();
+    
+    // Default hardcoded origins (used as fallback if ALLOWED_ORIGINS not set)
+    const defaultOrigins = [
+        apiBaseUrl,
+        publicSiteUrl,
         'http://localhost:3000',
         'http://localhost:5173',
         'http://localhost:8080'
     ];
+    
+    // Use ALLOWED_ORIGINS env var if set, otherwise fall back to defaults
+    const allowedOrigins = process.env.ALLOWED_ORIGINS
+        ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()).filter(o => o.length > 0)
+        : defaultOrigins;
     
     // Native apps (Capacitor) don't send origin header - allow them
     const isNativeApp = !origin;
@@ -38,8 +50,8 @@ function setCorsHeaders(req, res) {
         res.setHeader('Access-Control-Allow-Origin', origin);
         res.setHeader('Access-Control-Allow-Credentials', 'true');
     } else {
-        // Default to production URL
-        res.setHeader('Access-Control-Allow-Origin', 'https://ok-snap-repo.vercel.app');
+        // Default to public site URL
+        res.setHeader('Access-Control-Allow-Origin', publicSiteUrl);
         res.setHeader('Access-Control-Allow-Credentials', 'true');
     }
     
