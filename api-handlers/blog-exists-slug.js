@@ -51,6 +51,7 @@ module.exports = async (req, res) => {
         
         return res.status(200).json({
             exists: exists,
+            deployed: exists, // Blogs in Supabase are always "deployed" (available immediately)
             url: `https://ok-snap.com/blog.html?slug=${slug}`,
             slug: slug
         });

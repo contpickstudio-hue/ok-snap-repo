@@ -8447,8 +8447,8 @@
                 // Use global getApiBase function to ensure apiBase is always defined
                 const apiBase = getApiBase();
                 const publicWebsiteUrl = 'https://ok-snap.com';
-                // Ensure URL format matches: ok-snap.com/blogs/{slug}.html
-                const blogUrl = `${publicWebsiteUrl}/blogs/${slug}.html`;
+                // Use new Supabase format: /blog.html?slug=xxx (blogs are in Supabase, not static files)
+                const blogUrl = `${publicWebsiteUrl}/blog.html?slug=${slug}`;
 
                 // Step 1: Check if blog exists (handle 404 gracefully)
                 let checkResult = { exists: false };
@@ -8517,10 +8517,10 @@
                             finalBlogUrl = generateResult.blogUrl;
                         } else if (generateResult.slug) {
                             // Construct URL from slug if provided
-                            finalBlogUrl = `${publicWebsiteUrl}/blogs/${generateResult.slug}.html`;
+                            finalBlogUrl = `${publicWebsiteUrl}/blog.html?slug=${generateResult.slug}`;
                         } else {
-                            // Fallback to constructed URL
-                            finalBlogUrl = blogUrl;
+                            // Fallback to constructed URL (new Supabase format)
+                            finalBlogUrl = `${publicWebsiteUrl}/blog.html?slug=${slug}`;
                         }
                         
                         // Verify blog was successfully created (not skipped)
@@ -8614,11 +8614,9 @@
                         delete window.generatedBlogImageUrl;
                     } else {
                         // Blog exists on ok-snap.com - verify URL format and show link
-                        // Ensure URL format is correct: ok-snap.com/blogs/{slug}.html
-                        if (!finalBlogUrl.includes('/blogs/') || !finalBlogUrl.endsWith('.html')) {
-                            // Fix URL format if incorrect
-                            finalBlogUrl = `${publicWebsiteUrl}/blogs/${slug}.html`;
-                        }
+                        // Blog exists on ok-snap.com - use new Supabase format: /blog.html?slug=xxx
+                        // Update URL to new format (blogs are now in Supabase, not static files)
+                        finalBlogUrl = `${publicWebsiteUrl}/blog.html?slug=${slug}`;
                         
                         // Verify blog exists before showing link (use API endpoint to avoid CORS)
                         try {
@@ -8633,46 +8631,23 @@
                             if (verifyResponse.ok) {
                                 const verifyResult = await verifyResponse.json();
                                 if (verifyResult.exists) {
-                                    if (verifyResult.deployed) {
-                                        // Blog exists and is deployed - show link
-                                        if (blogViewer) {
-                                            blogViewer.innerHTML = '<p>Blog post is ready! Click the button below to view the full recipe on ok-snap.com.</p>';
-                                        }
-                                        
-                                        if (blogExternalLink) {
-                                            blogExternalLink.href = finalBlogUrl;
-                                            blogExternalLink.textContent = 'View Full Blog Post';
-                                            blogExternalLink.style.display = 'inline-block';
-                                        }
-                                    } else {
-                                        // Blog exists in repository but not deployed yet
-                                        if (blogViewer) {
-                                            blogViewer.innerHTML = '<p>Blog post is being deployed. This usually takes 1-2 minutes. Please check back shortly.</p>';
-                                        }
-                                        if (blogExternalLink) {
-                                            blogExternalLink.style.display = 'none';
-                                        }
-                                        // Retry after 30 seconds
-                                        setTimeout(() => {
-                                            const retryUrl = `${apiBase}/api/blog-exists/${slug}`;
-                                            fetch(retryUrl).then(r => r.json()).then(result => {
-                                                if (result.exists && result.deployed) {
-                                                    if (blogViewer) {
-                                                        blogViewer.innerHTML = '<p>Blog post is ready! Click the button below to view the full recipe on ok-snap.com.</p>';
-                                                    }
-                                                    if (blogExternalLink) {
-                                                        blogExternalLink.href = finalBlogUrl;
-                                                        blogExternalLink.textContent = 'View Full Blog Post';
-                                                        blogExternalLink.style.display = 'inline-block';
-                                                    }
-                                                }
-                                            }).catch(() => {});
-                                        }, 30000);
+                                    // Blog exists in Supabase - available immediately (no deployment needed!)
+                                    if (blogViewer) {
+                                        blogViewer.innerHTML = '<p>Blog post is ready! Available immediately from Supabase. Click the button below to view the full recipe on ok-snap.com.</p>';
+                                    }
+                                    
+                                    // Update URL to use new format: /blog.html?slug=xxx
+                                    const blogUrl = `https://ok-snap.com/blog.html?slug=${slug}`;
+                                    
+                                    if (blogExternalLink) {
+                                        blogExternalLink.href = blogUrl;
+                                        blogExternalLink.textContent = 'View Full Blog Post';
+                                        blogExternalLink.style.display = 'inline-block';
                                     }
                                 } else {
-                                    // Blog doesn't exist - hide link
+                                    // Blog doesn't exist yet - might still be generating
                                     if (blogViewer) {
-                                        blogViewer.innerHTML = '<p>Blog post is being prepared. Please check back later.</p>';
+                                        blogViewer.innerHTML = '<p>Blog post is being generated and will be available shortly. Please refresh in a moment.</p>';
                                     }
                                     if (blogExternalLink) {
                                         blogExternalLink.style.display = 'none';
@@ -10612,7 +10587,9 @@
             recipes.forEach((recipe) => {
                 const card = document.createElement('div');
                 card.className = 'blog-card';
-                card.onclick = () => openBlogPost(recipe.url || `${publicWebsiteUrl}/blogs/${recipe.slug || createSlug(recipe.name)}.html`);
+                // Use new Supabase format: /blog.html?slug=xxx
+                const recipeUrl = recipe.url || `${publicWebsiteUrl}/blog.html?slug=${recipe.slug || createSlug(recipe.name)}`;
+                card.onclick = () => openBlogPost(recipeUrl);
                 
                 // Use JSON data only - no HTML fetching
                 const title = recipe.title || recipe.name || 'Untitled Recipe';
