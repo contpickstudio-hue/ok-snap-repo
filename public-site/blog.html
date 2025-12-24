@@ -59,11 +59,48 @@
 
     <script src="scripts.js"></script>
     <script>
+        // Configuration object for URLs
+        const CONFIG = {
+            API_BASE: null,
+            PUBLIC_SITE_URL: null
+        };
+        
+        // Load configuration from API endpoint (non-blocking)
+        (async function loadConfig() {
+            try {
+                let configBaseUrl = 'https://ok-snap-identifier.vercel.app';
+                if (typeof window !== 'undefined' && window.location) {
+                    const origin = window.location.origin;
+                    if (origin.includes('localhost') || origin.includes('vercel.app')) {
+                        configBaseUrl = origin;
+                    }
+                }
+                const response = await fetch(`${configBaseUrl}/api/config`);
+                if (response.ok) {
+                    const configData = await response.json();
+                    if (configData.API_BASE_URL) CONFIG.API_BASE = configData.API_BASE_URL;
+                    if (configData.PUBLIC_SITE_URL) CONFIG.PUBLIC_SITE_URL = configData.PUBLIC_SITE_URL;
+                }
+            } catch (error) {
+                console.debug('Config endpoint not available, using fallbacks');
+            }
+        })();
+        
         // Get API base URL
         function getApiBase() {
-            return window.location.origin.includes('localhost') 
-                ? window.location.origin 
-                : 'https://ok-snap-identifier.vercel.app';
+            // If config loaded from endpoint, use it
+            if (CONFIG && CONFIG.API_BASE) {
+                return CONFIG.API_BASE;
+            }
+            // Fallback logic
+            if (typeof window !== 'undefined' && window.location) {
+                const origin = window.location.origin;
+                if (origin.includes('localhost') || origin.includes('vercel.app')) {
+                    return origin;
+                }
+            }
+            // Final fallback
+            return 'https://ok-snap-identifier.vercel.app';
         }
 
         // Check if we should show a single blog post (from URL query parameter)
