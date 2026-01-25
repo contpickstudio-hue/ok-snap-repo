@@ -97,6 +97,9 @@
             --shadow: rgba(0, 0, 0, 0.06);
             --shadow-lg: rgba(0, 0, 0, 0.1);
             --shadow-interactive: rgba(122, 145, 99, 0.2);
+            
+            /* Ad safe area - Banner ad height for camera controls positioning */
+            --banner-ad-height: 50px; /* Standard AdMob BANNER size height */
         }
 
         :root[data-theme="dark"] {
@@ -839,7 +842,8 @@
             right: 0;
             background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
             padding: 24px;
-            padding-bottom: max(24px, env(safe-area-inset-bottom) + 16px);
+            /* Reserve space for banner ad + safe area: banner height + safe area inset + spacing */
+            padding-bottom: max(24px, calc(env(safe-area-inset-bottom) + 16px + var(--banner-ad-height, 50px)));
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -1620,12 +1624,32 @@
         }
 
         .blog-viewer {
-            max-height: 600px;
+            max-height: 70vh;
             overflow-y: auto;
-            padding: 16px;
-            background: var(--background);
+            padding: 24px;
+            background: var(--background-alt);
             border-radius: 12px;
             margin-top: 16px;
+            border: 1px solid var(--secondary);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .blog-viewer::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .blog-viewer::-webkit-scrollbar-track {
+            background: var(--background);
+            border-radius: 4px;
+        }
+        
+        .blog-viewer::-webkit-scrollbar-thumb {
+            background: var(--secondary-dark);
+            border-radius: 4px;
+        }
+        
+        .blog-viewer::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-light);
         }
 
         .blog-viewer h2 {
@@ -1661,6 +1685,31 @@
         .blog-viewer li {
             margin-bottom: 0.5rem;
             color: var(--text-primary);
+        }
+        
+        .blog-featured-image {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .blog-featured-image img {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .blog-post-content {
+            line-height: 1.8;
+        }
+        
+        .blog-post-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        
+        .blog-post-content strong {
+            color: var(--primary);
+            font-weight: 600;
         }
 
         .recipe-cards {
@@ -3680,7 +3729,8 @@
 
             .camera-controls {
                 padding: 20px 16px;
-                padding-bottom: max(20px, calc(16px + env(safe-area-inset-bottom)));
+                /* Reserve space for banner ad + safe area on mobile */
+                padding-bottom: max(20px, calc(16px + env(safe-area-inset-bottom) + var(--banner-ad-height, 50px)));
             }
 
             .capture-btn {
@@ -3952,7 +4002,8 @@
 
             .camera-controls {
                 padding: 16px;
-                padding-bottom: max(16px, calc(16px + env(safe-area-inset-bottom)));
+                /* Reserve space for banner ad + safe area on mobile */
+                padding-bottom: max(16px, calc(16px + env(safe-area-inset-bottom) + var(--banner-ad-height, 50px)));
                 gap: 0.75rem;
             }
 
@@ -4665,14 +4716,30 @@
         // Global API base getter - ensures apiBase is always available
         // This prevents "apiBase is not defined" errors in error handlers
         function getApiBase() {
-            // Native app (Capacitor) - use production API
-            if (typeof window !== 'undefined' && window.Capacitor) {
-                return 'https://ok-snap-identifier.vercel.app';
-            }
             // Explicit config override
             if (CONFIG && CONFIG.API_BASE) {
                 return CONFIG.API_BASE;
             }
+            
+            // Enhanced Capacitor detection for release builds
+            // Check multiple ways Capacitor might be available
+            const isCapacitor = typeof window !== 'undefined' && (
+                window.Capacitor || 
+                window.CapacitorWeb || 
+                (window.location && (
+                    window.location.protocol === 'capacitor:' ||
+                    window.location.protocol === 'capacitor-https:' ||
+                    window.location.hostname === 'localhost' ||
+                    window.location.hostname === ''
+                ))
+            );
+            
+            // Native app (Capacitor) - use production API
+            if (isCapacitor) {
+                console.log('[getApiBase] Detected Capacitor app, using production API');
+                return 'https://ok-snap-identifier.vercel.app';
+            }
+            
             // Check if we're on Vercel (production or preview deployment)
             if (typeof window !== 'undefined' && window.location) {
                 const origin = window.location.origin;
@@ -4682,11 +4749,12 @@
                     return origin; // Use same origin for API calls
                 }
                 // Localhost development
-                if (origin.includes('localhost')) {
+                if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
                     return origin;
                 }
             }
             // Final fallback to production
+            console.log('[getApiBase] Using fallback production API');
             return 'https://ok-snap-identifier.vercel.app';
         }
         
@@ -5081,8 +5149,22 @@
                 return CONFIG.API_BASE;
             }
             
+            // Enhanced Capacitor detection for release builds
+            // Check multiple ways Capacitor might be available
+            const isCapacitor = typeof window !== 'undefined' && (
+                window.Capacitor || 
+                window.CapacitorWeb || 
+                (window.location && (
+                    window.location.protocol === 'capacitor:' ||
+                    window.location.protocol === 'capacitor-https:' ||
+                    window.location.hostname === 'localhost' ||
+                    window.location.hostname === ''
+                ))
+            );
+            
             // Native app (Capacitor) - use production API
-            if (typeof window !== 'undefined' && window.Capacitor) {
+            if (isCapacitor) {
+                console.log('[getApiBase] Detected Capacitor app, using production API');
                 return 'https://ok-snap-identifier.vercel.app';
             }
             
@@ -5095,11 +5177,12 @@
                     return origin; // Use same origin for API calls
                 }
                 // Localhost development
-                if (origin.includes('localhost')) {
+                if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
                     return origin;
                 }
             }
             // Final fallback to production
+            console.log('[getApiBase] Using fallback production API');
             return 'https://ok-snap-identifier.vercel.app';
         }
         
@@ -5229,6 +5312,64 @@
                 }
             },
             
+            // Show 5-second interstitial ad (optimized for recipe reading completion)
+            showRecipeInterstitialAd: async function(adUnitId) {
+                // Use test ad unit ID if testing, otherwise use configured ID
+                let adId = adUnitId || ADMOB_CONFIG.INTERSTITIAL_AD_UNIT_ID;
+                if (ADMOB_CONFIG.USE_TEST_ADS) {
+                    // Android test interstitial ad unit ID
+                    adId = 'ca-app-pub-3940256099942544/1033173712';
+                }
+                console.log('[AdManager] showRecipeInterstitialAd called', adId, ADMOB_CONFIG.USE_TEST_ADS ? '(TEST MODE)' : '(PRODUCTION)');
+                
+                try {
+                    // Check if running in Capacitor (mobile app)
+                    if (typeof Capacitor !== 'undefined' && Capacitor.Plugins && Capacitor.Plugins.AdMob) {
+                        const { AdMob } = Capacitor.Plugins;
+                        
+                        // Preserve result state before showing ad
+                        const resultSection = document.getElementById('resultSection');
+                        const wasShowingResult = resultSection && resultSection.style.display !== 'none';
+                        
+                        // Prepare interstitial ad
+                        await AdMob.prepareInterstitial({ adId: adId });
+                        
+                        // Set up listener for ad close event to restore results if needed
+                        const adCloseListener = AdMob.addListener('onInterstitialAdClosed', () => {
+                            console.log('[AdManager] Interstitial ad closed');
+                            // Restore results if they were visible before ad
+                            if (wasShowingResult && isShowingResult && currentDishData) {
+                                setTimeout(() => {
+                                    const resultSection = document.getElementById('resultSection');
+                                    if (resultSection && resultSection.style.display === 'none') {
+                                        displayResult(currentDishData);
+                                    }
+                                }, 100);
+                            }
+                            // Remove listener after use
+                            adCloseListener.remove();
+                        });
+                        
+                        // Show interstitial ad (AdMob handles the 5-second minimum display)
+                        await AdMob.showInterstitial();
+                        console.log('[AdManager] Recipe interstitial ad shown successfully');
+                        
+                        // Return promise that resolves after a short delay to allow ad to display
+                        return new Promise((resolve) => {
+                            setTimeout(() => resolve(true), 100);
+                        });
+                    } else {
+                        console.warn('[AdManager] AdMob plugin not available (running in web browser)');
+                        return Promise.resolve(false);
+                    }
+                } catch (error) {
+                    console.error('[AdManager] Error showing recipe interstitial ad:', error);
+                    // Don't throw - allow app to continue even if ad fails
+                    // Return resolved promise to prevent unhandled rejection
+                    return Promise.resolve(false);
+                }
+            },
+            
             // Show rewarded ad (user watches ad to get scan limit recharge)
             // Returns a promise that resolves when ad is completed and reward is granted
             showRewardedAd: async function(adUnitId) {
@@ -5269,6 +5410,191 @@
                     console.error('[AdManager] Error showing rewarded ad:', error);
                     throw error;
                 }
+            }
+        };
+        
+        // ============================================
+        // RECIPE AD MANAGER - 5-Second Ad System
+        // ============================================
+        // Shows ads only after finishing reading a recipe
+        // Never interrupts camera usage or onboarding
+        // Avoids showing ads to brand-new users before first scan
+        const RecipeAdManager = {
+            // Track if user has completed their first scan
+            markFirstScanComplete: function() {
+                const hasCompletedFirstScan = localStorage.getItem('okSnap_hasCompletedFirstScan');
+                if (!hasCompletedFirstScan || hasCompletedFirstScan !== 'true') {
+                    localStorage.setItem('okSnap_hasCompletedFirstScan', 'true');
+                    console.log('[RecipeAdManager] First scan completed - user is now eligible for recipe ads');
+                }
+            },
+            
+            // Check if user has completed first scan
+            hasCompletedFirstScan: function() {
+                return localStorage.getItem('okSnap_hasCompletedFirstScan') === 'true';
+            },
+            
+            // Check if camera is currently active
+            isCameraActive: function() {
+                const cameraModal = document.getElementById('cameraModal');
+                return cameraModal && cameraModal.classList.contains('active');
+            },
+            
+            // Check if onboarding is currently active
+            isOnboardingActive: function() {
+                const onboardingOverlay = document.getElementById('onboardingOverlay');
+                return onboardingOverlay && onboardingOverlay.classList.contains('active');
+            },
+            
+            // Check if it's safe to show ads (not during camera/onboarding)
+            canShowAd: function() {
+                // Never show ads during camera usage
+                if (this.isCameraActive()) {
+                    console.log('[RecipeAdManager] Ad blocked: Camera is active');
+                    return false;
+                }
+                
+                // Never show ads during onboarding
+                if (this.isOnboardingActive()) {
+                    console.log('[RecipeAdManager] Ad blocked: Onboarding is active');
+                    return false;
+                }
+                
+                // Don't show ads to brand-new users before first scan
+                if (!this.hasCompletedFirstScan()) {
+                    console.log('[RecipeAdManager] Ad blocked: User has not completed first scan');
+                    return false;
+                }
+                
+                return true;
+            },
+            
+            // Track recipe reading completion (scroll-based + time-based)
+            startRecipeReadingTracker: function() {
+                const resultSection = document.getElementById('resultSection');
+                if (!resultSection || resultSection.style.display === 'none') {
+                    return; // Result section not visible
+                }
+                
+                let hasScrolledToBottom = false;
+                let readingStartTime = Date.now();
+                const MIN_READING_TIME = 3000; // Minimum 3 seconds of reading
+                const SCROLL_THRESHOLD = 0.85; // Consider "read" when scrolled 85% down
+                
+                // Track scroll position
+                const checkScroll = () => {
+                    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                    const scrollHeight = document.documentElement.scrollHeight;
+                    const clientHeight = window.innerHeight;
+                    const scrollPercentage = (scrollTop + clientHeight) / scrollHeight;
+                    
+                    if (scrollPercentage >= SCROLL_THRESHOLD) {
+                        hasScrolledToBottom = true;
+                        this.checkAndShowRecipeAd();
+                    }
+                };
+                
+                // Check scroll on scroll events (throttled)
+                let scrollTimeout;
+                window.addEventListener('scroll', () => {
+                    clearTimeout(scrollTimeout);
+                    scrollTimeout = setTimeout(checkScroll, 100);
+                }, { once: false, passive: true });
+                
+                // Also check after minimum reading time (time-based fallback)
+                setTimeout(() => {
+                    const readingDuration = Date.now() - readingStartTime;
+                    if (readingDuration >= MIN_READING_TIME) {
+                        // User has spent enough time - consider recipe "read"
+                        this.checkAndShowRecipeAd();
+                    }
+                }, MIN_READING_TIME);
+                
+                // Clean up scroll listener after 30 seconds (prevent memory leaks)
+                setTimeout(() => {
+                    window.removeEventListener('scroll', checkScroll);
+                }, 30000);
+            },
+            
+            // Check conditions and show recipe ad if appropriate
+            checkAndShowRecipeAd: function() {
+                // Prevent multiple ad triggers for the same recipe view
+                if (this._adShownForCurrentRecipe) {
+                    return;
+                }
+                
+                if (!this.canShowAd()) {
+                    return;
+                }
+                
+                // Check 7-minute cooldown
+                const lastAdTime = localStorage.getItem('okSnap_lastAdShownTime');
+                if (lastAdTime) {
+                    const timeSinceLastAd = Date.now() - parseInt(lastAdTime);
+                    const COOLDOWN_MS = 7 * 60 * 1000; // 7 minutes in milliseconds
+                    if (timeSinceLastAd < COOLDOWN_MS) {
+                        const remainingMinutes = Math.ceil((COOLDOWN_MS - timeSinceLastAd) / (60 * 1000));
+                        console.log(`[RecipeAdManager] Ad blocked: ${remainingMinutes} minute(s) remaining in cooldown`);
+                        return;
+                    }
+                }
+                
+                // Mark that we've shown an ad for this recipe view
+                this._adShownForCurrentRecipe = true;
+                
+                // Preserve current result state before showing ad
+                const preservedResultState = {
+                    isShowingResult: isShowingResult,
+                    dishData: currentDishData ? JSON.parse(JSON.stringify(currentDishData)) : null
+                };
+                
+                // Small delay to ensure smooth UX (don't show immediately)
+                setTimeout(() => {
+                    if (this.canShowAd()) { // Double-check conditions after delay
+                        console.log('[RecipeAdManager] Showing 5-second recipe interstitial ad');
+                        
+                        // Save timestamp when showing ad
+                        localStorage.setItem('okSnap_lastAdShownTime', Date.now().toString());
+                        
+                        // Show ad and restore results after ad closes
+                        AdManager.showRecipeInterstitialAd()
+                            .then(() => {
+                                // Ad shown successfully - restore results if they were visible
+                                if (preservedResultState.isShowingResult && preservedResultState.dishData) {
+                                    console.log('[RecipeAdManager] Restoring results after ad');
+                                    // Small delay to ensure ad is fully closed
+                                    setTimeout(() => {
+                                        if (isShowingResult && currentDishData) {
+                                            // Results still exist, just ensure they're displayed
+                                            const resultSection = document.getElementById('resultSection');
+                                            if (resultSection && resultSection.style.display === 'none') {
+                                                displayResult(currentDishData);
+                                            }
+                                        } else if (preservedResultState.dishData) {
+                                            // Restore results if they were lost
+                                            currentDishData = preservedResultState.dishData;
+                                            isShowingResult = true;
+                                            displayResult(preservedResultState.dishData);
+                                        }
+                                    }, 100);
+                                }
+                            })
+                            .catch(error => {
+                                console.warn('[RecipeAdManager] Failed to show recipe ad:', error);
+                                // Restore results even if ad failed
+                                if (preservedResultState.isShowingResult && preservedResultState.dishData) {
+                                    currentDishData = preservedResultState.dishData;
+                                    isShowingResult = true;
+                                    displayResult(preservedResultState.dishData);
+                                }
+                            });
+                    }
+                }, 500); // 500ms delay for smooth transition
+            },
+            
+            // Reset ad tracking for new recipe view
+            resetForNewRecipe: function() {
+                this._adShownForCurrentRecipe = false;
             }
         };
         
@@ -6556,7 +6882,7 @@
             // Set app version
             const appVersionEl = document.getElementById('appVersion');
             if (appVersionEl) {
-                appVersionEl.textContent = '1.0.22';
+                appVersionEl.textContent = '1.0.28';
             }
 
             // Initialize feedback button
@@ -8020,6 +8346,9 @@
                 // Set result state BEFORE switching tabs so switchTab shows it immediately
                 isShowingResult = true;
                 
+                // Mark first scan as complete (for recipe ad eligibility)
+                RecipeAdManager.markFirstScanComplete();
+                
                 // REMOVED: Tab switching (browse page doesn't show scan results)
                 
                 // Display results immediately
@@ -8400,6 +8729,15 @@
             // Show result section
             resultSection.style.display = 'block';
             resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            
+            // Reset ad tracking for new recipe view
+            RecipeAdManager.resetForNewRecipe();
+            
+            // Start tracking recipe reading completion (will show ad after user finishes reading)
+            // Small delay to ensure result section is fully rendered
+            setTimeout(() => {
+                RecipeAdManager.startRecipeReadingTracker();
+            }, 500);
         }
 
         function displayNutritionInfo(dishData) {
@@ -8682,6 +9020,12 @@
                 setTimeout(async () => {
                     blogGenSection.style.display = 'none';
                     blogDisplaySection.style.display = 'block';
+                    
+                    // Hide the static "Full Recipe Blog" header - title will be in scrollable content
+                    const blogDisplayHeader = blogDisplaySection.querySelector('.result-section-header');
+                    if (blogDisplayHeader) {
+                        blogDisplayHeader.style.display = 'none';
+                    }
 
                     // Check if blog content was provided in API response (Vercel serverless)
                     if (window.generatedBlogContent) {
@@ -8690,7 +9034,12 @@
                         
                         // Add image if available
                         if (window.generatedBlogImageUrl) {
-                            viewerContent += `<div class="blog-featured-image"><img src="${window.generatedBlogImageUrl}" alt="${dishData.name}" style="width: 100%; max-width: 800px; height: auto; border-radius: 12px; margin: 2rem auto; display: block;"></div>`;
+                            viewerContent += `<div class="blog-featured-image"><img src="${window.generatedBlogImageUrl}" alt="${dishData.name}" style="width: 100%; max-width: 800px; height: auto; border-radius: 12px; margin: 0 auto 2rem; display: block;"></div>`;
+                        }
+                        
+                        // Add blog title
+                        if (dishData.name) {
+                            viewerContent += `<h2 style="margin-top: 0; color: var(--primary);">${dishData.name}</h2>`;
                         }
                         
                         // Add blog content
@@ -8718,67 +9067,81 @@
                         delete window.generatedBlogContent;
                         delete window.generatedBlogImageUrl;
                     } else {
-                        // Blog exists on ok-snap.com - verify URL format and show link
-                        // Blog exists on ok-snap.com - use new Supabase format: /blog.html?slug=xxx
-                        // Update URL to new format (blogs are now in Supabase, not static files)
+                        // Blog exists on ok-snap.com - fetch and display content in-app
                         finalBlogUrl = `${publicWebsiteUrl}/blog.html?slug=${slug}`;
                         
-                        // Verify blog exists before showing link (use API endpoint to avoid CORS)
+                        // Hide the static "Full Recipe Blog" header - title will be in scrollable content
+                        const blogDisplayHeader = blogDisplaySection.querySelector('.result-section-header');
+                        if (blogDisplayHeader) {
+                            blogDisplayHeader.style.display = 'none';
+                        }
+                        
+                        // Fetch blog content from API and display in-app
                         try {
-                            const verifyApiUrl = `${apiBase}/api/blog-exists/${slug}`;
-                            const verifyResponse = await fetch(verifyApiUrl, {
+                            const blogApiUrl = `${apiBase}/api/blogs/${slug}`;
+                            const blogResponse = await fetch(blogApiUrl, {
                                 method: 'GET',
                                 headers: {
                                     'Content-Type': 'application/json'
                                 }
                             });
                             
-                            if (verifyResponse.ok) {
-                                const verifyResult = await verifyResponse.json();
-                                if (verifyResult.exists) {
-                                    // Blog exists in Supabase - available immediately (no deployment needed!)
-                                    if (blogViewer) {
-                                        blogViewer.innerHTML = '<p>Blog post is ready! Available immediately from Supabase. Click the button below to view the full recipe on ok-snap.com.</p>';
-                                    }
-                                    
-                                    // Update URL to use new format: /blog.html?slug=xxx
-                                    const blogUrl = `${getPublicSiteUrl()}/blog.html?slug=${slug}`;
-                                    
-                                    if (blogExternalLink) {
-                                        blogExternalLink.href = blogUrl;
-                                        blogExternalLink.textContent = 'View Full Blog Post';
-                                        blogExternalLink.style.display = 'inline-block';
-                                    }
-                                } else {
-                                    // Blog doesn't exist yet - might still be generating
-                                    if (blogViewer) {
-                                        blogViewer.innerHTML = '<p>Blog post is being generated and will be available shortly. Please refresh in a moment.</p>';
-                                    }
-                                    if (blogExternalLink) {
-                                        blogExternalLink.style.display = 'none';
-                                    }
-                                }
-                            } else {
-                                // API error - show link anyway (blog might exist but API check failed)
+                            if (blogResponse.ok) {
+                                const blogData = await blogResponse.json();
+                                
+                                // Display blog content in-app
                                 if (blogViewer) {
-                                    blogViewer.innerHTML = '<p>Blog post is ready! Click the button below to view the full recipe on ok-snap.com.</p>';
+                                    let viewerContent = '';
+                                    
+                                    // Add featured image if available
+                                    if (blogData.imageUrl) {
+                                        viewerContent += `<div class="blog-featured-image"><img src="${blogData.imageUrl}" alt="${blogData.title || blogData.name}" style="width: 100%; max-width: 800px; height: auto; border-radius: 12px; margin: 0 auto 2rem; display: block;"></div>`;
+                                    }
+                                    
+                                    // Add blog title
+                                    if (blogData.title || blogData.name) {
+                                        viewerContent += `<h2 style="margin-top: 0; color: var(--primary);">${blogData.title || blogData.name}</h2>`;
+                                    }
+                                    
+                                    // Add blog content (HTML)
+                                    if (blogData.content) {
+                                        viewerContent += `<div class="blog-post-content">${blogData.content}</div>`;
+                                    } else {
+                                        viewerContent += '<p>Recipe content is being prepared...</p>';
+                                    }
+                                    
+                                    blogViewer.innerHTML = viewerContent;
                                 }
                                 
+                                // Hide external link (content is displayed in-app)
+                                if (blogExternalLink) {
+                                    blogExternalLink.style.display = 'none';
+                                }
+                            } else {
+                                // Blog API fetch failed - show fallback message
+                                if (blogViewer) {
+                                    blogViewer.innerHTML = '<p>Recipe blog is ready! Content is being loaded...</p>';
+                                }
+                                
+                                // Show external link as fallback
                                 if (blogExternalLink) {
                                     blogExternalLink.href = finalBlogUrl;
-                                    blogExternalLink.textContent = 'View Full Blog Post';
+                                    blogExternalLink.textContent = 'View Full Recipe';
                                     blogExternalLink.style.display = 'inline-block';
                                 }
                             }
-                        } catch (verifyError) {
-                            // Verification failed - show link anyway (might be network issue)
+                        } catch (fetchError) {
+                            console.warn('[Blog] Failed to fetch blog content:', fetchError);
+                            
+                            // Show fallback message
                             if (blogViewer) {
-                                blogViewer.innerHTML = '<p>Blog post is ready! Click the button below to view the full recipe on ok-snap.com.</p>';
+                                blogViewer.innerHTML = '<p>Recipe blog is ready! Click the button below to view the full recipe.</p>';
                             }
                             
+                            // Show external link as fallback
                             if (blogExternalLink) {
                                 blogExternalLink.href = finalBlogUrl;
-                                blogExternalLink.textContent = 'View Full Blog Post';
+                                blogExternalLink.textContent = 'View Full Recipe';
                                 blogExternalLink.style.display = 'inline-block';
                             }
                         }

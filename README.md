@@ -141,4 +141,4 @@ npm run install-android
 
 ## Version
 
-Current version: 1.0.17
+Current version: 1.0.28
