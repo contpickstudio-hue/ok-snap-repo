@@ -40,24 +40,23 @@ module.exports = async (req, res) => {
             return;
         }
         
-        // Extract path from request using WHATWG URL API (avoids deprecation warning)
-        // Vercel rewrites: original path is in req.url
+        // Extract route: Vercel rewrite sends /api/(.*) -> /api?path=$1, so path is in req.query.path
         let path = req.url || '';
-        
-        // Also check if path is in query (some Vercel configurations put it there)
-        if (!path && req.query && req.query.path) {
-            path = req.query.path;
+        const pathParam = req.query && (req.query.path !== undefined ? req.query.path : req.query['path']);
+        if (pathParam !== undefined && pathParam !== null) {
+            const p = typeof pathParam === 'string' ? pathParam : (Array.isArray(pathParam) ? pathParam[0] : String(pathParam));
+            if (p) path = '/api/' + p.replace(/^\/+/, '');
+        } else {
+            const originalUrl = req.headers['x-vercel-original-url'] || req.headers['x-original-url'];
+            if (originalUrl) {
+                try {
+                    const pathFromOriginal = originalUrl.includes('?') ? originalUrl.split('?')[0] : originalUrl;
+                    if (pathFromOriginal.startsWith('/api')) path = pathFromOriginal;
+                } catch (e) { /* keep path */ }
+            }
         }
-        
-        // Remove query string if present (using string methods to avoid URL.parse deprecation)
-        if (path.includes('?')) {
-            path = path.split('?')[0];
-        }
-        
-        // Remove leading /api if present
+        if (path.includes('?')) path = path.split('?')[0];
         route = path.replace(/^\/api\/?/, '') || '';
-        
-        // Remove trailing slash
         route = route.replace(/\/$/, '');
         
         debugLog(`[api-router] Route: "${route}", Method: ${req.method}, URL: ${req.url}, Query:`, req.query);
