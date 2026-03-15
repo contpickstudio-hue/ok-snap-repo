@@ -333,6 +333,15 @@ body {
     margin-top: auto;
 }
 
+.footer a {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.footer a:hover {
+    text-decoration: underline;
+}
+
 /* Blog Post Template Styles */
 .blog-post {
     max-width: 800px;
