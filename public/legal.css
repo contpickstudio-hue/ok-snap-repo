@@ -1,0 +1,91 @@
+/* Shared styles for legal/info pages: privacy, terms, about, contact */
+:root {
+    --primary: #7A9163;
+    --primary-dark: #5A6F4A;
+    --primary-light: #9AB87A;
+    --background: #F5F5F0;
+    --background-alt: #FFFFFF;
+    --text-primary: #2C2C2C;
+    --text-secondary: #666666;
+    --text-link: #7A9163;
+    --surface: #FFFFFF;
+    --shadow: rgba(0, 0, 0, 0.06);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--background);
+    color: var(--text-primary);
+    line-height: 1.6;
+    min-height: 100vh;
+}
+.legal-header {
+    background: var(--surface);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 1px 4px var(--shadow);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+.legal-header a {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+.legal-header a:hover { color: var(--primary-dark); }
+.legal-logo {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 800;
+    font-size: 1.25rem;
+    color: var(--text-primary);
+}
+.legal-logo:hover { color: var(--primary); }
+.legal-page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 24px 20px 48px;
+    min-height: calc(100vh - 60px); /* leave room for sticky header */
+}
+.legal-page h1 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+.legal-page h2 {
+    font-size: 1.15rem;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+.legal-page p {
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+}
+.legal-page ul {
+    margin: 0.5rem 0 0.75rem 1.25rem;
+}
+.legal-page li { margin-bottom: 0.25rem; }
+.legal-page a {
+    color: var(--text-link);
+    text-decoration: none;
+}
+.legal-page a:hover { text-decoration: underline; }
+.legal-footer {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(0,0,0,0.08);
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+.legal-footer a {
+    color: var(--primary);
+    text-decoration: none;
+    margin: 0 0.25rem;
+}
+.legal-footer a:hover { text-decoration: underline; }
+.legal-footer a:first-child { margin-left: 0; }

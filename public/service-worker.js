@@ -1,9 +1,18 @@
 // Service Worker for Ok Snap PWA
-const CACHE_NAME = 'ok-snap-v1.0.28';
+const CACHE_NAME = 'ok-snap-v1.0.29';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/manifest.json'
+  '/manifest.json',
+  '/settings.html',
+  '/history.html',
+  '/favorites.html',
+  '/browse.html',
+  '/privacy.html',
+  '/terms.html',
+  '/about.html',
+  '/contact.html',
+  '/legal.css'
 ];
 
 // Install event - cache resources

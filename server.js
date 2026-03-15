@@ -46,6 +46,8 @@ app.set('trust proxy', true);
 const config = require('./lib/config');
 const defaultCorsOrigins = [
     config.getPublicSiteUrl(),
+    'https://scanner.ok-snap.com',
+    'https://recipes.ok-snap.com',
     'http://localhost:3000',
     'http://localhost:5173',
     'http://localhost:8080'
@@ -116,8 +118,8 @@ async function getRemainingScans(userId, userIp) {
     return await rateLimitStorage.getRemainingScans(userId, userIp);
 }
 
-// Serve static files from www directory
-app.use(express.static(path.join(__dirname, 'www')));
+// Serve static files from public directory (web app)
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Serve public-site static files
 app.use('/public-site', express.static(path.join(__dirname, 'public-site')));
@@ -129,6 +131,10 @@ app.use('/public-site/images', express.static(path.join(__dirname, 'public-site'
 app.get('/health', (req, res) => {
     res.json({ status: 'ok' });
 });
+
+// Config endpoint (same as api-handlers/config - for frontend API_BASE_URL / PUBLIC_SITE_URL)
+const configHandler = require('./api-handlers/config');
+app.get('/api/config', (req, res) => configHandler(req, res));
 
 // Get remaining scans endpoint
 app.get('/api/scan-limit', async (req, res) => {
@@ -362,98 +368,16 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Blog generation endpoint
-const blogGenerator = require('./api/generate-blog');
-const config = require('./lib/config');
+// Blog generation endpoint (uses same handler as Vercel; local dev needs SUPABASE_* in .env)
+const generateBlogHandler = require('./api-handlers/generate-blog');
+app.post('/api/generate-blog', rateLimit, (req, res) => generateBlogHandler(req, res));
 
-app.post('/api/generate-blog', rateLimit, async (req, res) => {
-    try {
-        const { dishData } = req.body;
-
-        if (!dishData || !dishData.name) {
-            return res.status(400).json({ error: 'Dish data is required' });
-        }
-
-        // Check if blog post already exists (caching)
-        const existingBlog = blogGenerator.checkBlogExists(dishData.name);
-        
-        if (existingBlog) {
-            debugLog(`Blog post already exists for ${dishData.name}, reusing existing post`);
-            
-            // Update recipes.json metadata (in case it's missing)
-            const recipeEntry = blogGenerator.updateRecipesJson(dishData, existingBlog.slug);
-            
-            const apiBaseUrl = config.getApiBaseUrl(req);
-            const blogUrl = `${apiBaseUrl}/public-site/blogs/${existingBlog.slug}.html`;
-            return res.json({
-                success: true,
-                slug: existingBlog.slug,
-                url: recipeEntry.url,
-                blogUrl: blogUrl,
-                imageUrl: existingBlog.imagePath,
-                cached: true // Indicate this is a cached result
-            });
-        }
-
-        // Generate new blog post and image
-        debugLog(`Generating new blog post for ${dishData.name}`);
-        
-        // Generate image first (in parallel with blog content for efficiency)
-        const [blogContent, imagePath] = await Promise.all([
-            blogGenerator.generateBlogPost(dishData),
-            blogGenerator.generateBlogImage(dishData).catch(err => {
-                console.warn('Image generation failed, continuing without image:', err);
-                return null;
-            })
-        ]);
-        
-        // Save blog post to file with image
-        const slug = blogGenerator.saveBlogPost(dishData, blogContent, imagePath);
-        
-        // Update recipes.json
-        const recipeEntry = blogGenerator.updateRecipesJson(dishData, slug);
-        
-        const apiBaseUrl = config.getApiBaseUrl(req);
-        const blogUrl = `${apiBaseUrl}/public-site/blogs/${slug}.html`;
-        res.json({
-            success: true,
-            slug: slug,
-            url: recipeEntry.url,
-            blogUrl: blogUrl,
-            imageUrl: imagePath,
-            cached: false
-        });
-    } catch (error) {
-        console.error('Error generating blog:', error);
-        res.status(500).json({ 
-            error: NODE_ENV === 'production' 
-                ? 'Failed to generate blog post'
-                : error.message 
-        });
-    }
-});
-
-// Check if blog post exists
+// Check if blog post exists (uses same Supabase-backed handler as Vercel)
+const blogExistsHandler = require('./api-handlers/blog-exists-slug');
 app.get('/api/blog-exists/:slug', (req, res) => {
-    try {
-        const { slug } = req.params;
-        const blogPath = path.join(__dirname, 'public-site', 'blogs', `${slug}.html`);
-        const exists = fs.existsSync(blogPath);
-        const apiBaseUrl = config.getApiBaseUrl(req);
-        const blogUrl = `${apiBaseUrl}/public-site/blogs/${slug}.html`;
-        
-        res.json({
-            exists: exists,
-            url: blogUrl,
-            slug: slug
-        });
-    } catch (error) {
-        console.error('Error checking blog existence:', error);
-        res.status(500).json({ 
-            error: 'Failed to check blog existence',
-            exists: false
-        });
-    }
+    req.query = req.query || {};
+    req.query.slug = req.params.slug;
+    return blogExistsHandler(req, res);
 });
 
 // Serve recipes.json
@@ -469,7 +393,7 @@ app.use((req, res) => {
 
 // Serve index.html for all routes (SPA fallback)
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'www', 'index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // ============================================

@@ -44,9 +44,7 @@ See [.env.example](.env.example) for all optional variables.
 1. Connect this repo to Vercel.
 2. In **Project Settings → General**, set **Output Directory** to `public` (so the app is served at `/`).
 3. In **Settings → Environment Variables**, add at least `OPENAI_API_KEY`; for blog generation add `SUPABASE_URL` and `SUPABASE_ANON_KEY` (or `SUPABASE_SERVICE_ROLE_KEY`).
-4. Deploy. The API is at `/api/*`; cron for `/api/sync-recipes` is in `vercel.json`.
-
-Details and migration notes: [MIGRATION_WEB_FIRST.md](MIGRATION_WEB_FIRST.md).
+4. Deploy. The API is at `/api/*`; cron for `/api/sync-recipes` is in `vercel.json`. Redeploy after changing env vars.
 
 ## 🔑 What You Need
 
