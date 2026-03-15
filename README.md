@@ -14,10 +14,6 @@ A simple app that identifies food from photos using AI. Upload a food picture an
 
 ## 🚀 Getting Started
 
-**👉 Start here: [SETUP_GUIDE.md](./SETUP_GUIDE.md)**
-
-The setup guide has step-by-step instructions with no coding knowledge needed!
-
 ## 📋 Quick Overview
 
 1. Install Node.js (free software)
@@ -27,6 +23,30 @@ The setup guide has step-by-step instructions with no coding knowledge needed!
 5. Done! Your app is running
 
 **Total time:** About 30 minutes
+
+## 🌐 Run Locally (Web)
+
+The app is **web-first**: run it in your browser without building a native app.
+
+```bash
+npm install
+cp .env.example .env
+# Edit .env: set OPENAI_API_KEY (and SUPABASE_* if you use blog generation)
+npm run dev
+```
+
+Open **http://localhost:3000** in your browser.
+
+See [.env.example](.env.example) for all optional variables.
+
+## 🚢 Deploy as a Web App (Vercel)
+
+1. Connect this repo to Vercel.
+2. In **Project Settings → General**, set **Output Directory** to `public` (so the app is served at `/`).
+3. In **Settings → Environment Variables**, add at least `OPENAI_API_KEY`; for blog generation add `SUPABASE_URL` and `SUPABASE_ANON_KEY` (or `SUPABASE_SERVICE_ROLE_KEY`).
+4. Deploy. The API is at `/api/*`; cron for `/api/sync-recipes` is in `vercel.json`.
+
+Details and migration notes: [MIGRATION_WEB_FIRST.md](MIGRATION_WEB_FIRST.md).
 
 ## 🔑 What You Need
 
@@ -41,104 +61,16 @@ The setup guide has step-by-step instructions with no coding knowledge needed!
 - **Very cheap:** About $0.01 per food identification
 - **Estimated:** Less than $5/month for personal use
 
-## 📞 Need Help?
+## 🌐 Domains
 
-- **[SETUP_GUIDE.md](./SETUP_GUIDE.md)** - Complete setup instructions
-- **[KEEPING_SERVER_RUNNING.md](./KEEPING_SERVER_RUNNING.md)** - How to keep server running 24/7
+- **Scanner (this app):** `scanner.ok-snap.com` — the web app (identify dishes, history, favorites).
+- **Recipes site:** `recipes.ok-snap.com` — blog/recipe content; links from the scanner open there.
+- **API:** Deployed on Vercel; CORS allows `scanner.ok-snap.com` and `recipes.ok-snap.com` by default.
 
-## 📱 Updating Android App
+## 📺 Ads (Google AdSense)
 
-After modifying files in the `/public` folder, update the Android app:
-
-### Quick Workflow (Recommended)
-
-```bash
-# 1. Update assets
-npm run update-android
-
-# 2. Build the app
-npm run build-android
-
-# 3. Verify APK contains latest version
-npm run verify-apk
-
-# 4. Install on device (automatically uninstalls old version)
-npm run install-android
-```
-
-### Detailed Steps
-
-1. **Update assets:**
-   ```bash
-   npm run update-android
-   ```
-   - Copies files from `/public` to Android project
-   - Updates Capacitor configuration
-   - Verifies files were copied correctly
-
-2. **Build the app:**
-   ```bash
-   npm run build-android
-   ```
-   Or manually:
-   ```powershell
-   cd android
-   .\gradlew clean assembleDebug
-   cd ..
-   ```
-   Or in Android Studio:
-   - **Build > Clean Project**
-   - **File > Invalidate Caches / Restart**
-   - **Build > Rebuild Project**
-
-3. **Verify APK (recommended):**
-   ```bash
-   npm run verify-apk
-   ```
-   - Checks APK version metadata
-   - Verifies `index.html` contains latest version
-   - Shows APK file timestamp and size
-
-4. **Install on device:**
-   ```bash
-   npm run install-android
-   ```
-   - Automatically uninstalls old app
-   - Clears app data cache
-   - Installs new APK
-   - Verifies installation success
-
-### Troubleshooting
-
-**If you still see the old version:**
-
-1. **Force clean build:**
-   ```bash
-   Remove-Item android\app\build -Recurse -Force
-   Remove-Item android\.gradle -Recurse -Force -ErrorAction SilentlyContinue
-   cd android
-   ./gradlew clean assembleDebug
-   ```
-
-2. **Verify APK contents:**
-   ```bash
-   npm run verify-apk
-   ```
-   This will tell you if the APK actually contains the new version.
-
-3. **Manual uninstall:**
-   ```bash
-   adb uninstall com.oksnap.app
-   adb shell pm clear com.oksnap.app
-   ```
-
-4. **Check device:**
-   - Settings > Apps > OK-Snap > Check version
-   - If still old, uninstall manually from device settings
-   - Restart device if needed
-
-**Why uninstall?** Android WebView caches files aggressively. Even with cache disabled, completely removing the app ensures no stale files remain.
+The app is set up for **Google AdSense** for web using publisher ID `ca-pub-9493449427784119`. Each page loads the AdSense script and has a responsive ad unit above the bottom nav. Replace `data-ad-slot="XXXXXXXXXX"` with your ad slot ID from the [AdSense](https://www.google.com/adsense/) dashboard to show ads.
 
 ## Version
 
-Current version: 1.0.28
+Current version: 1.0.29

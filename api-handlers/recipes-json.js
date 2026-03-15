@@ -1,4 +1,4 @@
-// API route to fetch recipes.json from ok-snap.com with CORS headers
+// API route to fetch recipes.json from recipe site (recipes.ok-snap.com) with CORS headers
 module.exports = async (req, res) => {
     const config = require('../lib/config');
     const { debugLog } = require('../lib/logger');

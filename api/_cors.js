@@ -2,7 +2,6 @@
 // CORS (Cross-Origin Resource Sharing) allows web pages to make requests
 // to APIs hosted on different domains. This is required for:
 // - Web apps accessing APIs from different origins
-// - Mobile apps (Capacitor) accessing APIs
 // - Preview deployments accessing production APIs
 // - Development (localhost) accessing deployed APIs
 
@@ -24,6 +23,8 @@ function setCorsHeaders(req, res) {
     const defaultOrigins = [
         apiBaseUrl,
         publicSiteUrl,
+        'https://scanner.ok-snap.com',
+        'https://recipes.ok-snap.com',
         'http://localhost:3000',
         'http://localhost:5173',
         'http://localhost:8080'
@@ -34,19 +35,11 @@ function setCorsHeaders(req, res) {
         ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()).filter(o => o.length > 0)
         : defaultOrigins;
     
-    // Native apps (Capacitor) don't send origin header - allow them
-    const isNativeApp = !origin;
-    
     // Allow Vercel preview deployments (pattern: *.vercel.app)
-    // This is critical for preview deployments which have unique subdomains
     const isVercelPreview = origin && origin.endsWith('.vercel.app');
-    const isAllowedOrigin = isNativeApp || allowedOrigins.includes(origin) || isVercelPreview;
+    const isAllowedOrigin = allowedOrigins.includes(origin) || isVercelPreview;
     
-    if (isNativeApp) {
-        // Native app - allow all origins (no origin header means it's a native app)
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        // Cannot use credentials with wildcard origin
-    } else if (isAllowedOrigin) {
+    if (isAllowedOrigin) {
         res.setHeader('Access-Control-Allow-Origin', origin);
         res.setHeader('Access-Control-Allow-Credentials', 'true');
     } else {

@@ -50,6 +50,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;600;700&family=Poppins:wght@700;800;900&display=swap" rel="stylesheet">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9493449427784119" crossorigin="anonymous"></script>
     <style>
         * {
             margin: 0;
@@ -99,7 +100,7 @@
             --shadow-interactive: rgba(122, 145, 99, 0.2);
             
             /* Ad safe area - Banner ad height for camera controls positioning */
-            --banner-ad-height: 50px; /* Standard AdMob BANNER size height */
+            --banner-ad-height: 50px;
         }
 
         :root[data-theme="dark"] {
@@ -3054,7 +3055,7 @@
         }
         
         /* Prevent banner ads from overlapping footer navigation */
-        /* AdMob banner is positioned at bottom (0px), footer is positioned above it (50px) */
+        /* Ad slot at bottom; footer is positioned above it */
         /* Banner ad height is ~50px, footer navigation height is ~60px */
         /* Total space needed: 50px (banner) + 60px (footer) = 110px */
         
@@ -4618,6 +4619,9 @@
 
     </div>
 
+    <div class="ad-container" style="min-height: 50px; display: block; margin: 0 auto; text-align: center;">
+        <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-9493449427784119" data-ad-slot="XXXXXXXXXX" data-ad-format="auto" data-full-width-responsive="true"></ins>
+    </div>
     <!-- Bottom Navigation -->
     <nav class="bottom-navigation">
         <a href="index.html" class="nav-item" id="navDiscover">
@@ -4703,47 +4707,20 @@
             SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpeXByZWZ6aHByanpnZW12cWV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MTY0NDgsImV4cCI6MjA3NTA5MjQ0OH0.RZAXhSFG3MOfAJkERaoD8Qv91_lWgkbWUBymtKjjFmU' // e.g., 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
         };
         
-        // Global API base getter - ensures apiBase is always available
-        // This prevents "apiBase is not defined" errors in error handlers
+        // Global API base getter - browser-first: same-origin when in browser, then native (Capacitor), then fallback
         function getApiBase() {
-            // Explicit config override
-            if (CONFIG && CONFIG.API_BASE) {
-                return CONFIG.API_BASE;
+            if (CONFIG && CONFIG.API_BASE) return CONFIG.API_BASE;
+            const origin = typeof window !== 'undefined' && window.location && window.location.origin;
+            const isCapacitor = typeof window !== 'undefined' && (window.Capacitor || window.CapacitorWeb) &&
+                window.location && (window.location.protocol === 'capacitor:' || window.location.protocol === 'capacitor-https:');
+            if (origin && !isCapacitor && (origin.includes('localhost') || origin.includes('127.0.0.1') || origin.includes('vercel.app'))) {
+                return origin;
             }
-            
-            // Enhanced Capacitor detection for release builds
-            // Check multiple ways Capacitor might be available
-            const isCapacitor = typeof window !== 'undefined' && (
-                window.Capacitor || 
-                window.CapacitorWeb || 
-                (window.location && (
-                    window.location.protocol === 'capacitor:' ||
-                    window.location.protocol === 'capacitor-https:' ||
-                    window.location.hostname === 'localhost' ||
-                    window.location.hostname === ''
-                ))
-            );
-            
-            // Native app (Capacitor) - use production API
             if (isCapacitor) {
                 console.log('[getApiBase] Detected Capacitor app, using production API');
                 return 'https://ok-snap-identifier.vercel.app';
             }
-            
-            // Check if we're on Vercel (production or preview deployment)
-            if (typeof window !== 'undefined' && window.location) {
-                const origin = window.location.origin;
-                // If on Vercel preview deployment, use its own API endpoints
-                // Preview URLs: https://ok-snap-identifier-*-*.vercel.app
-                if (origin.includes('vercel.app')) {
-                    return origin; // Use same origin for API calls
-                }
-                // Localhost development
-                if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
-                    return origin;
-                }
-            }
-            // Final fallback to production
+            if (origin) return origin;
             console.log('[getApiBase] Using fallback production API');
             return 'https://ok-snap-identifier.vercel.app';
         }
@@ -4755,7 +4732,7 @@
                 return CONFIG.PUBLIC_SITE_URL;
             }
             // Fallback to default
-            return 'https://ok-snap.com';
+            return 'https://recipes.ok-snap.com';
         }
         
         // Expose globally for error handlers
@@ -4797,7 +4774,7 @@
                         3/3 scans (Guest)
                     </div>
                     <button class="btn-secondary" id="rechargeScanBtn" style="width: 100%; margin-bottom: 8px; font-size: 0.85rem;" onclick="rechargeScanLimitWithAd()">
-                        📺 Watch Ad to Recharge
+                        Sign in for more scans
                     </button>
                     <button class="btn" id="analyzeBtn" disabled>Discover Your Dish</button>
                         <button class="camera-btn" id="cameraBtn">
@@ -5165,47 +5142,20 @@
             SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpeXByZWZ6aHByanpnZW12cWV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MTY0NDgsImV4cCI6MjA3NTA5MjQ0OH0.RZAXhSFG3MOfAJkERaoD8Qv91_lWgkbWUBymtKjjFmU' // e.g., 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
         };
         
-        // Global API base getter - ensures apiBase is always available
-        // This prevents "apiBase is not defined" errors in error handlers
+        // Global API base getter - browser-first: same-origin when in browser, then native (Capacitor), then fallback
         function getApiBase() {
-            // Explicit config override
-            if (CONFIG && CONFIG.API_BASE) {
-                return CONFIG.API_BASE;
+            if (CONFIG && CONFIG.API_BASE) return CONFIG.API_BASE;
+            const origin = typeof window !== 'undefined' && window.location && window.location.origin;
+            const isCapacitor = typeof window !== 'undefined' && (window.Capacitor || window.CapacitorWeb) &&
+                window.location && (window.location.protocol === 'capacitor:' || window.location.protocol === 'capacitor-https:');
+            if (origin && !isCapacitor && (origin.includes('localhost') || origin.includes('127.0.0.1') || origin.includes('vercel.app'))) {
+                return origin;
             }
-            
-            // Enhanced Capacitor detection for release builds
-            // Check multiple ways Capacitor might be available
-            const isCapacitor = typeof window !== 'undefined' && (
-                window.Capacitor || 
-                window.CapacitorWeb || 
-                (window.location && (
-                    window.location.protocol === 'capacitor:' ||
-                    window.location.protocol === 'capacitor-https:' ||
-                    window.location.hostname === 'localhost' ||
-                    window.location.hostname === ''
-                ))
-            );
-            
-            // Native app (Capacitor) - use production API
             if (isCapacitor) {
                 console.log('[getApiBase] Detected Capacitor app, using production API');
                 return 'https://ok-snap-identifier.vercel.app';
             }
-            
-            // Check if we're on Vercel (production or preview deployment)
-            if (typeof window !== 'undefined' && window.location) {
-                const origin = window.location.origin;
-                // If on Vercel preview deployment, use its own API endpoints
-                // Preview URLs: https://ok-snap-identifier-*-*.vercel.app
-                if (origin.includes('vercel.app')) {
-                    return origin; // Use same origin for API calls
-                }
-                // Localhost development
-                if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
-                    return origin;
-                }
-            }
-            // Final fallback to production
+            if (origin) return origin;
             console.log('[getApiBase] Using fallback production API');
             return 'https://ok-snap-identifier.vercel.app';
         }
@@ -5217,7 +5167,7 @@
                 return CONFIG.PUBLIC_SITE_URL;
             }
             // Fallback to default
-            return 'https://ok-snap.com';
+            return 'https://recipes.ok-snap.com';
         }
         
         // Expose globally for error handlers
@@ -5235,212 +5185,13 @@
         let blogGenerationAttempted = new Set(); // Track blog generation attempts per dish to prevent duplicates
         let blogGenerationFailed = new Set(); // Track failed blog generations to prevent retries
         
-        // ============================================
-        // ADMOB CONFIGURATION
-        // ============================================
-        // STEP 1: Get your AdMob ad unit IDs from https://admob.google.com/
-        // STEP 2: Replace the placeholder values below with your actual ad unit IDs
-        // STEP 3: Install Capacitor AdMob plugin: npm install @capacitor-community/admob
-        // STEP 4: Add AdMob App ID to capacitor.config.json
-        // STEP 5: Replace placeholder functions below with real AdMob SDK calls
-        
-        const ADMOB_CONFIG = {
-            // ⚠️ REPLACE THIS: Get your AdMob App ID from AdMob dashboard
-            // Format: ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX
-            APP_ID: 'ca-app-pub-9493449427784119~2493840936',
-            
-            // ⚠️ REPLACE THIS: Banner ad unit ID (shown at bottom of screen)
-            // Format: ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX
-            BANNER_AD_UNIT_ID: 'ca-app-pub-9493449427784119/9505971848',
-            
-            // ⚠️ REPLACE THIS: Interstitial ad unit ID (full-screen ads between screens)
-            // Format: ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX
-            INTERSTITIAL_AD_UNIT_ID: 'ca-app-pub-9493449427784119/6066254438',
-            
-            // ⚠️ REPLACE THIS: Rewarded ad unit ID (for scan limit recharge)
-            // Format: ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX
-            REWARDED_AD_UNIT_ID: 'ca-app-pub-9493449427784119/9901557668',
-            
-            // Test ad unit IDs (use these during development, replace with real IDs for production)
-            // Android Test: ca-app-pub-3940256099942544/6300978111 (Rewarded)
-            // iOS Test: ca-app-pub-3940256099942544/1712485313 (Rewarded)
-            USE_TEST_ADS: true // Set to true for testing, false for production
-        };
-        
-        // ============================================
-        // ADMOB AD MANAGER
-        // ============================================
-        // TODO: Replace placeholder functions below with real AdMob SDK implementation
-        // After installing @capacitor-community/admob plugin, uncomment and use the real implementation
-        
+        // AdSense: display ads via script in head. Stub for legacy AdManager call sites.
         const AdManager = {
-            // Show banner ad (appears at bottom of screen)
-            showBannerAd: async function(adUnitId) {
-                // Use test ad unit ID if testing, otherwise use configured ID
-                let adId = adUnitId || ADMOB_CONFIG.BANNER_AD_UNIT_ID;
-                if (ADMOB_CONFIG.USE_TEST_ADS) {
-                    // Android test banner ad unit ID
-                    adId = 'ca-app-pub-3940256099942544/6300978111';
-                }
-                console.log('[AdManager] showBannerAd called', adId, ADMOB_CONFIG.USE_TEST_ADS ? '(TEST MODE)' : '(PRODUCTION)');
-                
-                try {
-                    // Check if running in Capacitor (mobile app)
-                    if (typeof Capacitor !== 'undefined' && Capacitor.Plugins && Capacitor.Plugins.AdMob) {
-                        const { AdMob } = Capacitor.Plugins;
-                        // Remove existing banner if any
-                        try {
-                            await AdMob.removeBanner();
-                        } catch (e) {
-                            // Ignore if no banner exists
-                        }
-                        // Show new banner at bottom
-                        // Footer navigation has z-index 3000 to ensure it stays above banner
-                        // Content padding accounts for banner height (~50px) + footer height (~60px)
-                        await AdMob.showBanner({
-                            adId: adId,
-                            adSize: 'BANNER',
-                            position: 'BOTTOM_CENTER', // Banner appears at bottom, footer overlays it with higher z-index
-                        });
-                        console.log('[AdManager] Banner ad shown successfully (footer navigation remains visible above)');
-                    } else {
-                        console.warn('[AdManager] AdMob plugin not available (running in web browser)');
-                    }
-                } catch (error) {
-                    console.error('[AdManager] Error showing banner ad:', error);
-                    // Don't throw - allow app to continue even if ad fails
-                }
-            },
-            
-            // Show interstitial ad (full-screen ad between screens)
-            showInterstitialAd: async function(adUnitId) {
-                // Use test ad unit ID if testing, otherwise use configured ID
-                let adId = adUnitId || ADMOB_CONFIG.INTERSTITIAL_AD_UNIT_ID;
-                if (ADMOB_CONFIG.USE_TEST_ADS) {
-                    // Android test interstitial ad unit ID
-                    adId = 'ca-app-pub-3940256099942544/1033173712';
-                }
-                console.log('[AdManager] showInterstitialAd called', adId, ADMOB_CONFIG.USE_TEST_ADS ? '(TEST MODE)' : '(PRODUCTION)');
-                
-                try {
-                    // Check if running in Capacitor (mobile app)
-                    if (typeof Capacitor !== 'undefined' && Capacitor.Plugins && Capacitor.Plugins.AdMob) {
-                        const { AdMob } = Capacitor.Plugins;
-                        // Prepare interstitial ad
-                        await AdMob.prepareInterstitial({ adId: adId });
-                        // Show interstitial ad
-                        await AdMob.showInterstitial();
-                        console.log('[AdManager] Interstitial ad shown successfully');
-                    } else {
-                        console.warn('[AdManager] AdMob plugin not available (running in web browser)');
-                    }
-                } catch (error) {
-                    console.error('[AdManager] Error showing interstitial ad:', error);
-                    // Don't throw - allow app to continue even if ad fails
-                }
-            },
-            
-            // Show 5-second interstitial ad (optimized for recipe reading completion)
-            showRecipeInterstitialAd: async function(adUnitId) {
-                // Use test ad unit ID if testing, otherwise use configured ID
-                let adId = adUnitId || ADMOB_CONFIG.INTERSTITIAL_AD_UNIT_ID;
-                if (ADMOB_CONFIG.USE_TEST_ADS) {
-                    // Android test interstitial ad unit ID
-                    adId = 'ca-app-pub-3940256099942544/1033173712';
-                }
-                console.log('[AdManager] showRecipeInterstitialAd called', adId, ADMOB_CONFIG.USE_TEST_ADS ? '(TEST MODE)' : '(PRODUCTION)');
-                
-                try {
-                    // Check if running in Capacitor (mobile app)
-                    if (typeof Capacitor !== 'undefined' && Capacitor.Plugins && Capacitor.Plugins.AdMob) {
-                        const { AdMob } = Capacitor.Plugins;
-                        
-                        // Preserve result state before showing ad
-                        const resultSection = document.getElementById('resultSection');
-                        const wasShowingResult = resultSection && resultSection.style.display !== 'none';
-                        
-                        // Prepare interstitial ad
-                        await AdMob.prepareInterstitial({ adId: adId });
-                        
-                        // Set up listener for ad close event to restore results if needed
-                        const adCloseListener = AdMob.addListener('onInterstitialAdClosed', () => {
-                            console.log('[AdManager] Interstitial ad closed');
-                            // Restore results if they were visible before ad
-                            if (wasShowingResult && isShowingResult && currentDishData) {
-                                setTimeout(() => {
-                                    const resultSection = document.getElementById('resultSection');
-                                    if (resultSection && resultSection.style.display === 'none') {
-                                        displayResult(currentDishData);
-                                    }
-                                }, 100);
-                            }
-                            // Remove listener after use
-                            adCloseListener.remove();
-                        });
-                        
-                        // Show interstitial ad (AdMob handles the 5-second minimum display)
-                        await AdMob.showInterstitial();
-                        console.log('[AdManager] Recipe interstitial ad shown successfully');
-                        
-                        // Return promise that resolves after a short delay to allow ad to display
-                        return new Promise((resolve) => {
-                            setTimeout(() => resolve(true), 100);
-                        });
-                    } else {
-                        console.warn('[AdManager] AdMob plugin not available (running in web browser)');
-                        return Promise.resolve(false);
-                    }
-                } catch (error) {
-                    console.error('[AdManager] Error showing recipe interstitial ad:', error);
-                    // Don't throw - allow app to continue even if ad fails
-                    // Return resolved promise to prevent unhandled rejection
-                    return Promise.resolve(false);
-                }
-            },
-            
-            // Show rewarded ad (user watches ad to get scan limit recharge)
-            // Returns a promise that resolves when ad is completed and reward is granted
-            showRewardedAd: async function(adUnitId) {
-                // Use test ad unit ID if testing, otherwise use configured ID
-                let adId = adUnitId || ADMOB_CONFIG.REWARDED_AD_UNIT_ID;
-                if (ADMOB_CONFIG.USE_TEST_ADS) {
-                    // Android test rewarded ad unit ID
-                    adId = 'ca-app-pub-3940256099942544/5224354917';
-                }
-                console.log('[AdManager] showRewardedAd called', adId, ADMOB_CONFIG.USE_TEST_ADS ? '(TEST MODE)' : '(PRODUCTION)');
-                
-                try {
-                    // Check if running in Capacitor (mobile app)
-                    if (typeof Capacitor !== 'undefined' && Capacitor.Plugins && Capacitor.Plugins.AdMob) {
-                        const { AdMob } = Capacitor.Plugins;
-                        
-                        // Prepare the rewarded ad
-                        await AdMob.prepareRewardVideoAd({ adId: adId });
-                        console.log('[AdManager] Rewarded ad prepared');
-                        
-                        // Show the rewarded ad and wait for result
-                        const result = await AdMob.showRewardVideoAd();
-                        console.log('[AdManager] Rewarded ad result:', result);
-                        
-                        // Check if user completed the ad and got reward
-                        if (result && result.rewarded) {
-                            return { rewardType: 'scan_limit', rewardAmount: 1 };
-                        } else {
-                            console.warn('[AdManager] Ad was not completed or reward not granted');
-                            return null;
-                        }
-                    } else {
-                        console.warn('[AdManager] AdMob plugin not available (running in web browser)');
-                        // For testing in browser, return mock reward
-                        return { rewardType: 'scan_limit', rewardAmount: 1 };
-                    }
-                } catch (error) {
-                    console.error('[AdManager] Error showing rewarded ad:', error);
-                    throw error;
-                }
-            }
+            showBannerAd: async function() {},
+            showInterstitialAd: async function() {},
+            showRecipeInterstitialAd: async function() { return false; },
+            showRewardedAd: async function() { return null; }
         };
-        
         // ============================================
         // RECIPE AD MANAGER - 5-Second Ad System
         // ============================================
@@ -5627,124 +5378,20 @@
         };
         
         // ============================================
-        // SCAN LIMIT RECHARGE VIA REWARDED AD
+        // GET MORE SCANS (WEB: SIGN IN)
         // ============================================
-        async function rechargeScanLimitWithAd() {
-            try {
-                console.log('[rechargeScanLimitWithAd] Starting rewarded ad flow...');
-                
-                // Show rewarded ad
-                const rewardResult = await AdManager.showRewardedAd();
-                
-                if (!rewardResult) {
-                    console.warn('[rechargeScanLimitWithAd] Ad was not completed or reward not granted');
-                    return;
-                }
-                
-                console.log('[rechargeScanLimitWithAd] Ad completed, reward granted:', rewardResult);
-                
-                // Increment scan limit by 1
-                const incrementAmount = rewardResult.rewardAmount || 1;
-                
-                // CRITICAL: Decrement backend scan count first so backend knows about recharge
-                const apiBase = getApiBase();
-                let backendRemaining = null;
-                try {
-                    const decrementResponse = await fetch(`${apiBase}/api/decrement-scan-count`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            userId: currentUser?.id || null,
-                            decrementAmount: incrementAmount
-                        })
-                    });
-                    
-                    if (decrementResponse.ok) {
-                        const decrementResult = await decrementResponse.json();
-                        console.log('[rechargeScanLimitWithAd] Backend scan count decremented:', decrementResult);
-                        backendRemaining = decrementResult.remaining;
-                    } else {
-                        console.warn('[rechargeScanLimitWithAd] Failed to decrement backend count, continuing with local update');
-                    }
-                } catch (backendError) {
-                    console.warn('[rechargeScanLimitWithAd] Error calling backend decrement API:', backendError);
-                    // Continue with local update even if backend call fails
-                }
-                
-                // Calculate new remaining - use backend value if available, otherwise calculate locally
-                const newRemaining = backendRemaining !== null 
-                    ? backendRemaining 
-                    : Math.min(
-                        (userScanInfo.remaining || 0) + incrementAmount,
-                        userScanInfo.limit || 3
-                    );
-                
-                // Update local state
-                userScanInfo.remaining = newRemaining;
-                
-                // Update Supabase if user is logged in
-                if (currentUser && supabaseClient) {
-                    try {
-                        const { error } = await supabaseClient
-                            .from('user_scan_limits')
-                            .upsert({
-                                user_id: currentUser.id,
-                                remaining_scans: newRemaining,
-                                limit: userScanInfo.limit,
-                                level: userScanInfo.level,
-                                updated_at: new Date().toISOString()
-                            }, {
-                                onConflict: 'user_id'
-                            });
-                        
-                        if (error) {
-                            console.warn('[rechargeScanLimitWithAd] Failed to update Supabase:', error);
-                        } else {
-                            console.log('[rechargeScanLimitWithAd] Supabase updated successfully');
-                        }
-                    } catch (dbError) {
-                        console.warn('[rechargeScanLimitWithAd] Error updating database:', dbError);
-                    }
-                } else {
-                    // For guests, update localStorage and userScanInfo
-                    const today = new Date().toISOString().split('T')[0];
-                    const guestScansKey = `guestScans_${today}`;
-                    const currentGuestScans = parseInt(localStorage.getItem(guestScansKey) || '0');
-                    const newGuestScans = Math.max(0, currentGuestScans - incrementAmount);
-                    localStorage.setItem(guestScansKey, newGuestScans.toString());
-                    
-                    // Update userScanInfo for guests to reflect recharge
-                    userScanInfo.remaining = Math.max(0, 3 - newGuestScans);
-                    userScanInfo.limit = 3;
-                    userScanInfo.level = 'guest';
-                    console.log('[rechargeScanLimitWithAd] Guest scan limit updated:', { scansUsed: newGuestScans, remaining: userScanInfo.remaining });
-                }
-                
-                // Update UI
-                updateScanLimitDisplay();
-                
-                // Re-enable analyze button if image is already selected
-                const analyzeBtn = document.getElementById('analyzeBtn');
-                if (analyzeBtn && currentImage) {
-                    analyzeBtn.disabled = false;
-                }
-                
-                // Show success message
+        function rechargeScanLimitWithAd() {
+            if (currentUser) {
                 const lang = getCurrentLanguage();
                 const t = translations[lang] || translations.en;
-                const successMsg = (t.scanLimitRecharged || 'Scan limit recharged! You now have {remaining} scans remaining.').replace('{remaining}', newRemaining);
-                showSuccess(successMsg);
-                
-                console.log('[rechargeScanLimitWithAd] Recharge completed successfully');
-                
-            } catch (error) {
-                console.error('[rechargeScanLimitWithAd] Error:', error);
-                const lang = getCurrentLanguage();
-                const t = translations[lang] || translations.en;
-                showError(t.rechargeError || 'Failed to recharge scan limit. Please try again.');
+                showSuccess(t.scanLimitResetsDaily || 'Your daily scan limit resets each day. You\'re all set!');
+                return;
             }
+            const lang = getCurrentLanguage();
+            const t = translations[lang] || translations.en;
+            showSuccess(t.signInForMoreScans || 'Sign in to get more daily scans.');
+            const loginModal = document.getElementById('loginModal');
+            if (loginModal) loginModal.classList.add('active');
         }
         
         // Get remaining scans from server
@@ -6498,28 +6145,6 @@
                 }
             });
             
-            // Handle Android hardware back button via Capacitor if available
-            if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
-                window.Capacitor.Plugins.App.addListener('backButton', ({ canGoBack }) => {
-                    // Always handle our custom logic first
-                    if (currentRoute === 'discover' && isShowingResult) {
-                        // Reset to blank slate
-                        resetToBlankSlate();
-                        window.history.replaceState({ route: 'discover', isBlankSlate: true }, '', window.location.href);
-                    } else if (navigationHistory.length > 0) {
-                        // Go back in navigation history
-                        const previousRoute = navigationHistory.pop();
-                        switchTab(previousRoute, true);
-                        window.history.replaceState({ route: previousRoute }, '', window.location.href);
-                    } else if (!canGoBack) {
-                        // Can't go back, exit app
-                        window.Capacitor.Plugins.App.exitApp();
-                    } else {
-                        // Let browser handle it
-                        window.history.back();
-                    }
-                });
-            }
         }
         
         // Reset to blank slate (clear scan result)
@@ -6620,7 +6245,9 @@
                 favoritesEmpty: "No favorites yet – discover dishes to add them here",
                 
                 // Ad Recharge
-                watchAdToRecharge: "📺 Watch Ad to Recharge",
+                watchAdToRecharge: "Sign in for more scans",
+                signInForMoreScans: "Sign in to get more daily scans.",
+                scanLimitResetsDaily: "Your daily scan limit resets each day. You're all set!",
                 scanLimitRecharged: "Scan limit recharged! You now have {remaining} scans remaining.",
                 rechargeError: "Failed to recharge scan limit. Please try again.",
                 
@@ -7344,39 +6971,11 @@
         // ============================================
         // HEADER INITIALIZATION
         // ============================================
-        // Initialize AdMob ads
         function initializeAds() {
-            // Only initialize ads in Capacitor (mobile app), not in web browser
-            if (typeof Capacitor !== 'undefined' && Capacitor.Plugins && Capacitor.Plugins.AdMob) {
-                try {
-                    const { AdMob } = Capacitor.Plugins;
-                    
-                    // Initialize AdMob SDK first (required before showing ads)
-                    // Note: Test ads are controlled by using test ad unit IDs, not initialization parameter
-                    AdMob.initialize({
-                        appId: ADMOB_CONFIG.APP_ID
-                    }).then(() => {
-                        console.log('[AdManager] AdMob SDK initialized successfully');
-                        console.log('[AdManager] Test mode:', ADMOB_CONFIG.USE_TEST_ADS ? 'ENABLED (using test ad unit IDs)' : 'DISABLED');
-                        
-                        // Show banner ad at bottom of screen
-                        AdManager.showBannerAd().catch(error => {
-                            console.warn('[AdManager] Banner ad initialization failed:', error);
-                        });
-                        
-                        // Prepare interstitial ad for later use
-                        AdManager.showInterstitialAd().catch(error => {
-                            console.warn('[AdManager] Interstitial ad preparation failed:', error);
-                        });
-                    }).catch(error => {
-                        console.error('[AdManager] AdMob SDK initialization failed:', error);
-                    });
-                } catch (error) {
-                    console.warn('[AdManager] Ad initialization error:', error);
-                }
-            } else {
-                console.log('[AdManager] Running in web browser - ads disabled');
-            }
+            try {
+                const ins = document.querySelectorAll('ins.adsbygoogle');
+                if (window.adsbygoogle && ins.length) ins.forEach(() => { (window.adsbygoogle = window.adsbygoogle || []).push({}); });
+            } catch (e) { console.warn('[Ads] AdSense init:', e); }
         }
         
         function initializeHeader() {
@@ -7821,36 +7420,6 @@
 
             cameraModal.classList.add('active');
             cameraError.style.display = 'none';
-
-            // Try Capacitor Camera API first for instant launch
-            try {
-                const { Camera } = await import('@capacitor/camera');
-                const { Capacitor } = await import('@capacitor/core');
-                
-                // Check if running on native platform
-                if (Capacitor.isNativePlatform()) {
-                    // Use Capacitor Camera for native platforms
-                    try {
-                        const permissionStatus = await Camera.checkPermissions();
-                        
-                        if (permissionStatus.camera !== 'granted') {
-                            const requestResult = await Camera.requestPermissions({ permissions: ['camera'] });
-                            if (requestResult.camera !== 'granted') {
-                                throw new Error('Camera permission denied');
-                            }
-                        }
-
-                        // For native, we'll use getUserMedia but with better performance
-                        // The Capacitor Camera.getPhoto() can be used for instant capture
-                        // but we'll use getUserMedia for preview
-                    } catch (permError) {
-                        console.log('Capacitor permission error:', permError);
-                    }
-                }
-            } catch (importError) {
-                // Capacitor not available, continue with browser API
-                console.log('Capacitor not available, using browser API');
-            }
 
             try {
                 // Stop any existing stream
@@ -9205,7 +8774,7 @@
                         delete window.generatedBlogContent;
                         delete window.generatedBlogImageUrl;
                     } else {
-                        // Blog exists on ok-snap.com - fetch and display content in-app
+                        // Blog exists on recipes.ok-snap.com - fetch and display content in-app
                         finalBlogUrl = `${publicWebsiteUrl}/blog.html?slug=${slug}`;
                         
                         // Hide the static "Full Recipe Blog" header - title will be in scrollable content
@@ -11073,7 +10642,7 @@
                 if (!response.ok) {
                     if (response.status === 404) {
                         // recipes.json doesn't exist yet - show empty state
-                        console.log('recipes.json not found on ok-snap.com yet (404)');
+                        console.log('recipes.json not found on recipes.ok-snap.com yet (404)');
                         if (loading) loading.style.display = 'none';
                         if (empty) empty.style.display = 'block';
                         return;
@@ -11119,7 +10688,7 @@
         function renderBlogCards(recipes, container) {
             if (!container) return;
             
-            const publicWebsiteUrl = 'https://ok-snap.com';
+            const publicWebsiteUrl = 'https://recipes.ok-snap.com';
             
             recipes.forEach((recipe) => {
                 const card = document.createElement('div');
@@ -11136,7 +10705,7 @@
                     <div class="blog-card-content">
                         <div class="blog-card-title">${title}</div>
                         ${date ? `<div class="blog-card-date">${new Date(date).toLocaleDateString()}</div>` : ''}
-                        <div class="blog-card-excerpt">Click to view full recipe on ok-snap.com</div>
+                        <div class="blog-card-excerpt">Click to view full recipe on recipes.ok-snap.com</div>
                     </div>
                 `;
                 

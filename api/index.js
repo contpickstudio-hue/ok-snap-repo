@@ -8,9 +8,10 @@ const { debugLog } = require('../lib/logger');
 // This keeps them out of the api/ directory so Vercel doesn't create separate functions
 let identifyHandler, generateBlogHandler, recipesJsonHandler, recipesStoreHandler;
 let syncRecipesHandler, scanLimitHandler, decrementScanCountHandler, blogsHandler;
-let blogExistsHandler, blogsSlugHandler;
+let blogExistsHandler, blogsSlugHandler, configHandler;
 
 try {
+    configHandler = require('../api-handlers/config');
     identifyHandler = require('../api-handlers/identify');
     generateBlogHandler = require('../api-handlers/generate-blog');
     recipesJsonHandler = require('../api-handlers/recipes-json');
@@ -62,6 +63,11 @@ module.exports = async (req, res) => {
         debugLog(`[api-router] Route: "${route}", Method: ${req.method}, URL: ${req.url}, Query:`, req.query);
     
         // Route to appropriate handler based on path
+        if (route === 'config' && req.method === 'GET') {
+            if (!configHandler) throw new Error('configHandler not loaded');
+            return await configHandler(req, res);
+        }
+        
         if (route === 'identify' && req.method === 'POST') {
             debugLog('[api-router] Routing to identify handler');
             if (!identifyHandler) {
