@@ -97,10 +97,23 @@ Return the blog post as HTML with proper structure. Use semantic HTML tags. Incl
 }
 
 function createSlug(name) {
-    return name
-        .toLowerCase()
+    const normalizedName = String(name || '').trim().toLowerCase();
+    const baseSlug = normalizedName
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)/g, '');
+
+    if (baseSlug) {
+        return baseSlug;
+    }
+
+    // Ensure a stable, non-empty slug for non-Latin dish names.
+    let hash = 0;
+    for (let i = 0; i < normalizedName.length; i++) {
+        hash = ((hash << 5) - hash) + normalizedName.charCodeAt(i);
+        hash |= 0;
+    }
+
+    return `recipe-${Math.abs(hash).toString(36) || 'item'}`;
 }
 
 /**

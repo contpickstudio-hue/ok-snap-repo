@@ -8603,10 +8603,19 @@
 
         // Helper function to create slug from dish name
         function createSlug(name) {
-            return name
-                .toLowerCase()
+            const normalizedName = String(name || '').trim().toLowerCase();
+            const baseSlug = normalizedName
                 .replace(/[^a-z0-9]+/g, '-')
                 .replace(/(^-|-$)/g, '');
+
+            if (baseSlug) return baseSlug;
+
+            let hash = 0;
+            for (let i = 0; i < normalizedName.length; i++) {
+                hash = ((hash << 5) - hash) + normalizedName.charCodeAt(i);
+                hash |= 0;
+            }
+            return `recipe-${Math.abs(hash).toString(36) || 'item'}`;
         }
 
         // Generate blog post for the dish
@@ -8710,6 +8719,7 @@
                 }
 
                 let finalBlogUrl = blogUrl;
+                let resolvedSlug = checkResult.slug || slug;
                 let needsGeneration = !checkResult.exists;
                 let generateResult = null; // Declare outside if block for scope access
 
@@ -8760,6 +8770,11 @@
                         if (generateResult.skipped) {
                             // Blog already exists, use the existing URL
                             finalBlogUrl = generateResult.blogUrl || blogUrl;
+                        }
+
+                        // Always use backend-confirmed slug for follow-up reads.
+                        if (generateResult.slug) {
+                            resolvedSlug = generateResult.slug;
                         }
                         
                         // If blog content is in the response (Vercel serverless can't write files)
@@ -8858,7 +8873,7 @@
                         delete window.generatedBlogImageUrl;
                     } else {
                         // Blog exists on recipes.ok-snap.com - fetch and display content in-app
-                        finalBlogUrl = `${publicWebsiteUrl}/blog.html?slug=${slug}`;
+                        finalBlogUrl = `${publicWebsiteUrl}/blog.html?slug=${encodeURIComponent(resolvedSlug)}`;
                         
                         // Hide the static "Full Recipe Blog" header - title will be in scrollable content
                         const blogDisplayHeader = blogDisplaySection.querySelector('.result-section-header');
@@ -8868,7 +8883,7 @@
                         
                         // Fetch blog content from API and display in-app
                         try {
-                            const blogApiUrl = `${apiBase}/api/blogs/${slug}`;
+                            const blogApiUrl = `${apiBase}/api/blogs/${encodeURIComponent(resolvedSlug)}`;
                             const blogResponse = await fetch(blogApiUrl, {
                                 method: 'GET',
                                 headers: {
