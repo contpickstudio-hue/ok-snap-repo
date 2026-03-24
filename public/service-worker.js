@@ -1,5 +1,5 @@
 // Service Worker for Ok Snap PWA
-const CACHE_NAME = 'ok-snap-v1.0.29';
+const CACHE_NAME = 'ok-snap-v1.0.30';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -8,6 +8,8 @@ const urlsToCache = [
   '/history.html',
   '/favorites.html',
   '/browse.html',
+  '/ad-slots.css',
+  '/ad-runtime.js',
   '/privacy.html',
   '/terms.html',
   '/about.html',
