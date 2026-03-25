@@ -207,8 +207,25 @@
         // Render blog posts list
         function renderBlogPosts(blogs) {
             const postsGrid = document.getElementById('blogPosts');
+            const createSlug = (name) => {
+                const normalizedName = String(name || '').trim().toLowerCase();
+                const baseSlug = normalizedName
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/(^-|-$)/g, '');
+
+                if (baseSlug) return baseSlug;
+
+                let hash = 0;
+                for (let i = 0; i < normalizedName.length; i++) {
+                    hash = ((hash << 5) - hash) + normalizedName.charCodeAt(i);
+                    hash |= 0;
+                }
+                return `recipe-${Math.abs(hash).toString(36) || 'item'}`;
+            };
+
             postsGrid.innerHTML = blogs.map(blog => {
-                const slug = blog.slug || (blog.name ? blog.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : '');
+                const slug = blog.slug || createSlug(blog.name);
+                const encodedSlug = encodeURIComponent(slug);
                 const title = blog.title || blog.name || 'Untitled Recipe';
                 const date = blog.createdAt ? new Date(blog.createdAt).toLocaleDateString() : 'Date unknown';
                 const imageUrl = blog.imageUrl || blog.image_url;
@@ -217,10 +234,10 @@
                     <article class="post-card">
                         ${imageUrl ? `<div class="post-image"><img src="${imageUrl}" alt="${title}" loading="lazy"></div>` : ''}
                         <div class="post-content">
-                            <h2 class="post-title"><a href="blog.html?slug=${slug}">${title}</a></h2>
+                            <h2 class="post-title"><a href="blog.html?slug=${encodedSlug}">${title}</a></h2>
                             ${blog.nameKorean ? `<p class="post-subtitle">${blog.nameKorean}</p>` : ''}
                             <p class="post-date">Published: ${date}</p>
-                            <a href="blog.html?slug=${slug}" class="btn btn-secondary">Read More</a>
+                            <a href="blog.html?slug=${encodedSlug}" class="btn btn-secondary">Read More</a>
                         </div>
                     </article>
                 `;
