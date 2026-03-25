@@ -19,21 +19,25 @@ function setCorsHeaders(req, res) {
     const apiBaseUrl = config.getApiBaseUrl(req);
     const publicSiteUrl = config.getPublicSiteUrl();
     
-    // Default hardcoded origins (used as fallback if ALLOWED_ORIGINS not set)
-    const defaultOrigins = [
-        apiBaseUrl,
-        publicSiteUrl,
+    // Required production origins (always allowed regardless of ALLOWED_ORIGINS)
+    const requiredOrigins = [
         'https://scanner.ok-snap.com',
         'https://recipes.ok-snap.com',
+        apiBaseUrl,
+        publicSiteUrl
+    ];
+    // Default dev + required
+    const defaultOrigins = [
+        ...requiredOrigins,
         'http://localhost:3000',
         'http://localhost:5173',
         'http://localhost:8080'
     ];
-    
-    // Use ALLOWED_ORIGINS env var if set, otherwise fall back to defaults
-    const allowedOrigins = process.env.ALLOWED_ORIGINS
+    // Merge ALLOWED_ORIGINS with required origins so scanner/recipes always work
+    const envOrigins = process.env.ALLOWED_ORIGINS
         ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()).filter(o => o.length > 0)
-        : defaultOrigins;
+        : [];
+    const allowedOrigins = [...new Set([...requiredOrigins, ...defaultOrigins, ...envOrigins])];
     
     // Allow Vercel preview deployments (pattern: *.vercel.app)
     const isVercelPreview = origin && origin.endsWith('.vercel.app');
