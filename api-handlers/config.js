@@ -31,7 +31,7 @@ module.exports = async (req, res) => {
         console.error('Config API error:', err);
         return res.status(200).json({
             PUBLIC_SITE_URL: 'https://recipes.ok-snap.com',
-            API_BASE_URL: 'https://ok-snap-identifier.vercel.app'
+            API_BASE_URL: 'https://ok-snap.com'
         });
     }
 };

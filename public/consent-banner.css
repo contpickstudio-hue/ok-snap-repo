@@ -1,0 +1,216 @@
+/* Cookie consent — Ok-Snap soft green / minimal */
+
+body.oksnap-consent-modal-open {
+    overflow: hidden;
+}
+
+:root {
+    --oksnap-consent-bg: rgba(255, 255, 255, 0.97);
+    --oksnap-consent-border: rgba(122, 145, 99, 0.35);
+    --oksnap-consent-shadow: 0 -4px 24px rgba(45, 55, 40, 0.12);
+}
+
+.oksnap-consent-banner {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 4000;
+    padding: 14px 16px;
+    padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px));
+    pointer-events: none;
+}
+
+.oksnap-consent-banner__inner {
+    pointer-events: auto;
+    max-width: 720px;
+    margin: 0 auto;
+    background: var(--oksnap-consent-bg, #fff);
+    border: 1px solid var(--oksnap-consent-border, rgba(122, 145, 99, 0.35));
+    border-radius: 14px;
+    box-shadow: var(--oksnap-consent-shadow);
+    padding: 16px 18px;
+    backdrop-filter: blur(8px);
+}
+
+.oksnap-consent-banner__title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--primary, #7a9163);
+    margin: 0 0 8px 0;
+    letter-spacing: -0.02em;
+}
+
+.oksnap-consent-banner__text {
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: var(--text-secondary, #555);
+    margin: 0 0 14px 0;
+}
+
+.oksnap-consent-banner__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.oksnap-consent-btn {
+    font-family: inherit;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+}
+
+.oksnap-consent-btn:active {
+    transform: scale(0.98);
+}
+
+.oksnap-consent-btn--primary {
+    background: var(--primary, #7a9163);
+    color: #fff;
+}
+
+.oksnap-consent-btn--primary:hover {
+    background: var(--primary-dark, #5a6f4a);
+}
+
+.oksnap-consent-btn--ghost {
+    background: var(--secondary, #e8e8e0);
+    color: var(--text-primary, #333);
+}
+
+.oksnap-consent-btn--ghost:hover {
+    opacity: 0.9;
+}
+
+.oksnap-consent-btn--link {
+    background: transparent;
+    color: var(--primary, #7a9163);
+    text-decoration: underline;
+    padding: 8px 10px;
+}
+
+.oksnap-consent-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 4100;
+    background: rgba(40, 45, 35, 0.45);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 16px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@media (min-width: 520px) {
+    .oksnap-consent-modal-overlay {
+        align-items: center;
+    }
+}
+
+.oksnap-consent-modal {
+    width: 100%;
+    max-width: 420px;
+    max-height: min(88vh, 560px);
+    overflow: auto;
+    background: var(--background-alt, #fff);
+    border-radius: 16px;
+    border: 1px solid var(--secondary-dark, #d4d4c8);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    padding: 20px 20px 18px;
+}
+
+.oksnap-consent-modal h2 {
+    font-size: 1.1rem;
+    margin: 0 0 10px 0;
+    color: var(--primary, #7a9163);
+}
+
+.oksnap-consent-modal__intro {
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: var(--text-secondary, #555);
+    margin: 0 0 16px 0;
+}
+
+.oksnap-consent-toggle-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--secondary, #e8e8e0);
+}
+
+.oksnap-consent-toggle-row:last-of-type {
+    border-bottom: none;
+}
+
+.oksnap-consent-toggle-row__label {
+    flex: 1;
+    min-width: 0;
+}
+
+.oksnap-consent-toggle-row__label strong {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--text-primary, #333);
+    margin-bottom: 4px;
+}
+
+.oksnap-consent-toggle-row__label span {
+    font-size: 0.75rem;
+    color: var(--text-secondary, #666);
+    line-height: 1.4;
+}
+
+.oksnap-consent-switch {
+    flex-shrink: 0;
+    width: 44px;
+    height: 26px;
+    border-radius: 13px;
+    border: none;
+    background: var(--secondary-dark, #ccc);
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.oksnap-consent-switch[aria-checked='true'] {
+    background: var(--primary, #7a9163);
+}
+
+.oksnap-consent-switch::after {
+    content: '';
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #fff;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.oksnap-consent-switch[aria-checked='true']::after {
+    transform: translateX(18px);
+}
+
+.oksnap-consent-switch:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.oksnap-consent-modal__footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 18px;
+    justify-content: flex-end;
+}

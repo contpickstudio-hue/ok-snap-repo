@@ -118,6 +118,29 @@ async function getRemainingScans(userId, userIp) {
     return await rateLimitStorage.getRemainingScans(userId, userIp);
 }
 
+// ============================================
+// SEO-friendly routes (local dev / express)
+// ============================================
+const { validateSlug } = require('./lib/slug-validation');
+const blogHtmlHandler = require('./api-handlers/blog-html');
+const sitemapXmlHandler = require('./api-handlers/sitemap-xml');
+const robotsTxtHandler = require('./api-handlers/robots-txt');
+
+// Clean, indexable recipe pages: /recipe/:slug
+app.get('/recipe/:slug', (req, res) => {
+    try {
+        validateSlug(req.params.slug, 'slug');
+    } catch {
+        return res.status(404).send('Not found');
+    }
+    req.query = req.query || {};
+    req.query.slug = req.params.slug;
+    return blogHtmlHandler(req, res);
+});
+
+app.get('/sitemap.xml', (req, res) => sitemapXmlHandler(req, res));
+app.get('/robots.txt', (req, res) => robotsTxtHandler(req, res));
+
 // Serve static files from public directory (web app)
 app.use(express.static(path.join(__dirname, 'public')));
 

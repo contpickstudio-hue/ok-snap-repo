@@ -1,30 +1,81 @@
 /**
- * Ok-Snap AdSense helpers: conditional slots, single push per ins, config in one place.
- * Set OK_SNAP_ADS.enabled = true and real slot IDs when ready for production.
+ * Ok-Snap AdSense slot config and push helpers. The AdSense script is injected only via ad-consent-loader.js
+ * after advertising consent (with &npa=1 when personalized ads are off).
+ *
+ * PUBLISHER ID: set below. SLOT IDs: replace XXXXXXXXXX with your AdSense unit IDs when going live.
  */
 (function () {
     var G = typeof window !== 'undefined' ? window : globalThis;
 
+    function consentAllowsAds() {
+        var C = G.OkSnapConsent;
+        if (!C || typeof C.allowsAdvertising !== 'function') {
+            return false;
+        }
+        return C.allowsAdvertising();
+    }
+
     G.OK_SNAP_ADS = G.OK_SNAP_ADS || {
         enabled: false,
+        /** Google AdSense publisher ID (ca-pub-…). Also read by OkSnapAdLoader in ad-consent-loader.js */
         publisherId: 'ca-pub-9493449427784119',
         /** In-page display ads only; recipe scroll interstitial is disabled in the app. */
         browseFeedInterval: 4,
         showResultMidSlot: true,
+        /** Show in-article mid slot only when stripped HTML body length >= this (optional second ad). */
+        articleMidMinContentLength: 900,
+        /**
+         * Per-slot on/off (false = hidden, no push). Omit key or true = on.
+         * Replace XXXXXXXXXX in `slots` with real AdSense unit IDs when enabling OK_SNAP_ADS.enabled.
+         */
+        slotToggles: {
+            discoverBelowHero: true,
+            discoverFooter: false,
+            resultAfterNutrition: true,
+            resultMidContent: true,
+            browseFeed: true,
+            articleIntro: true,
+            articleMid: true,
+            historyPage: true,
+            favoritesPage: true
+        },
         slots: {
+            discoverBelowHero: 'XXXXXXXXXX',
             discoverFooter: 'XXXXXXXXXX',
             resultAfterNutrition: 'XXXXXXXXXX',
             resultMidContent: 'XXXXXXXXXX',
-            browseFeed: 'XXXXXXXXXX'
+            browseFeed: 'XXXXXXXXXX',
+            articleIntro: 'XXXXXXXXXX',
+            articleMid: 'XXXXXXXXXX',
+            historyPage: 'XXXXXXXXXX',
+            favoritesPage: 'XXXXXXXXXX'
         }
     };
+
+    function isSlotEnabled(slotKey) {
+        var cfg = G.OK_SNAP_ADS;
+        var t = cfg.slotToggles || {};
+        return t[slotKey] !== false;
+    }
+
+    function applyDisabledSlotClass(root) {
+        (root || document).querySelectorAll('[data-oksnap-ad-slot]').forEach(function (el) {
+            var key = el.getAttribute('data-oksnap-ad-slot');
+            if (!key) return;
+            if (!isSlotEnabled(key)) {
+                el.classList.add('oksnap-ad-slot--off');
+            } else {
+                el.classList.remove('oksnap-ad-slot--off');
+            }
+        });
+    }
 
     function applySlotAttributes(root) {
         var rootEl = root || document;
         var cfg = G.OK_SNAP_ADS;
         rootEl.querySelectorAll('[data-oksnap-ad-slot]').forEach(function (wrap) {
             var key = wrap.getAttribute('data-oksnap-ad-slot');
-            if (!key) return;
+            if (!key || !isSlotEnabled(key)) return;
             var slotId = cfg.slots && cfg.slots[key];
             var ins = wrap.querySelector('ins.adsbygoogle');
             if (!ins || !cfg.publisherId) return;
@@ -45,10 +96,16 @@
         return st.display !== 'none' && st.visibility !== 'hidden' && st.opacity !== '0';
     }
 
-    function hideAllSlots(root) {
+    /** Reserved layout when ads are configured but user declined advertising — avoids hard collapse/CLS vs real ads. */
+    function setSlotsPlaceholderMode(root, on) {
         (root || document).querySelectorAll('[data-oksnap-ad-slot]').forEach(function (el) {
-            el.style.display = 'none';
-            el.setAttribute('aria-hidden', 'true');
+            var key = el.getAttribute('data-oksnap-ad-slot');
+            if (key && !isSlotEnabled(key)) return;
+            if (on) {
+                el.classList.add('oksnap-ad-slot--blocked');
+            } else {
+                el.classList.remove('oksnap-ad-slot--blocked');
+            }
         });
     }
 
@@ -62,6 +119,10 @@
         list.forEach(function (ins) {
             if (ins.getAttribute('data-oksnap-pushed') === '1') return;
             var wrap = ins.closest('[data-oksnap-ad-slot]');
+            if (wrap) {
+                var sk = wrap.getAttribute('data-oksnap-ad-slot');
+                if (sk && !isSlotEnabled(sk)) return;
+            }
             if (wrap && !isElementVisible(wrap)) return;
             if (!isElementVisible(ins)) return;
             try {
@@ -74,18 +135,37 @@
     }
 
     G.initOkSnapAds = function (root) {
-        applySlotAttributes(root);
-        if (!G.OK_SNAP_ADS.enabled) {
-            hideAllSlots(root || document);
+        var scope = root || document;
+        var cfg = G.OK_SNAP_ADS;
+        applyDisabledSlotClass(scope);
+        var canRun = cfg.enabled && consentAllowsAds();
+        setSlotsPlaceholderMode(scope, !!(cfg.enabled && !consentAllowsAds()));
+        if (!canRun) {
             return;
         }
-        pushAdsIn(root || document);
+        setSlotsPlaceholderMode(scope, false);
+        applySlotAttributes(scope);
+        pushAdsIn(scope);
     };
 
-    /** Call after toggling slot visibility or injecting new ad units. */
+    /** Call after toggling slot visibility or injecting new ad units (e.g. SPA route or modal). */
     G.refreshOkSnapAds = function (root) {
-        applySlotAttributes(root);
-        if (!G.OK_SNAP_ADS.enabled) return;
-        pushAdsIn(root || document);
+        var scope = root || document;
+        var cfg = G.OK_SNAP_ADS;
+        applyDisabledSlotClass(scope);
+        var canRun = cfg.enabled && consentAllowsAds();
+        setSlotsPlaceholderMode(scope, !!(cfg.enabled && !consentAllowsAds()));
+        if (!canRun) {
+            return;
+        }
+        setSlotsPlaceholderMode(scope, false);
+        applySlotAttributes(scope);
+        pushAdsIn(scope);
     };
+
+    G.okSnapAdsEffectiveEnabled = function () {
+        return !!(G.OK_SNAP_ADS.enabled && consentAllowsAds());
+    };
+
+    G.okSnapAdSlotEnabled = isSlotEnabled;
 })();

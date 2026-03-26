@@ -40,13 +40,25 @@ module.exports = async (req, res) => {
         
         // Fetch blog from Supabase (encode slug for URL)
         const encodedSlug = encodeSlugForUrl(slug);
-        const response = await fetch(`${supabaseUrl}/rest/v1/blogs?slug=eq.${encodedSlug}&select=*`, {
-            headers: {
-                'apikey': supabaseKey,
-                'Authorization': `Bearer ${supabaseKey}`,
-                'Content-Type': 'application/json'
-            }
-        });
+        let response;
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000);
+            response = await fetch(`${supabaseUrl}/rest/v1/blogs?slug=eq.${encodedSlug}&select=*`, {
+                headers: {
+                    'apikey': supabaseKey,
+                    'Authorization': `Bearer ${supabaseKey}`,
+                    'Content-Type': 'application/json'
+                },
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+        } catch (fetchErr) {
+            const isTimeout = fetchErr && fetchErr.name === 'AbortError';
+            const err = new Error(isTimeout ? 'Supabase request timed out' : 'Supabase request failed');
+            err.cause = fetchErr;
+            return ErrorResponse.databaseError(res, 'Could not load this recipe right now. Please try again.', err);
+        }
         
         if (!response.ok) {
             const errorText = await response.text().catch(() => 'Unknown error');

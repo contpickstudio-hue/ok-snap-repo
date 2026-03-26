@@ -1,14 +1,25 @@
 // Unified API router - handles all API routes in a single serverless function
 // This reduces the number of serverless functions to stay within Vercel Hobby plan limits (12 max)
 
+const crypto = require('crypto');
 const { setCorsHeaders, handlePreflight } = require('./_cors');
 const { debugLog } = require('../lib/logger');
+
+function decodeRouteSlugParam(raw) {
+    if (raw == null || raw === '') return raw;
+    try {
+        return decodeURIComponent(raw);
+    } catch {
+        return raw;
+    }
+}
 
 // Import route handlers from api-handlers directory
 // This keeps them out of the api/ directory so Vercel doesn't create separate functions
 let identifyHandler, generateBlogHandler, recipesJsonHandler, recipesStoreHandler;
 let syncRecipesHandler, scanLimitHandler, decrementScanCountHandler, blogsHandler;
-let blogExistsHandler, blogsSlugHandler, configHandler;
+let blogExistsHandler, blogsSlugHandler, blogHtmlHandler, configHandler;
+let sitemapXmlHandler, robotsTxtHandler;
 
 try {
     configHandler = require('../api-handlers/config');
@@ -23,6 +34,9 @@ try {
     // Handle files with brackets in path - renamed to avoid Node.js issues
     blogExistsHandler = require('../api-handlers/blog-exists-slug');
     blogsSlugHandler = require('../api-handlers/blogs-slug');
+    blogHtmlHandler = require('../api-handlers/blog-html');
+    sitemapXmlHandler = require('../api-handlers/sitemap-xml');
+    robotsTxtHandler = require('../api-handlers/robots-txt');
     debugLog('[api-router] All handlers loaded successfully');
 } catch (requireError) {
     console.error('[api-router] Failed to load handlers:', requireError);
@@ -62,6 +76,16 @@ module.exports = async (req, res) => {
         debugLog(`[api-router] Route: "${route}", Method: ${req.method}, URL: ${req.url}, Query:`, req.query);
     
         // Route to appropriate handler based on path
+        if (route === 'sitemap.xml' && req.method === 'GET') {
+            if (!sitemapXmlHandler) throw new Error('sitemapXmlHandler not loaded');
+            return await sitemapXmlHandler(req, res);
+        }
+
+        if (route === 'robots.txt' && req.method === 'GET') {
+            if (!robotsTxtHandler) throw new Error('robotsTxtHandler not loaded');
+            return await robotsTxtHandler(req, res);
+        }
+
         if (route === 'config' && req.method === 'GET') {
             if (!configHandler) throw new Error('configHandler not loaded');
             return await configHandler(req, res);
@@ -112,13 +136,21 @@ module.exports = async (req, res) => {
         if (route === 'blogs' && req.method === 'GET') {
             return await blogsHandler(req, res);
         }
+
+        // Crawlable HTML for a single post (before blogs/:slug JSON)
+        const blogHtmlMatch = route.match(/^blog-html\/(.+)$/);
+        if (blogHtmlMatch && req.method === 'GET') {
+            req.query = req.query || {};
+            req.query.slug = decodeRouteSlugParam(blogHtmlMatch[1]);
+            return await blogHtmlHandler(req, res);
+        }
         
         // Handle dynamic routes: blogs/[slug] and blog-exists/[slug]
         const blogsSlugMatch = route.match(/^blogs\/(.+)$/);
         if (blogsSlugMatch && req.method === 'GET') {
             // Set slug in query for the handler
             req.query = req.query || {};
-            req.query.slug = blogsSlugMatch[1];
+            req.query.slug = decodeRouteSlugParam(blogsSlugMatch[1]);
             return await blogsSlugHandler(req, res);
         }
         
@@ -126,7 +158,7 @@ module.exports = async (req, res) => {
         if (blogExistsMatch && req.method === 'GET') {
             // Set slug in query for the handler
             req.query = req.query || {};
-            req.query.slug = blogExistsMatch[1];
+            req.query.slug = decodeRouteSlugParam(blogExistsMatch[1]);
             return await blogExistsHandler(req, res);
         }
         
@@ -137,13 +169,15 @@ module.exports = async (req, res) => {
         });
         
     } catch (error) {
-        console.error('[api-router] Error:', error);
+        const requestId = crypto.randomUUID ? crypto.randomUUID() : crypto.randomBytes(8).toString('hex');
+        console.error('[api-router] Error:', { requestId, route, method: req.method, message: error.message });
         console.error('[api-router] Error stack:', error.stack);
         return res.status(500).json({
             error: 'Internal server error',
             message: error.message,
             route: route,
-            method: req.method
+            method: req.method,
+            requestId
         });
     }
 };

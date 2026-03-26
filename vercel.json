@@ -7,6 +7,18 @@
   },
   "rewrites": [
     {
+      "source": "/sitemap.xml",
+      "destination": "/api?path=sitemap.xml"
+    },
+    {
+      "source": "/robots.txt",
+      "destination": "/api?path=robots.txt"
+    },
+    {
+      "source": "/recipe/:slug",
+      "destination": "/api?path=blog-html/:slug"
+    },
+    {
       "source": "/",
       "destination": "/index.html"
     },

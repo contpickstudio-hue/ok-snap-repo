@@ -21,6 +21,8 @@ function setCorsHeaders(req, res) {
     
     // Required production origins (always allowed regardless of ALLOWED_ORIGINS)
     const requiredOrigins = [
+        'https://ok-snap.com',
+        'https://www.ok-snap.com',
         'https://scanner.ok-snap.com',
         'https://recipes.ok-snap.com',
         apiBaseUrl,
@@ -43,13 +45,15 @@ function setCorsHeaders(req, res) {
     const isVercelPreview = origin && origin.endsWith('.vercel.app');
     const isAllowedOrigin = allowedOrigins.includes(origin) || isVercelPreview;
     
-    if (isAllowedOrigin) {
+    if (isAllowedOrigin && origin) {
         res.setHeader('Access-Control-Allow-Origin', origin);
         res.setHeader('Access-Control-Allow-Credentials', 'true');
+    } else if (isAllowedOrigin && !origin) {
+        res.setHeader('Access-Control-Allow-Origin', '*');
     } else {
-        // Default to public site URL
-        res.setHeader('Access-Control-Allow-Origin', publicSiteUrl);
-        res.setHeader('Access-Control-Allow-Credentials', 'true');
+        // Do not set ACAO to a host that mismatches the request Origin (breaks CORS).
+        // Unknown browser origins: wildcard without credentials (anonymous fetches still work).
+        res.setHeader('Access-Control-Allow-Origin', '*');
     }
     
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');

@@ -8,6 +8,22 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Ok Snap">
     <title>Ok Snap - Discover Food Through Your Lens</title>
+    <meta name="description" content="Snap a food photo to identify dishes, explore recipes, and get cultural context — powered by Ok Snap.">
+    <link rel="canonical" href="https://scanner.ok-snap.com/">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Ok Snap">
+    <meta property="og:title" content="Ok Snap - Discover Food Through Your Lens">
+    <meta property="og:description" content="Snap a food photo to identify dishes, explore recipes, and get cultural context — powered by Ok Snap.">
+    <meta property="og:url" content="https://scanner.ok-snap.com/">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Ok Snap - Discover Food Through Your Lens">
+    <meta name="twitter:description" content="Snap a food photo to identify dishes, explore recipes, and get cultural context — powered by Ok Snap.">
+    <script type="application/ld+json">
+    [
+      {"@context":"https://schema.org","@type":"Organization","name":"Ok Snap","url":"https://scanner.ok-snap.com/","email":"support@ok-snap.com"},
+      {"@context":"https://schema.org","@type":"WebSite","name":"Ok Snap","url":"https://scanner.ok-snap.com/"}
+    ]
+    </script>
     <script>
         // Only load icons and manifest if not using file:// protocol (avoids CORS/file errors)
         if (window.location.protocol !== 'file:') {
@@ -51,7 +67,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;600;700&family=Poppins:wght@700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="ad-slots.css">
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9493449427784119" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="consent-banner.css">
+    <link rel="stylesheet" href="site-footer.css">
     <style>
         * {
             margin: 0;
@@ -638,6 +655,45 @@
             font-size: 0.75rem;
             opacity: 0.9;
             line-height: 1.4;
+        }
+
+        .upload-guidance {
+            margin-top: 10px;
+            padding: 10px 12px;
+            background: rgba(255, 255, 255, 0.55);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            border-radius: 12px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+            line-height: 1.45;
+        }
+
+        .upload-guidance a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .upload-guidance a:hover {
+            text-decoration: underline;
+        }
+
+        .result-report {
+            margin-top: 10px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .result-report a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .result-report a:hover {
+            text-decoration: underline;
         }
         
         @media (min-width: 420px) {
@@ -4281,7 +4337,7 @@
         }
     </style>
 </head>
-<body>
+<body data-oksnap-consent-banner="1">
     <!-- Onboarding Overlay -->
     <div class="onboarding-overlay" id="onboardingOverlay">
         <div class="onboarding-container">
@@ -4289,7 +4345,7 @@
             <div class="onboarding-screen active" id="onboardingScreen1">
                 <div class="onboarding-content">
                     <div class="onboarding-icon">🍲</div>
-                    <h1 class="onboarding-title">Welcome to OK-Snap</h1>
+                    <h1 class="onboarding-title">Welcome to Ok Snap</h1>
                     <p class="onboarding-description">
                         Discover Korean cuisine and food from around the world through the power of AI. Snap a photo and learn about what you're eating!
                     </p>
@@ -4453,7 +4509,7 @@
                         <circle cx="28" cy="28" r="2" fill="var(--accent)"/>
                     </svg>
                 </div>
-                <span class="logo-text">OK-Snap</span>
+                <span class="logo-text">Ok Snap</span>
             </div>
             <div class="auth-section" id="authSection">
                 <div class="scan-counter-header" id="scanCounterHeader" style="display: flex; align-items: center; background: var(--secondary); border-radius: 16px; font-weight: 500;">
@@ -4606,6 +4662,10 @@
                         </div>
                         <div class="upload-text" id="uploadText" style="font-family: 'Poppins', 'Inter', sans-serif; font-weight: 700; margin-bottom: 12px;">Discover Your Dish</div>
                         <div class="upload-hint" id="uploadHint" style="font-weight: 500;">Tap to upload or use camera • Korean dishes emphasized</div>
+                        <div class="upload-guidance" id="uploadGuidance">
+                            Upload a clear photo of food. Avoid offensive or unrelated images.
+                            <span style="white-space: nowrap;">By uploading, you agree to our <a href="terms.html" target="_blank" rel="noopener">Terms</a> and <a href="privacy.html" target="_blank" rel="noopener">Privacy</a>.</span>
+                        </div>
                     </div>
                     <input type="file" id="fileInput" accept="image/*">
                 </div>
@@ -4659,6 +4719,14 @@
                 </div>
             </div>
 
+            <!-- Ad (discover): below hero / upload block — not inside CTA row; IDs in ad-runtime.js slots.discoverBelowHero + slotToggles.discoverBelowHero -->
+            <aside class="oksnap-ad-slot oksnap-ad-slot--discover-hero" id="oksnapDiscoverBelowHeroAd" data-oksnap-ad-slot="discoverBelowHero" style="display: none;" aria-hidden="true" role="complementary" aria-label="Advertisement">
+                <div class="oksnap-ad-slot__label">Advertisement</div>
+                <div class="oksnap-ad-slot__frame">
+                    <ins class="adsbygoogle" style="display:block"></ins>
+                </div>
+            </aside>
+
             <!-- Loading State -->
             <div class="loading" id="loading">
                 <button class="loading-close-btn" id="cancelLoadingBtn" title="Cancel (or press ESC)" onclick="cancelAnalysis()" style="z-index: 1600;">×</button>
@@ -4683,6 +4751,9 @@
                 <div class="result-header">
                     <h2 class="result-title" id="dishName"></h2>
                     <span class="confidence-badge" id="confidenceBadge"></span>
+                </div>
+                <div class="result-report">
+                    <a id="oksnapReportLink" href="contact.html">Recognition looks wrong?</a>
                 </div>
                 <img class="dish-image" id="dishImage" alt="Uploaded dish">
                 <div class="dish-description" id="dishDescription"></div>
@@ -4721,12 +4792,12 @@
                     </div>
                 </div>
 
-                <div class="oksnap-ad-slot" id="oksnapResultAdAfterNutrition" data-oksnap-ad-slot="resultAfterNutrition" style="display: none;" aria-hidden="true">
+                <aside class="oksnap-ad-slot" id="oksnapResultAdAfterNutrition" data-oksnap-ad-slot="resultAfterNutrition" style="display: none;" aria-hidden="true" role="complementary" aria-label="Advertisement">
                     <div class="oksnap-ad-slot__label">Advertisement</div>
                     <div class="oksnap-ad-slot__frame">
                         <ins class="adsbygoogle" style="display:block"></ins>
                     </div>
-                </div>
+                </aside>
 
                 <!-- Section Divider -->
                 <div class="result-section-divider"></div>
@@ -4826,12 +4897,12 @@
                 <!-- Section Divider -->
                 <div class="result-section-divider"></div>
 
-                <div class="oksnap-ad-slot" id="oksnapResultAdMidContent" data-oksnap-ad-slot="resultMidContent" style="display: none;" aria-hidden="true">
+                <aside class="oksnap-ad-slot" id="oksnapResultAdMidContent" data-oksnap-ad-slot="resultMidContent" style="display: none;" aria-hidden="true" role="complementary" aria-label="Advertisement">
                     <div class="oksnap-ad-slot__label">Advertisement</div>
                     <div class="oksnap-ad-slot__frame">
                         <ins class="adsbygoogle" style="display:block"></ins>
                     </div>
-                </div>
+                </aside>
 
                 <!-- Korean Cultural Description Section - Enhanced -->
                 <div class="cultural-section" id="culturalSection" style="display: none;">
@@ -4952,37 +5023,13 @@
                 <p id="warmMessageText"></p>
             </div>
             
-            <!-- Feature Row - Positioned at bottom of discover tab -->
-            <div class="feature-row" style="margin-top: 16px; padding: 24px 16px;">
-                <div class="feature-item">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
-                        <path d="M2 17l10 5 10-5"></path>
-                        <path d="M2 12l10 5 10-5"></path>
-                    </svg>
-                    <span>Powered by AI</span>
-                </div>
-                <div class="feature-item">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                        <circle cx="12" cy="10" r="3"></circle>
-                    </svg>
-                    <span>Korean Focus</span>
-                </div>
-                <div class="feature-item">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                    </svg>
-                    <span>Cultural Stories</span>
-                </div>
-            </div>
-
-            <div class="oksnap-ad-slot" id="oksnapDiscoverFooterAd" data-oksnap-ad-slot="discoverFooter" style="display: none;" aria-hidden="true">
+            <!-- Optional second discover placement; off by default (slotToggles.discoverFooter) to avoid crowding -->
+            <aside class="oksnap-ad-slot" id="oksnapDiscoverFooterAd" data-oksnap-ad-slot="discoverFooter" style="display: none;" aria-hidden="true" role="complementary" aria-label="Advertisement">
                 <div class="oksnap-ad-slot__label">Advertisement</div>
                 <div class="oksnap-ad-slot__frame">
                     <ins class="adsbygoogle" style="display:block"></ins>
                 </div>
-            </div>
+            </aside>
 
             <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--secondary-dark); font-size: 0.85rem; color: var(--text-secondary); text-align: center;">
                 <a href="privacy.html" style="color: var(--primary); text-decoration: none;">Privacy</a>
@@ -5089,7 +5136,10 @@
         </a>
     </nav>
 
+    <script src="consent-store.js"></script>
     <script src="ad-runtime.js"></script>
+    <script src="ad-consent-loader.js"></script>
+    <script src="consent-banner.js"></script>
     <script>
         // ============================================
         // CONFIGURATION
@@ -5595,9 +5645,11 @@
                 }
                 
                 // Clear local history and favorites
-                localStorage.removeItem('biteSightHistory');
-                localStorage.removeItem('biteSightFavorites');
-                localStorage.removeItem('biteSightUsername');
+                localStorage.removeItem(OKSNAP_STORAGE.historyNew);
+                localStorage.removeItem(OKSNAP_STORAGE.historyLegacy);
+                localStorage.removeItem(OKSNAP_STORAGE.favoritesNew);
+                localStorage.removeItem(OKSNAP_STORAGE.favoritesLegacy);
+                localStorage.removeItem(OKSNAP_STORAGE.usernameLegacy);
                 
                 // Clear current state
                 currentUser = null;
@@ -5938,6 +5990,7 @@
                 initializeProfileCard();
             }
 
+            syncDiscoverBelowHeroAd();
             syncDiscoverFooterAd();
         }
         
@@ -6054,6 +6107,7 @@
             
             // Reset favorite button state
             updateFavoriteButtonState();
+            syncDiscoverBelowHeroAd();
             syncDiscoverFooterAd();
         }
 
@@ -6432,9 +6486,38 @@
         // ============================================
         // SETTINGS MANAGEMENT
         // ============================================
+        // Storage keys: migrated from legacy BiteSight names; keep backward compatibility.
+        const OKSNAP_STORAGE = {
+            settingsNew: 'okSnapSettings',
+            settingsLegacy: 'biteSightSettings',
+            historyNew: 'okSnapHistory',
+            historyLegacy: 'biteSightHistory',
+            favoritesNew: 'okSnapFavorites',
+            favoritesLegacy: 'biteSightFavorites',
+            usernameLegacy: 'biteSightUsername'
+        };
+
+        function getStoredJson(newKey, legacyKey, fallback) {
+            try {
+                const raw = localStorage.getItem(newKey) || (legacyKey ? localStorage.getItem(legacyKey) : null);
+                if (!raw) return fallback;
+                return JSON.parse(raw);
+            } catch (e) {
+                return fallback;
+            }
+        }
+
+        function setStoredJson(newKey, legacyKey, value) {
+            try {
+                const raw = JSON.stringify(value);
+                localStorage.setItem(newKey, raw);
+                if (legacyKey) localStorage.setItem(legacyKey, raw);
+            } catch (e) { /* ignore */ }
+        }
+
         function initializeSettings() {
             // Load saved settings
-            let settings = JSON.parse(localStorage.getItem('biteSightSettings') || '{}');
+            let settings = getStoredJson(OKSNAP_STORAGE.settingsNew, OKSNAP_STORAGE.settingsLegacy, {});
             
             // Initialize night mode
             const nightModeToggle = document.getElementById('nightModeToggle');
@@ -6487,7 +6570,7 @@
             const feedbackBtn = document.getElementById('feedbackBtn');
             if (feedbackBtn) {
                 feedbackBtn.addEventListener('click', () => {
-                    window.location.href = 'mailto:contpickstudio@gmail.com?subject=OK-Snap Feedback';
+                    window.location.href = 'mailto:contpickstudio@gmail.com?subject=Ok%20Snap%20Feedback';
                 });
             }
         }
@@ -6613,7 +6696,7 @@
         }
 
         function saveSettings(settings) {
-            localStorage.setItem('biteSightSettings', JSON.stringify(settings));
+            setStoredJson(OKSNAP_STORAGE.settingsNew, OKSNAP_STORAGE.settingsLegacy, settings);
         }
 
         // ============================================
@@ -6812,18 +6895,85 @@
         // ============================================
         // HEADER INITIALIZATION
         // ============================================
-        function syncDiscoverFooterAd() {
-            const el = document.getElementById('oksnapDiscoverFooterAd');
+        function okSnapSlotEnabled(key) {
+            return typeof window.okSnapAdSlotEnabled !== 'function' || window.okSnapAdSlotEnabled(key);
+        }
+
+        function syncDiscoverBelowHeroAd() {
+            const el = document.getElementById('oksnapDiscoverBelowHeroAd');
             if (!el) return;
-            const cfg = window.OK_SNAP_ADS || { enabled: false };
-            if (!cfg.enabled) {
+            if (!okSnapSlotEnabled('discoverBelowHero')) {
                 el.style.display = 'none';
                 el.setAttribute('aria-hidden', 'true');
                 return;
             }
+            const cfg = window.OK_SNAP_ADS || { enabled: false };
+            const adsOn =
+                cfg.enabled &&
+                (typeof window.okSnapAdsEffectiveEnabled === 'function'
+                    ? window.okSnapAdsEffectiveEnabled()
+                    : typeof OkSnapConsent !== 'undefined' &&
+                      OkSnapConsent.allowsAdvertising &&
+                      OkSnapConsent.allowsAdvertising());
             const rs = document.getElementById('resultSection');
             const resultVisible = rs && rs.style.display !== 'none' && isShowingResult;
             const show = currentRoute === 'discover' && !resultVisible;
+            if (!adsOn) {
+                el.classList.toggle('oksnap-ad-slot--blocked', !!cfg.enabled);
+                if (!cfg.enabled) {
+                    el.style.display = 'none';
+                    el.setAttribute('aria-hidden', 'true');
+                    return;
+                }
+                el.style.display = show ? 'block' : 'none';
+                el.setAttribute('aria-hidden', show ? 'false' : 'true');
+                if (show && typeof window.refreshOkSnapAds === 'function') {
+                    window.refreshOkSnapAds(el);
+                }
+                return;
+            }
+            el.classList.remove('oksnap-ad-slot--blocked');
+            el.style.display = show ? 'block' : 'none';
+            el.setAttribute('aria-hidden', show ? 'false' : 'true');
+            if (show && typeof window.refreshOkSnapAds === 'function') {
+                window.refreshOkSnapAds(el);
+            }
+        }
+
+        function syncDiscoverFooterAd() {
+            const el = document.getElementById('oksnapDiscoverFooterAd');
+            if (!el) return;
+            if (!okSnapSlotEnabled('discoverFooter')) {
+                el.style.display = 'none';
+                el.setAttribute('aria-hidden', 'true');
+                return;
+            }
+            const cfg = window.OK_SNAP_ADS || { enabled: false };
+            const adsOn =
+                cfg.enabled &&
+                (typeof window.okSnapAdsEffectiveEnabled === 'function'
+                    ? window.okSnapAdsEffectiveEnabled()
+                    : typeof OkSnapConsent !== 'undefined' &&
+                      OkSnapConsent.allowsAdvertising &&
+                      OkSnapConsent.allowsAdvertising());
+            const rs = document.getElementById('resultSection');
+            const resultVisible = rs && rs.style.display !== 'none' && isShowingResult;
+            const show = currentRoute === 'discover' && !resultVisible;
+            if (!adsOn) {
+                el.classList.toggle('oksnap-ad-slot--blocked', !!cfg.enabled);
+                if (!cfg.enabled) {
+                    el.style.display = 'none';
+                    el.setAttribute('aria-hidden', 'true');
+                    return;
+                }
+                el.style.display = show ? 'block' : 'none';
+                el.setAttribute('aria-hidden', show ? 'false' : 'true');
+                if (show && typeof window.refreshOkSnapAds === 'function') {
+                    window.refreshOkSnapAds(el);
+                }
+                return;
+            }
+            el.classList.remove('oksnap-ad-slot--blocked');
             el.style.display = show ? 'block' : 'none';
             el.setAttribute('aria-hidden', show ? 'false' : 'true');
             if (show && typeof window.refreshOkSnapAds === 'function') {
@@ -6835,20 +6985,73 @@
             const afterNut = document.getElementById('oksnapResultAdAfterNutrition');
             const mid = document.getElementById('oksnapResultAdMidContent');
             const cfg = window.OK_SNAP_ADS || { enabled: false, showResultMidSlot: true };
-            if (!cfg.enabled) {
-                if (afterNut) {
-                    afterNut.style.display = 'none';
-                    afterNut.setAttribute('aria-hidden', 'true');
+            const slotAfterOn = okSnapSlotEnabled('resultAfterNutrition');
+            const slotMidOn = okSnapSlotEnabled('resultMidContent');
+            const adsOn =
+                cfg.enabled &&
+                (typeof window.okSnapAdsEffectiveEnabled === 'function'
+                    ? window.okSnapAdsEffectiveEnabled()
+                    : typeof OkSnapConsent !== 'undefined' &&
+                      OkSnapConsent.allowsAdvertising &&
+                      OkSnapConsent.allowsAdvertising());
+            if (afterNut && !slotAfterOn) {
+                afterNut.style.display = 'none';
+                afterNut.setAttribute('aria-hidden', 'true');
+            }
+            if (mid && !slotMidOn) {
+                mid.style.display = 'none';
+                mid.setAttribute('aria-hidden', 'true');
+            }
+            if (!adsOn) {
+                const blocked = !!cfg.enabled;
+                if (afterNut && slotAfterOn) {
+                    afterNut.classList.toggle('oksnap-ad-slot--blocked', blocked);
+                    if (!cfg.enabled) {
+                        afterNut.style.display = 'none';
+                        afterNut.setAttribute('aria-hidden', 'true');
+                    }
                 }
-                if (mid) {
-                    mid.style.display = 'none';
-                    mid.setAttribute('aria-hidden', 'true');
+                if (mid && slotMidOn) {
+                    mid.classList.toggle('oksnap-ad-slot--blocked', blocked);
+                    if (!cfg.enabled) {
+                        mid.style.display = 'none';
+                        mid.setAttribute('aria-hidden', 'true');
+                    }
+                }
+                if (!cfg.enabled) {
+                    return;
+                }
+                const nutrition = dishData && dishData.nutrition;
+                const hasNutrition = nutrition && Number(nutrition.calories) > 0;
+                if (afterNut && slotAfterOn) {
+                    afterNut.style.display = hasNutrition ? 'block' : 'none';
+                    afterNut.setAttribute('aria-hidden', hasNutrition ? 'false' : 'true');
+                }
+                const ingEl = document.getElementById('ingredientsSection');
+                const blogGen = document.getElementById('blogGenerationSection');
+                const blogDisp = document.getElementById('blogDisplaySection');
+                const cul = document.getElementById('culturalSection');
+                const enoughContent =
+                    (ingEl && ingEl.style.display !== 'none') ||
+                    (blogGen && blogGen.style.display !== 'none') ||
+                    (blogDisp && blogDisp.style.display !== 'none') ||
+                    (cul && cul.style.display !== 'none');
+                if (mid && slotMidOn) {
+                    const showMid = cfg.showResultMidSlot !== false && enoughContent;
+                    mid.style.display = showMid ? 'block' : 'none';
+                    mid.setAttribute('aria-hidden', showMid ? 'false' : 'true');
+                }
+                const rsBlocked = document.getElementById('resultSection');
+                if (typeof window.refreshOkSnapAds === 'function' && rsBlocked) {
+                    window.refreshOkSnapAds(rsBlocked);
                 }
                 return;
             }
+            if (afterNut && slotAfterOn) afterNut.classList.remove('oksnap-ad-slot--blocked');
+            if (mid && slotMidOn) mid.classList.remove('oksnap-ad-slot--blocked');
             const nutrition = dishData && dishData.nutrition;
             const hasNutrition = nutrition && Number(nutrition.calories) > 0;
-            if (afterNut) {
+            if (afterNut && slotAfterOn) {
                 afterNut.style.display = hasNutrition ? 'block' : 'none';
                 afterNut.setAttribute('aria-hidden', hasNutrition ? 'false' : 'true');
                 if (hasNutrition) {
@@ -6865,7 +7068,7 @@
                 (blogGen && blogGen.style.display !== 'none') ||
                 (blogDisp && blogDisp.style.display !== 'none') ||
                 (cul && cul.style.display !== 'none');
-            if (mid) {
+            if (mid && slotMidOn) {
                 const showMid = cfg.showResultMidSlot !== false && enoughContent;
                 mid.style.display = showMid ? 'block' : 'none';
                 mid.setAttribute('aria-hidden', showMid ? 'false' : 'true');
@@ -6882,9 +7085,12 @@
 
         function initializeAds() {
             try {
-                if (typeof window.initOkSnapAds === 'function') {
+                if (typeof window.OkSnapConsent !== 'undefined' && typeof window.OkSnapConsent.bootstrapAds === 'function') {
+                    window.OkSnapConsent.bootstrapAds();
+                } else if (typeof window.initOkSnapAds === 'function') {
                     window.initOkSnapAds(document);
                 }
+                syncDiscoverBelowHeroAd();
                 syncDiscoverFooterAd();
             } catch (e) {
                 console.warn('[Ads] OkSnapAds init:', e);
@@ -7245,8 +7451,28 @@
         }
 
         function handleFile(file) {
-            if (!file.type.startsWith('image/')) {
-                showError('Please upload an image file.');
+            const MAX_UPLOAD_BYTES = 8 * 1024 * 1024; // 8MB — keeps uploads lightweight and reduces scan failures
+            const allowedTypes = new Set([
+                'image/jpeg',
+                'image/jpg',
+                'image/png',
+                'image/webp',
+                'image/gif'
+            ]);
+
+            if (!file || !file.type || !file.size) {
+                showError('Please choose a valid image file.');
+                return;
+            }
+
+            if (!file.type.startsWith('image/') || (!allowedTypes.has(file.type) && file.type !== 'image/jpg')) {
+                showError('Unsupported file type. Please upload a JPG, PNG, or WebP image.');
+                return;
+            }
+
+            if (file.size > MAX_UPLOAD_BYTES) {
+                const mb = Math.round((file.size / (1024 * 1024)) * 10) / 10;
+                showError(`That image is ${mb}MB. Please choose a smaller photo (under 8MB) for faster scanning.`);
                 return;
             }
 
@@ -7281,6 +7507,9 @@
                 if (analyzeBtn) {
                     analyzeBtn.disabled = false;
                 }
+            };
+            reader.onerror = () => {
+                showError('Couldn’t read that file. Please try another photo.');
             };
             reader.readAsDataURL(file);
         }
@@ -7948,7 +8177,10 @@
 
                 if (!analysis.dish_detected) {
                     const errorMessage = analysis.message || t.couldNotRecognize || "I couldn't recognize any food in this image. Try another angle or make sure the food is clearly visible.";
-                    showError(errorMessage);
+                    showError(errorMessage, {
+                        primaryCtaText: 'Try another photo',
+                        onPrimaryCta: () => resetUpload()
+                    });
                     showLoading(false);
                     return;
                 }
@@ -8205,6 +8437,7 @@
             const dishDescription = document.getElementById('dishDescription');
             const alternativesSection = document.getElementById('alternativesSection');
             const alternativeChips = document.getElementById('alternativeChips');
+                const reportLink = document.getElementById('oksnapReportLink');
 
             // Exit early if required elements don't exist
             if (!resultSection || !dishName || !confidenceBadge) {
@@ -8242,6 +8475,15 @@
             // Hide description - only show structured data (name, nutrition, ingredients)
             if (dishDescription) {
                 dishDescription.style.display = 'none';
+            }
+
+            // Optional: lightweight “looks wrong?” report link (kept subtle)
+            if (reportLink) {
+                const subject = encodeURIComponent('Ok Snap recognition looks wrong');
+                const body = encodeURIComponent(
+                    `Hi Ok Snap team,\n\nThe recognition result looks incorrect.\n\nDish shown: ${dishData.name || ''}\nConfidence: ${confidence}%\nTime: ${new Date().toISOString()}\n\nWhat I expected:\n\n(Any extra details)\n`
+                );
+                reportLink.setAttribute('href', `mailto:support@ok-snap.com?subject=${subject}&body=${body}`);
             }
 
             // Update Google Maps link with dish name
@@ -8371,6 +8613,7 @@
             
             RecipeAdManager.resetForNewRecipe();
             updateResultAdSlots(dishData);
+            syncDiscoverBelowHeroAd();
             syncDiscoverFooterAd();
         }
 
@@ -8442,6 +8685,7 @@
             const blogDisplaySection = document.getElementById('blogDisplaySection');
             if (blogGenSection) blogGenSection.style.display = 'none';
             if (blogDisplaySection) blogDisplaySection.style.display = 'none';
+            syncDiscoverBelowHeroAd();
             syncDiscoverFooterAd();
         }
 
@@ -8536,7 +8780,7 @@
                 const apiBase = getApiBase();
                 const publicWebsiteUrl = getPublicSiteUrl();
                 // Use new Supabase format: /blog.html?slug=xxx (blogs are in Supabase, not static files)
-                const blogUrl = `${publicWebsiteUrl}/blog.html?slug=${slug}`;
+                const blogUrl = `${publicWebsiteUrl}/blog.html?slug=${encodeURIComponent(slug)}`;
 
                 // Step 1: Check if blog exists (handle 404 gracefully)
                 let checkResult = { exists: false };
@@ -8605,10 +8849,10 @@
                             finalBlogUrl = generateResult.blogUrl;
                         } else if (generateResult.slug) {
                             // Construct URL from slug if provided (new Supabase format)
-                            finalBlogUrl = `${publicWebsiteUrl}/blog.html?slug=${generateResult.slug}`;
+                            finalBlogUrl = `${publicWebsiteUrl}/blog.html?slug=${encodeURIComponent(generateResult.slug)}`;
                         } else {
                             // Fallback to constructed URL (new Supabase format)
-                            finalBlogUrl = `${publicWebsiteUrl}/blog.html?slug=${slug}`;
+                            finalBlogUrl = `${publicWebsiteUrl}/blog.html?slug=${encodeURIComponent(slug)}`;
                         }
                         
                         // Verify blog was successfully created (not skipped)
@@ -8718,7 +8962,8 @@
                         delete window.generatedBlogImageUrl;
                     } else {
                         // Blog exists on recipes.ok-snap.com - fetch and display content in-app
-                        finalBlogUrl = `${publicWebsiteUrl}/blog.html?slug=${encodeURIComponent(resolvedSlug)}`;
+                        // Prefer the crawlable, standalone recipe route on this domain.
+                        finalBlogUrl = `${window.location.origin}/recipe/${encodeURIComponent(resolvedSlug)}`;
                         
                         // Hide the static "Full Recipe Blog" header - title will be in scrollable content
                         const blogDisplayHeader = blogDisplaySection.querySelector('.result-section-header');
@@ -8768,12 +9013,20 @@
                                     blogExternalLink.style.display = 'none';
                                 }
                             } else {
-                                // Blog API fetch failed - show fallback message
+                                let blogErrRef = '';
+                                try {
+                                    const errJson = await blogResponse.clone().json();
+                                    if (errJson.requestId) blogErrRef = errJson.requestId;
+                                } catch (e) { /* ignore */ }
+                                console.warn('[Blog] Blog API non-OK', {
+                                    status: blogResponse.status,
+                                    requestId: blogErrRef,
+                                    path: '/api/blogs/' + encodeURIComponent(resolvedSlug)
+                                });
                                 if (blogViewer) {
                                     blogViewer.innerHTML = '<p>Recipe blog is ready! Content is being loaded...</p>';
                                 }
                                 
-                                // Show external link as fallback
                                 if (blogExternalLink) {
                                     blogExternalLink.href = finalBlogUrl;
                                     blogExternalLink.textContent = 'View Full Recipe';
@@ -8983,15 +9236,40 @@
             }, 3000);
         }
 
-        function showError(message) {
+        function showError(message, opts) {
+            opts = opts || {};
             const resultSection = document.getElementById('resultSection');
             resultSection.style.display = 'block';
+            const primaryText = opts.primaryCtaText || 'Try again';
             resultSection.innerHTML = `
                 <div class="error-message">
                     <h3 style="margin-bottom: 0.5rem;">⚠️ Error</h3>
                     <p>${message}</p>
+                    <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top: 14px;">
+                        <button type="button" class="btn" id="oksnapErrorPrimaryCta">${primaryText}</button>
+                        <a class="btn btn-secondary" href="browse.html">Browse recipes</a>
+                    </div>
+                    <div style="margin-top: 10px; font-size: 0.82rem; color: var(--text-secondary); text-align: center;">
+                        Need help? <a href="contact.html" style="color: var(--primary); text-decoration: none; font-weight: 600;">Contact us</a>
+                    </div>
                 </div>
             `;
+
+            const cta = document.getElementById('oksnapErrorPrimaryCta');
+            if (cta) {
+                cta.addEventListener('click', () => {
+                    try {
+                        if (typeof opts.onPrimaryCta === 'function') {
+                            opts.onPrimaryCta();
+                            return;
+                        }
+                        // Default: re-run scan if possible
+                        if (currentImage) analyzeImage();
+                    } catch (e) {
+                        console.warn('Error CTA failed:', e);
+                    }
+                });
+            }
         }
         
         // Show signup prompt for features that require login
@@ -9093,7 +9371,7 @@
             const recipeLinksContainer = document.getElementById('recipeLinks');
             if (!recipeLinksContainer) return;
             
-            // Only show OK-Snap generated blogs and recipe JSON
+            // Only show Ok Snap generated blogs and recipe JSON
             // No external recipe site links
             recipeLinksContainer.innerHTML = '';
         }
@@ -9160,7 +9438,7 @@
                         saveToLocalHistory(historyItem);
                     } else {
                         // Also save to localStorage for immediate display
-                        localStorage.setItem('biteSightHistory', JSON.stringify(history));
+                        setStoredJson(OKSNAP_STORAGE.historyNew, OKSNAP_STORAGE.historyLegacy, history);
                     }
                 } catch (error) {
                     console.error('Error saving history to DB:', error);
@@ -9177,11 +9455,11 @@
         }
         
         function saveToLocalHistory(historyItem) {
-            let history = JSON.parse(localStorage.getItem('biteSightHistory') || '[]');
+            let history = getStoredJson(OKSNAP_STORAGE.historyNew, OKSNAP_STORAGE.historyLegacy, []);
             history = history.filter(item => item.name !== historyItem.name);
             history.unshift(historyItem);
             history = history.slice(0, 10);
-            localStorage.setItem('biteSightHistory', JSON.stringify(history));
+            setStoredJson(OKSNAP_STORAGE.historyNew, OKSNAP_STORAGE.historyLegacy, history);
         }
         
         async function loadUserHistoryAndFavorites() {
@@ -9199,7 +9477,7 @@
                     console.warn('History table may not exist:', historyError);
                 } else if (historyData?.history) {
                     // Sync to localStorage for display
-                    localStorage.setItem('biteSightHistory', JSON.stringify(historyData.history));
+                    setStoredJson(OKSNAP_STORAGE.historyNew, OKSNAP_STORAGE.historyLegacy, historyData.history);
                     loadHistory();
                 }
                 
@@ -9214,7 +9492,7 @@
                     console.warn('Favorites table may not exist:', favoritesError);
                 } else if (favoritesData?.favorites) {
                     // Sync to localStorage for display
-                    localStorage.setItem('biteSightFavorites', JSON.stringify(favoritesData.favorites));
+                    setStoredJson(OKSNAP_STORAGE.favoritesNew, OKSNAP_STORAGE.favoritesLegacy, favoritesData.favorites);
                     loadFavorites();
                 }
 
@@ -9825,14 +10103,14 @@
                     if (error && error.code !== 'PGRST116') {
                         console.warn('History table may not exist:', error);
                     } else if (data?.history) {
-                        localStorage.setItem('biteSightHistory', JSON.stringify(data.history));
+                        setStoredJson(OKSNAP_STORAGE.historyNew, OKSNAP_STORAGE.historyLegacy, data.history);
                     }
                 } catch (error) {
                     console.error('Error loading history from DB:', error);
                 }
             }
             
-            let history = JSON.parse(localStorage.getItem('biteSightHistory') || '[]');
+            let history = getStoredJson(OKSNAP_STORAGE.historyNew, OKSNAP_STORAGE.historyLegacy, []);
             
             // Filter history by period
             const now = new Date();
@@ -9950,7 +10228,7 @@
         }
 
         function getCurrentLanguage() {
-            const settings = JSON.parse(localStorage.getItem('biteSightSettings') || '{}');
+            const settings = getStoredJson(OKSNAP_STORAGE.settingsNew, OKSNAP_STORAGE.settingsLegacy, {});
             return settings.language || 'en';
         }
 
@@ -9993,7 +10271,7 @@
                 return;
             }
 
-            const favorites = JSON.parse(localStorage.getItem('biteSightFavorites') || '[]');
+            const favorites = getStoredJson(OKSNAP_STORAGE.favoritesNew, OKSNAP_STORAGE.favoritesLegacy, []);
             const exists = favorites.find(f => f.name === currentDishData.name);
             
             if (exists) {
@@ -10062,7 +10340,7 @@
             const lang = getCurrentLanguage();
             const t = translations[lang] || translations.en;
             const dishName = currentDishData.name || 'This dish';
-            const shareText = `${dishName} - Discovered with OK-Snap! 🍲`;
+            const shareText = `${dishName} - Discovered with Ok Snap! 🍲`;
             const shareUrl = window.location.href;
 
             if (navigator.share) {
@@ -10138,7 +10416,7 @@
                         saveToLocalFavorites(favoriteItem);
                     } else {
                         // Also save to localStorage for immediate display
-                        localStorage.setItem('biteSightFavorites', JSON.stringify(favorites));
+                        setStoredJson(OKSNAP_STORAGE.favoritesNew, OKSNAP_STORAGE.favoritesLegacy, favorites);
                     }
                 } catch (error) {
                     console.error('Error saving favorite to DB:', error);
@@ -10214,7 +10492,7 @@
                         saveToLocalFavorites(favoriteItem);
                     } else {
                         // Also save to localStorage for immediate display
-                        localStorage.setItem('biteSightFavorites', JSON.stringify(favorites));
+                        setStoredJson(OKSNAP_STORAGE.favoritesNew, OKSNAP_STORAGE.favoritesLegacy, favorites);
                     }
                 } catch (error) {
                     console.error('Error saving favorite to DB:', error);
@@ -10231,14 +10509,14 @@
         }
         
         function saveToLocalFavorites(favoriteItem) {
-            let favorites = JSON.parse(localStorage.getItem('biteSightFavorites') || '[]');
+            let favorites = getStoredJson(OKSNAP_STORAGE.favoritesNew, OKSNAP_STORAGE.favoritesLegacy, []);
             const exists = favorites.find(f => f.name === favoriteItem.name);
             if (exists) {
                 favorites = favorites.filter(f => f.name !== favoriteItem.name);
             } else {
                 favorites.unshift(favoriteItem);
             }
-            localStorage.setItem('biteSightFavorites', JSON.stringify(favorites));
+            setStoredJson(OKSNAP_STORAGE.favoritesNew, OKSNAP_STORAGE.favoritesLegacy, favorites);
         }
 
         async function loadFavorites() {
@@ -10254,14 +10532,14 @@
                     if (error && error.code !== 'PGRST116') {
                         console.warn('Favorites table may not exist:', error);
                     } else if (data?.favorites) {
-                        localStorage.setItem('biteSightFavorites', JSON.stringify(data.favorites));
+                        setStoredJson(OKSNAP_STORAGE.favoritesNew, OKSNAP_STORAGE.favoritesLegacy, data.favorites);
                     }
                 } catch (error) {
                     console.error('Error loading favorites from DB:', error);
                 }
             }
             
-            const favorites = JSON.parse(localStorage.getItem('biteSightFavorites') || '[]');
+            const favorites = getStoredJson(OKSNAP_STORAGE.favoritesNew, OKSNAP_STORAGE.favoritesLegacy, []);
             const favoritesGrid = document.getElementById('favoritesGrid');
             
             // Exit early if favoritesGrid doesn't exist (not on favorites page)
@@ -10298,7 +10576,7 @@
             const lang = getCurrentLanguage();
             const t = translations[lang] || translations.en;
             const dishName = currentDishData.name || 'This dish';
-            const shareText = `${dishName} - Discovered with OK-Snap! 🍲`;
+            const shareText = `${dishName} - Discovered with Ok Snap! 🍲`;
             const shareUrl = window.location.href;
 
             if (navigator.share) {
@@ -10536,7 +10814,7 @@
         // UTILITY FUNCTIONS
         // ============================================
         function loadDishFromHistory(name) {
-            const history = JSON.parse(localStorage.getItem('biteSightHistory') || '[]');
+            const history = getStoredJson(OKSNAP_STORAGE.historyNew, OKSNAP_STORAGE.historyLegacy, []);
             const historyItem = history.find(item => item.name === name);
             
             if (!historyItem) {
@@ -10574,7 +10852,7 @@
         }
         
         function loadDishFromFavorites(name) {
-            const favorites = JSON.parse(localStorage.getItem('biteSightFavorites') || '[]');
+            const favorites = getStoredJson(OKSNAP_STORAGE.favoritesNew, OKSNAP_STORAGE.favoritesLegacy, []);
             const favoriteItem = favorites.find(item => item.name === name);
             
             if (!favoriteItem) {
@@ -10712,7 +10990,7 @@
                 const card = document.createElement('div');
                 card.className = 'blog-card';
                 // Use new Supabase format: /blog.html?slug=xxx
-                const recipeUrl = recipe.url || `${publicWebsiteUrl}/blog.html?slug=${recipe.slug || createSlug(recipe.name)}`;
+                const recipeUrl = recipe.url || `${publicWebsiteUrl}/blog.html?slug=${encodeURIComponent(recipe.slug || createSlug(recipe.name))}`;
                 card.onclick = () => openBlogPost(recipeUrl);
                 
                 // Use JSON data only - no HTML fetching
@@ -10723,7 +11001,7 @@
                     <div class="blog-card-content">
                         <div class="blog-card-title">${title}</div>
                         ${date ? `<div class="blog-card-date">${new Date(date).toLocaleDateString()}</div>` : ''}
-                        <div class="blog-card-excerpt">Click to view full recipe on recipes.ok-snap.com</div>
+                        <div class="blog-card-excerpt">Open the full recipe</div>
                     </div>
                 `;
                 

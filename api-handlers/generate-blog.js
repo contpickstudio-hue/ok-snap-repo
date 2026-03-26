@@ -14,7 +14,12 @@ function buildBlogGenerationSystemPrompt(dishData, slug) {
     const protein = dishData.nutrition?.protein ?? 0;
     const carbs = dishData.nutrition?.carbs ?? 0;
     const fat = dishData.nutrition?.fat ?? 0;
-    const nutritionLine = `Nutrition to weave in (facts only, one short subsection or paragraph): ${calories} calories, ${protein}g protein, ${carbs}g carbs, ${fat}g fat.`;
+    const hasNutrition =
+        dishData.nutrition &&
+        [calories, protein, carbs, fat].some((v) => typeof v === 'number' && Number.isFinite(v) && v > 0);
+    const nutritionLine = hasNutrition
+        ? `Nutrition to weave in (facts only, one short subsection or paragraph): ${calories} calories, ${protein}g protein, ${carbs}g carbs, ${fat}g fat.`
+        : '';
     const descriptionLine = dishData.description
         ? `Dish description from the app: ${dishData.description}`
         : '';
@@ -25,7 +30,7 @@ DISH AND KEYWORD CONTEXT
 - Dish name: ${dishName}
 - Primary SEO keyword (use naturally 4 to 6 times plus close variations): ${primaryKeyword}
 - URL slug for this post (must appear exactly as given when you list the slug): ${slug}
-${koreanLine ? `${koreanLine}\n` : ''}${descriptionLine ? `${descriptionLine}\n` : ''}${nutritionLine}
+${koreanLine ? `${koreanLine}\n` : ''}${descriptionLine ? `${descriptionLine}\n` : ''}${nutritionLine ? `${nutritionLine}\n` : ''}
 
 SEO AND METADATA (include at the top of the article body as HTML)
 Generate and output in a section with class "seo-meta" (use a dl, paragraphs, or headings, no markdown):
@@ -51,8 +56,7 @@ STRUCTURE (use semantic HTML: article, section, h1 h2 h3, p, ul, ol, li)
 5. Instructions: ol/li, step-by-step, natural phrasing (not stiff or formal).
 6. Optional: include 1 or 2 only if relevant: Tips, Substitutions, FAQs (2 to 3 short Q and A pairs max).
 7. Closing: soft call to action (invite them to try the recipe).
-8. Nutrition: brief, using the numbers provided above.
-9. Image prompts: a section titled "Image prompts" with 3 to 5 items labeled exactly "Image Prompt 1:" through "Image Prompt 5:" as needed. Each value is one or more p elements with the prompt text only.
+${hasNutrition ? '8. Nutrition: brief, using the numbers provided above.\n' : ''}9. Image prompts: a section titled "Image prompts" with 3 to 5 items labeled exactly "Image Prompt 1:" through "Image Prompt 5:" as needed. Each value is one or more p elements with the prompt text only.
 
 IMAGE PROMPT RULES (text inside the article, not for you to run)
 Each prompt must describe: hyper-realistic food photography, cozy homemade kitchen, natural lighting, slightly imperfect (not studio perfect).
@@ -379,6 +383,42 @@ module.exports = async (req, res) => {
 
         // Create slug for the blog post
         const slug = createSlug(dishData.name);
+
+        // Idempotency: if this slug already exists in Supabase, skip OpenAI calls.
+        try {
+            const { encodeSlugForUrl } = require('../lib/slug-validation');
+            const seo = require('../lib/seo');
+            const supabaseUrl = process.env.SUPABASE_URL;
+            const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+            if (supabaseUrl && supabaseKey) {
+                const encodedSlug = encodeSlugForUrl(slug);
+                const checkResponse = await fetch(`${supabaseUrl}/rest/v1/blogs?slug=eq.${encodedSlug}&select=slug`, {
+                    headers: {
+                        apikey: supabaseKey,
+                        Authorization: `Bearer ${supabaseKey}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (checkResponse.ok) {
+                    const existing = await checkResponse.json();
+                    if (Array.isArray(existing) && existing.length > 0) {
+                        return res.status(200).json({
+                            success: true,
+                            skipped: true,
+                            slug,
+                            blogUrl: seo.recipeCanonicalUrl(seo.getSiteOrigin(req), slug),
+                            message: 'Recipe already exists. Skipping generation.'
+                        });
+                    }
+                }
+            }
+        } catch (precheckErr) {
+            // If precheck fails, continue with generation; store step will still validate/upsert.
+            console.warn('[generate-blog] Precheck failed, continuing', {
+                name: precheckErr && precheckErr.name,
+                message: precheckErr && precheckErr.message
+            });
+        }
         
         // Generate blog content
         const blogContent = await generateBlogPost(dishData, slug);
@@ -395,11 +435,17 @@ module.exports = async (req, res) => {
         const supabaseResult = await storeBlogInSupabase(dishData, blogContent, imagePath, slug);
         
         if (supabaseResult.success) {
+            let canonicalUrl = supabaseResult.blogUrl;
+            try {
+                const seo = require('../lib/seo');
+                canonicalUrl = seo.recipeCanonicalUrl(seo.getSiteOrigin(req), slug);
+            } catch (e) { /* ignore */ }
             return res.status(200).json({
                 success: true,
-                blogUrl: supabaseResult.blogUrl,
+                blogUrl: canonicalUrl,
                 slug: slug,
                 imageUrl: supabaseResult.imageUrl,
+                skipped: !!supabaseResult.skipped,
                 message: 'Blog post created and stored in Supabase. Available immediately - no deployment needed!'
             });
         } else {

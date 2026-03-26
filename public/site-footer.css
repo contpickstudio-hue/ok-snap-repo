@@ -1,0 +1,115 @@
+/**
+ * Shared site footer — PWA shell pages + legal pages.
+ * Expects --primary, --text-secondary, --text-primary, --secondary-dark on app pages;
+ * legal.css defines compatible tokens for standalone legal views.
+ */
+
+.oksnap-site-footer {
+    margin-top: auto;
+    padding-top: 1.25rem;
+    padding-bottom: 0.25rem;
+    border-top: 1px solid var(--secondary-dark, rgba(0, 0, 0, 0.1));
+    text-align: center;
+}
+
+.oksnap-site-footer__tagline {
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: var(--text-secondary, #666);
+    margin: 0 0 0.65rem;
+    max-width: 26rem;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.oksnap-site-footer__email {
+    font-size: 0.8125rem;
+    margin: 0 0 1rem;
+    color: var(--text-secondary, #666);
+}
+
+.oksnap-site-footer__email a {
+    color: var(--primary, #7a9163);
+    font-weight: 600;
+    text-decoration: none;
+    word-break: break-all;
+}
+
+.oksnap-site-footer__email a:hover {
+    text-decoration: underline;
+    color: var(--primary-dark, #5a6f4a);
+}
+
+.oksnap-site-footer__nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 0.35rem 0.65rem;
+    row-gap: 0.5rem;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+}
+
+.oksnap-site-footer__nav a {
+    color: var(--primary, #7a9163);
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0.45rem 0.2rem;
+    border-radius: 6px;
+}
+
+.oksnap-site-footer__nav a:hover {
+    text-decoration: underline;
+    color: var(--primary-dark, #5a6f4a);
+}
+
+/* Cookie control: match link styling */
+.oksnap-site-footer__cookie-btn {
+    color: var(--primary, #7a9163);
+    font: inherit;
+    font-weight: 500;
+    font-size: 0.8125rem;
+    background: none;
+    border: none;
+    padding: 0.2rem 0.15rem;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.oksnap-site-footer__cookie-btn:hover {
+    text-decoration: underline;
+    color: var(--primary-dark, #5a6f4a);
+}
+
+.oksnap-site-footer__nav a:focus-visible,
+.oksnap-site-footer__cookie-btn:focus-visible {
+    outline: 2px solid var(--primary, #7a9163);
+    outline-offset: 2px;
+}
+
+@media (min-width: 480px) {
+    .oksnap-site-footer__nav {
+        gap: 0 0.85rem;
+    }
+}
+
+/* Legal / static pages: inside .legal-page */
+.oksnap-site-footer--legal {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    text-align: left;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.oksnap-site-footer--legal .oksnap-site-footer__tagline,
+.oksnap-site-footer--legal .oksnap-site-footer__email {
+    text-align: left;
+    margin-left: 0;
+    margin-right: 0;
+    max-width: none;
+}
+
+.oksnap-site-footer--legal .oksnap-site-footer__nav {
+    justify-content: flex-start;
+}

@@ -8,6 +8,17 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Ok Snap">
     <title>Favorites - Ok Snap</title>
+    <meta name="description" content="Your saved favorites in Ok Snap. Keep recipes you love and come back anytime.">
+    <meta name="robots" content="noindex, follow">
+    <link rel="canonical" href="https://scanner.ok-snap.com/favorites.html">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Ok Snap">
+    <meta property="og:title" content="Favorites - Ok Snap">
+    <meta property="og:description" content="Your saved favorites in Ok Snap. Keep recipes you love and come back anytime.">
+    <meta property="og:url" content="https://scanner.ok-snap.com/favorites.html">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Favorites - Ok Snap">
+    <meta name="twitter:description" content="Your saved favorites in Ok Snap. Keep recipes you love and come back anytime.">
     <script>
         // Only load icons and manifest if not using file:// protocol (avoids CORS/file errors)
         if (window.location.protocol !== 'file:') {
@@ -3027,6 +3038,42 @@
             font-size: 0.875rem;
         }
 
+        .empty-state .empty-title {
+            font-weight: 800;
+            color: var(--text-primary);
+            font-size: 1.05rem;
+            margin: 0 0 10px;
+            font-family: 'Poppins', 'Inter', sans-serif;
+        }
+
+        .empty-state .empty-subtitle {
+            margin: 0 auto 18px;
+            max-width: 26rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.45;
+        }
+
+        .empty-state .empty-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 14px 0 10px;
+        }
+
+        .empty-state .empty-actions a {
+            text-decoration: none;
+        }
+
+        .empty-state .empty-help {
+            margin: 10px auto 0;
+            max-width: 28rem;
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            line-height: 1.45;
+        }
+
         .loading {
             display: none !important;
             position: fixed;
@@ -4278,6 +4325,9 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="ad-slots.css">
+    <link rel="stylesheet" href="consent-banner.css">
+    <link rel="stylesheet" href="site-footer.css">
 </head>
 <body>
     <!-- Onboarding Overlay -->
@@ -4287,7 +4337,7 @@
             <div class="onboarding-screen active" id="onboardingScreen1">
                 <div class="onboarding-content">
                     <div class="onboarding-icon">🍲</div>
-                    <h1 class="onboarding-title">Welcome to OK-Snap</h1>
+                    <h1 class="onboarding-title">Welcome to Ok Snap</h1>
                     <p class="onboarding-description">
                         Discover Korean cuisine and food from around the world through the power of AI. Snap a photo and learn about what you're eating!
                     </p>
@@ -4451,7 +4501,7 @@
                         <circle cx="28" cy="28" r="2" fill="var(--accent)"/>
                     </svg>
                 </div>
-                <span class="logo-text">OK-Snap</span>
+                <span class="logo-text">Ok Snap</span>
             </div>
             <div class="auth-section" id="authSection">
                 <div class="scan-counter-header" id="scanCounterHeader" style="display: flex; align-items: center; background: var(--secondary); border-radius: 16px; font-weight: 500;">
@@ -4581,44 +4631,36 @@
                             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="currentColor" opacity="0.2"></path>
                             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke="currentColor" stroke-width="2" fill="none"></path>
                         </svg>
-                        <p id="favoritesEmpty" style="color: var(--text-secondary); font-size: 0.9375rem; margin-top: 12px;">Save dishes you love to revisit them later</p>
+                        <div class="empty-title">No favorites yet</div>
+                        <p id="favoritesEmpty" class="empty-subtitle">When you tap <strong>Save to Favorites</strong> on a result, it’ll show up here for quick access later.</p>
+                        <div class="empty-actions" aria-label="Get started">
+                            <a class="btn" href="index.html">Scan a dish</a>
+                            <a class="btn btn-secondary" href="browse.html">Browse recipes</a>
+                        </div>
+                        <div class="empty-help">Pro tip: Favorites sync across devices when you’re signed in.</div>
                     </div>
                 </div>
             </div>
+
+            <!-- Ad: compact strip above footer; slot ID in ad-runtime.js slots.favoritesPage; toggle slotToggles.favoritesPage -->
+            <aside class="oksnap-ad-slot oksnap-ad-slot--compact" id="oksnapFavoritesPageAd" data-oksnap-ad-slot="favoritesPage" style="display: none;" aria-hidden="true" role="complementary" aria-label="Advertisement">
+                <div class="oksnap-ad-slot__label">Advertisement</div>
+                <div class="oksnap-ad-slot__frame">
+                    <ins class="adsbygoogle" style="display:block"></ins>
+                </div>
+            </aside>
             
-            <!-- Footer at bottom -->
-            <div class="feature-row" style="margin-top: auto; padding: 24px 16px;">
-                <div class="feature-item">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
-                        <path d="M2 17l10 5 10-5"></path>
-                        <path d="M2 12l10 5 10-5"></path>
-                    </svg>
-                    <span>Powered by AI</span>
-                </div>
-                <div class="feature-item">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                        <circle cx="12" cy="10" r="3"></circle>
-                    </svg>
-                    <span>Korean Focus</span>
-                </div>
-                <div class="feature-item">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                    </svg>
-                    <span>Cultural Stories</span>
-                </div>
-            </div>
-            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--secondary-dark); font-size: 0.85rem; color: var(--text-secondary); text-align: center;">
-                <a href="privacy.html" style="color: var(--primary); text-decoration: none;">Privacy</a>
-                <span style="margin: 0 6px;">·</span>
-                <a href="terms.html" style="color: var(--primary); text-decoration: none;">Terms</a>
-                <span style="margin: 0 6px;">·</span>
-                <a href="about.html" style="color: var(--primary); text-decoration: none;">About</a>
-                <span style="margin: 0 6px;">·</span>
-                <a href="contact.html" style="color: var(--primary); text-decoration: none;">Contact</a>
-            </div>
+            <footer class="oksnap-site-footer" role="contentinfo">
+                <p class="oksnap-site-footer__tagline">AI-powered food discovery, recipes, and cultural context.</p>
+                <p class="oksnap-site-footer__email">Questions? <a href="mailto:support@ok-snap.com">support@ok-snap.com</a></p>
+                <nav class="oksnap-site-footer__nav" aria-label="Legal and trust">
+                    <a href="privacy.html">Privacy Policy</a>
+                    <a href="terms.html">Terms of Service</a>
+                    <a href="about.html">About</a>
+                    <a href="contact.html">Contact</a>
+                    <button type="button" class="oksnap-site-footer__cookie-btn oksnap-consent-open">Cookie settings</button>
+                </nav>
+            </footer>
         </div>
     </div>
 
@@ -4714,6 +4756,52 @@
             <span id="navSettingsText">Settings</span>
         </a>
     </nav>
+
+    <script src="consent-store.js"></script>
+    <script src="ad-runtime.js"></script>
+    <script src="ad-consent-loader.js"></script>
+    <script src="consent-banner.js"></script>
+    <script>
+        window.syncFavoritesPageAd = function () {
+            var el = document.getElementById('oksnapFavoritesPageAd');
+            if (!el) return;
+            var cfg = window.OK_SNAP_ADS || {};
+            if (typeof window.okSnapAdSlotEnabled === 'function' && !window.okSnapAdSlotEnabled('favoritesPage')) {
+                el.style.display = 'none';
+                el.setAttribute('aria-hidden', 'true');
+                return;
+            }
+            if (!cfg.enabled) {
+                el.style.display = 'none';
+                el.setAttribute('aria-hidden', 'true');
+                return;
+            }
+            var adsOn =
+                typeof window.okSnapAdsEffectiveEnabled === 'function' && window.okSnapAdsEffectiveEnabled();
+            if (!adsOn) {
+                el.classList.toggle('oksnap-ad-slot--blocked', true);
+                el.style.display = 'block';
+                el.setAttribute('aria-hidden', 'false');
+                if (typeof window.refreshOkSnapAds === 'function') {
+                    window.refreshOkSnapAds(el);
+                }
+                return;
+            }
+            el.classList.remove('oksnap-ad-slot--blocked');
+            el.style.display = 'block';
+            el.setAttribute('aria-hidden', 'false');
+            if (typeof window.refreshOkSnapAds === 'function') {
+                window.refreshOkSnapAds(el);
+            }
+        };
+        document.addEventListener('DOMContentLoaded', function () {
+            if (window.OkSnapConsent && typeof window.OkSnapConsent.bootstrapAds === 'function') {
+                window.OkSnapConsent.bootstrapAds();
+            } else if (typeof window.syncFavoritesPageAd === 'function') {
+                window.syncFavoritesPageAd();
+            }
+        });
+    </script>
 
     <script>
         // ============================================
@@ -5212,9 +5300,11 @@
                 }
                 
                 // Clear local history and favorites
-                localStorage.removeItem('biteSightHistory');
-                localStorage.removeItem('biteSightFavorites');
-                localStorage.removeItem('biteSightUsername');
+                localStorage.removeItem(OKSNAP_STORAGE.historyNew);
+                localStorage.removeItem(OKSNAP_STORAGE.historyLegacy);
+                localStorage.removeItem(OKSNAP_STORAGE.favoritesNew);
+                localStorage.removeItem(OKSNAP_STORAGE.favoritesLegacy);
+                localStorage.removeItem(OKSNAP_STORAGE.usernameLegacy);
                 
                 // Clear current state
                 currentUser = null;
@@ -6085,9 +6175,38 @@
         // ============================================
         // SETTINGS MANAGEMENT
         // ============================================
+        // Storage keys: migrated from legacy BiteSight names; keep backward compatibility.
+        const OKSNAP_STORAGE = {
+            settingsNew: 'okSnapSettings',
+            settingsLegacy: 'biteSightSettings',
+            historyNew: 'okSnapHistory',
+            historyLegacy: 'biteSightHistory',
+            favoritesNew: 'okSnapFavorites',
+            favoritesLegacy: 'biteSightFavorites',
+            usernameLegacy: 'biteSightUsername'
+        };
+
+        function getStoredJson(newKey, legacyKey, fallback) {
+            try {
+                const raw = localStorage.getItem(newKey) || (legacyKey ? localStorage.getItem(legacyKey) : null);
+                if (!raw) return fallback;
+                return JSON.parse(raw);
+            } catch (e) {
+                return fallback;
+            }
+        }
+
+        function setStoredJson(newKey, legacyKey, value) {
+            try {
+                const raw = JSON.stringify(value);
+                localStorage.setItem(newKey, raw);
+                if (legacyKey) localStorage.setItem(legacyKey, raw);
+            } catch (e) { /* ignore */ }
+        }
+
         function initializeSettings() {
             // Load saved settings
-            let settings = JSON.parse(localStorage.getItem('biteSightSettings') || '{}');
+            let settings = getStoredJson(OKSNAP_STORAGE.settingsNew, OKSNAP_STORAGE.settingsLegacy, {});
             
             // Initialize night mode
             const nightModeToggle = document.getElementById('nightModeToggle');
@@ -6140,7 +6259,7 @@
             const feedbackBtn = document.getElementById('feedbackBtn');
             if (feedbackBtn) {
                 feedbackBtn.addEventListener('click', () => {
-                    window.location.href = 'mailto:contpickstudio@gmail.com?subject=OK-Snap Feedback';
+                    window.location.href = 'mailto:contpickstudio@gmail.com?subject=Ok%20Snap%20Feedback';
                 });
             }
         }
@@ -6266,7 +6385,7 @@
         }
 
         function saveSettings(settings) {
-            localStorage.setItem('biteSightSettings', JSON.stringify(settings));
+            setStoredJson(OKSNAP_STORAGE.settingsNew, OKSNAP_STORAGE.settingsLegacy, settings);
         }
 
         // ============================================
@@ -8084,7 +8203,7 @@
                 const apiBase = getApiBase();
                 const publicWebsiteUrl = getPublicSiteUrl();
                 // Use new Supabase format: /blog.html?slug=xxx (blogs are in Supabase, not static files)
-                const blogUrl = `${publicWebsiteUrl}/blog.html?slug=${slug}`;
+                const blogUrl = `${publicWebsiteUrl}/blog.html?slug=${encodeURIComponent(slug)}`;
 
                 // Step 1: Check if blog exists (handle 404 gracefully)
                 let checkResult = { exists: false };
@@ -8153,10 +8272,10 @@
                             finalBlogUrl = generateResult.blogUrl;
                         } else if (generateResult.slug) {
                             // Construct URL from slug if provided
-                            finalBlogUrl = `${publicWebsiteUrl}/blog.html?slug=${generateResult.slug}`;
+                            finalBlogUrl = `${window.location.origin}/recipe/${encodeURIComponent(generateResult.slug)}`;
                         } else {
                             // Fallback to constructed URL (new Supabase format)
-                            finalBlogUrl = `${publicWebsiteUrl}/blog.html?slug=${slug}`;
+                            finalBlogUrl = `${window.location.origin}/recipe/${encodeURIComponent(slug)}`;
                         }
                         
                         // Verify blog was successfully created (not skipped)
@@ -8261,7 +8380,7 @@
                         delete window.generatedBlogImageUrl;
                     } else {
                         // Blog exists on recipes.ok-snap.com - fetch and display content in-app
-                        finalBlogUrl = `${publicWebsiteUrl}/blog.html?slug=${slug}`;
+                        finalBlogUrl = `${window.location.origin}/recipe/${encodeURIComponent(slug)}`;
                         
                         // Hide the static "Full Recipe Blog" header - title will be in scrollable content
                         const blogDisplayHeader = blogDisplaySection.querySelector('.result-section-header');
@@ -8271,7 +8390,7 @@
                         
                         // Fetch blog content from API and display in-app
                         try {
-                            const blogApiUrl = `${apiBase}/api/blogs/${slug}`;
+                            const blogApiUrl = `${apiBase}/api/blogs/${encodeURIComponent(slug)}`;
                             const blogResponse = await fetch(blogApiUrl, {
                                 method: 'GET',
                                 headers: {
@@ -8635,7 +8754,7 @@
             const recipeLinksContainer = document.getElementById('recipeLinks');
             if (!recipeLinksContainer) return;
             
-            // Only show OK-Snap generated blogs and recipe JSON
+            // Only show Ok Snap generated blogs and recipe JSON
             // No external recipe site links
             recipeLinksContainer.innerHTML = '';
         }
@@ -8702,7 +8821,7 @@
                         saveToLocalHistory(historyItem);
                     } else {
                         // Also save to localStorage for immediate display
-                        localStorage.setItem('biteSightHistory', JSON.stringify(history));
+                        setStoredJson(OKSNAP_STORAGE.historyNew, OKSNAP_STORAGE.historyLegacy, history);
                     }
                 } catch (error) {
                     console.error('Error saving history to DB:', error);
@@ -8719,11 +8838,11 @@
         }
         
         function saveToLocalHistory(historyItem) {
-            let history = JSON.parse(localStorage.getItem('biteSightHistory') || '[]');
+            let history = getStoredJson(OKSNAP_STORAGE.historyNew, OKSNAP_STORAGE.historyLegacy, []);
             history = history.filter(item => item.name !== historyItem.name);
             history.unshift(historyItem);
             history = history.slice(0, 10);
-            localStorage.setItem('biteSightHistory', JSON.stringify(history));
+            setStoredJson(OKSNAP_STORAGE.historyNew, OKSNAP_STORAGE.historyLegacy, history);
         }
         
         async function loadUserHistoryAndFavorites() {
@@ -8741,7 +8860,7 @@
                     console.warn('History table may not exist:', historyError);
                 } else if (historyData?.history) {
                     // Sync to localStorage for display
-                    localStorage.setItem('biteSightHistory', JSON.stringify(historyData.history));
+                    setStoredJson(OKSNAP_STORAGE.historyNew, OKSNAP_STORAGE.historyLegacy, historyData.history);
                     loadHistory();
                 }
                 
@@ -8756,7 +8875,7 @@
                     console.warn('Favorites table may not exist:', favoritesError);
                 } else if (favoritesData?.favorites) {
                     // Sync to localStorage for display
-                    localStorage.setItem('biteSightFavorites', JSON.stringify(favoritesData.favorites));
+                    setStoredJson(OKSNAP_STORAGE.favoritesNew, OKSNAP_STORAGE.favoritesLegacy, favoritesData.favorites);
                     loadFavorites();
                 }
 
@@ -9367,14 +9486,14 @@
                     if (error && error.code !== 'PGRST116') {
                         console.warn('History table may not exist:', error);
                     } else if (data?.history) {
-                        localStorage.setItem('biteSightHistory', JSON.stringify(data.history));
+                        setStoredJson(OKSNAP_STORAGE.historyNew, OKSNAP_STORAGE.historyLegacy, data.history);
                     }
                 } catch (error) {
                     console.error('Error loading history from DB:', error);
                 }
             }
             
-            let history = JSON.parse(localStorage.getItem('biteSightHistory') || '[]');
+            let history = getStoredJson(OKSNAP_STORAGE.historyNew, OKSNAP_STORAGE.historyLegacy, []);
             
             // Filter history by period
             const now = new Date();
@@ -9492,7 +9611,7 @@
         }
 
         function getCurrentLanguage() {
-            const settings = JSON.parse(localStorage.getItem('biteSightSettings') || '{}');
+            const settings = getStoredJson(OKSNAP_STORAGE.settingsNew, OKSNAP_STORAGE.settingsLegacy, {});
             return settings.language || 'en';
         }
 
@@ -9535,7 +9654,7 @@
                 return;
             }
 
-            const favorites = JSON.parse(localStorage.getItem('biteSightFavorites') || '[]');
+            const favorites = getStoredJson(OKSNAP_STORAGE.favoritesNew, OKSNAP_STORAGE.favoritesLegacy, []);
             const exists = favorites.find(f => f.name === currentDishData.name);
             
             if (exists) {
@@ -9604,7 +9723,7 @@
             const lang = getCurrentLanguage();
             const t = translations[lang] || translations.en;
             const dishName = currentDishData.name || 'This dish';
-            const shareText = `${dishName} - Discovered with OK-Snap! 🍲`;
+            const shareText = `${dishName} - Discovered with Ok Snap! 🍲`;
             const shareUrl = window.location.href;
 
             if (navigator.share) {
@@ -9680,7 +9799,7 @@
                         saveToLocalFavorites(favoriteItem);
                     } else {
                         // Also save to localStorage for immediate display
-                        localStorage.setItem('biteSightFavorites', JSON.stringify(favorites));
+                        setStoredJson(OKSNAP_STORAGE.favoritesNew, OKSNAP_STORAGE.favoritesLegacy, favorites);
                     }
                 } catch (error) {
                     console.error('Error saving favorite to DB:', error);
@@ -9756,7 +9875,7 @@
                         saveToLocalFavorites(favoriteItem);
                     } else {
                         // Also save to localStorage for immediate display
-                        localStorage.setItem('biteSightFavorites', JSON.stringify(favorites));
+                        setStoredJson(OKSNAP_STORAGE.favoritesNew, OKSNAP_STORAGE.favoritesLegacy, favorites);
                     }
                 } catch (error) {
                     console.error('Error saving favorite to DB:', error);
@@ -9773,14 +9892,14 @@
         }
         
         function saveToLocalFavorites(favoriteItem) {
-            let favorites = JSON.parse(localStorage.getItem('biteSightFavorites') || '[]');
+            let favorites = getStoredJson(OKSNAP_STORAGE.favoritesNew, OKSNAP_STORAGE.favoritesLegacy, []);
             const exists = favorites.find(f => f.name === favoriteItem.name);
             if (exists) {
                 favorites = favorites.filter(f => f.name !== favoriteItem.name);
             } else {
                 favorites.unshift(favoriteItem);
             }
-            localStorage.setItem('biteSightFavorites', JSON.stringify(favorites));
+            setStoredJson(OKSNAP_STORAGE.favoritesNew, OKSNAP_STORAGE.favoritesLegacy, favorites);
         }
 
         async function loadFavorites() {
@@ -9796,14 +9915,14 @@
                     if (error && error.code !== 'PGRST116') {
                         console.warn('Favorites table may not exist:', error);
                     } else if (data?.favorites) {
-                        localStorage.setItem('biteSightFavorites', JSON.stringify(data.favorites));
+                        setStoredJson(OKSNAP_STORAGE.favoritesNew, OKSNAP_STORAGE.favoritesLegacy, data.favorites);
                     }
                 } catch (error) {
                     console.error('Error loading favorites from DB:', error);
                 }
             }
             
-            const favorites = JSON.parse(localStorage.getItem('biteSightFavorites') || '[]');
+            const favorites = getStoredJson(OKSNAP_STORAGE.favoritesNew, OKSNAP_STORAGE.favoritesLegacy, []);
             const favoritesGrid = document.getElementById('favoritesGrid');
             
             if (favorites.length === 0) {
@@ -9812,7 +9931,13 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                         </svg>
-                        <p>Save dishes you love to revisit them later</p>
+                        <div class="empty-title">No favorites yet</div>
+                        <p class="empty-subtitle">When you tap <strong>Save to Favorites</strong> on a result, it’ll show up here for quick access later.</p>
+                        <div class="empty-actions" aria-label="Get started">
+                            <a class="btn" href="index.html">Scan a dish</a>
+                            <a class="btn btn-secondary" href="browse.html">Browse recipes</a>
+                        </div>
+                        <div class="empty-help">Pro tip: Favorites sync across devices when you’re signed in.</div>
                     </div>
                 `;
                 return;
@@ -9835,7 +9960,7 @@
             const lang = getCurrentLanguage();
             const t = translations[lang] || translations.en;
             const dishName = currentDishData.name || 'This dish';
-            const shareText = `${dishName} - Discovered with OK-Snap! 🍲`;
+            const shareText = `${dishName} - Discovered with Ok Snap! 🍲`;
             const shareUrl = window.location.href;
 
             if (navigator.share) {
@@ -10073,7 +10198,7 @@
         // UTILITY FUNCTIONS
         // ============================================
         function loadDishFromHistory(name) {
-            const history = JSON.parse(localStorage.getItem('biteSightHistory') || '[]');
+            const history = getStoredJson(OKSNAP_STORAGE.historyNew, OKSNAP_STORAGE.historyLegacy, []);
             const historyItem = history.find(item => item.name === name);
             
             if (!historyItem) {
@@ -10111,7 +10236,7 @@
         }
         
         function loadDishFromFavorites(name) {
-            const favorites = JSON.parse(localStorage.getItem('biteSightFavorites') || '[]');
+            const favorites = getStoredJson(OKSNAP_STORAGE.favoritesNew, OKSNAP_STORAGE.favoritesLegacy, []);
             const favoriteItem = favorites.find(item => item.name === name);
             
             if (!favoriteItem) {
@@ -10249,7 +10374,7 @@
                 const card = document.createElement('div');
                 card.className = 'blog-card';
                 // Use new Supabase format: /blog.html?slug=xxx
-                const recipeUrl = recipe.url || `${publicWebsiteUrl}/blog.html?slug=${recipe.slug || createSlug(recipe.name)}`;
+                const recipeUrl = recipe.url || `${publicWebsiteUrl}/blog.html?slug=${encodeURIComponent(recipe.slug || createSlug(recipe.name))}`;
                 card.onclick = () => openBlogPost(recipeUrl);
                 
                 // Use JSON data only - no HTML fetching
@@ -10260,7 +10385,7 @@
                     <div class="blog-card-content">
                         <div class="blog-card-title">${title}</div>
                         ${date ? `<div class="blog-card-date">${new Date(date).toLocaleDateString()}</div>` : ''}
-                        <div class="blog-card-excerpt">Click to view full recipe on recipes.ok-snap.com</div>
+                        <div class="blog-card-excerpt">Open the full recipe</div>
                     </div>
                 `;
                 
