@@ -10,7 +10,7 @@
   "rewrites": [
     {
       "source": "/blogs/:slug",
-      "destination": "/blogs/:slug.html"
+      "destination": "/blog.html?slug=:slug"
     },
     {
       "source": "/account-delete",
@@ -48,7 +48,7 @@
       ]
     },
     {
-      "source": "/blogs/:slug.html",
+      "source": "/blog.html",
       "headers": [
         {
           "key": "Access-Control-Allow-Origin",
@@ -83,4 +83,3 @@
     }
   ]
 }
-

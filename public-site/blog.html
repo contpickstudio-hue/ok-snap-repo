@@ -3,15 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="OK-Snap Recipe Blog - Explore our collection of Korean recipes, cooking tips, and food stories.">
-    <title>Recipe Blog - OK-Snap</title>
+    <meta name="description" content="Ok Snap Recipe Blog - Explore Korean recipes, cooking tips, and food stories.">
+    <title>Recipe Blog - Ok Snap</title>
+    <!-- Optional: set content to your API origin (e.g. https://ok-snap.com) when config fetch should not be used first -->
+    <meta name="oksnap-api-base" content="">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <noscript>
+        <div class="container" style="padding: 1rem; background: #fff8e6; border-bottom: 1px solid #eee;">
+            <p>Enable JavaScript for the full recipe blog. Plain HTML versions of posts are available at <code>/api/blog-html/</code><em>your-recipe-slug</em> on the Ok Snap API host.</p>
+        </div>
+    </noscript>
     <header class="header">
         <div class="container">
             <div class="header-content">
-                <h1 class="logo">OK-Snap</h1>
+                <h1 class="logo">Ok Snap</h1>
                 <nav class="nav">
                     <a href="/" class="nav-link">Home</a>
                     <a href="/blog.html" class="nav-link active">Blog</a>
@@ -34,6 +41,10 @@
 
             <section class="blog-section">
                 <div class="container">
+                    <p id="blogListError" class="no-posts" style="display: none; text-align: center;"></p>
+                    <div style="text-align: center; margin-bottom: 1rem;">
+                        <button type="button" id="blogListRetryBtn" class="btn btn-secondary" style="display: none;">Retry</button>
+                    </div>
                     <div class="posts-grid" id="blogPosts">
                         <!-- Posts will be loaded dynamically from Supabase -->
                     </div>
@@ -54,167 +65,258 @@
     <footer class="footer">
         <div class="container">
             <p><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="/about">About</a> · <a href="/contact">Contact</a></p>
-            <p>&copy; 2025 OK-Snap. All rights reserved.</p>
+            <p>&copy; 2025 Ok Snap. All rights reserved.</p>
         </div>
     </footer>
 
     <script src="scripts.js"></script>
     <script>
-        // Configuration object for URLs
-        const CONFIG = {
-            API_BASE: null,
-            PUBLIC_SITE_URL: null
-        };
-        
-        // Load configuration from API endpoint (non-blocking)
-        (async function loadConfig() {
+        const CONFIG = { API_BASE: null, PUBLIC_SITE_URL: null };
+        let blogListLoadFailed = false;
+
+        function escapeHtml(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        async function loadConfig() {
+            const metaApi = document.querySelector('meta[name="oksnap-api-base"]');
+            const metaVal = metaApi && metaApi.getAttribute('content');
+            if (metaVal && metaVal.trim()) {
+                CONFIG.API_BASE = metaVal.trim().replace(/\/$/, '');
+            }
             try {
-                let configBaseUrl = 'https://ok-snap-identifier.vercel.app';
+                let configBaseUrl = 'https://ok-snap.com';
                 if (typeof window !== 'undefined' && window.location) {
                     const origin = window.location.origin;
-                    if (origin.includes('localhost') || origin.includes('vercel.app')) {
+                    if (origin.includes('localhost') || origin.includes('127.0.0.1') || origin.includes('vercel.app')) {
                         configBaseUrl = origin;
                     }
                 }
-                const response = await fetch(`${configBaseUrl}/api/config`);
+                const response = await fetch(`${configBaseUrl}/api/config`, { cache: 'no-store' });
                 if (response.ok) {
                     const configData = await response.json();
-                    if (configData.API_BASE_URL) CONFIG.API_BASE = configData.API_BASE_URL;
-                    if (configData.PUBLIC_SITE_URL) CONFIG.PUBLIC_SITE_URL = configData.PUBLIC_SITE_URL;
+                    if (configData.API_BASE_URL) CONFIG.API_BASE = String(configData.API_BASE_URL).replace(/\/$/, '');
+                    if (configData.PUBLIC_SITE_URL) CONFIG.PUBLIC_SITE_URL = String(configData.PUBLIC_SITE_URL).replace(/\/$/, '');
                 }
-            } catch (error) {
-                console.debug('Config endpoint not available, using fallbacks');
+            } catch (err) {
+                console.warn('[blog.html] Config fetch failed, using fallbacks', err && err.message);
             }
-        })();
-        
-        // Get API base URL
-        function getApiBase() {
-            // If config loaded from endpoint, use it
-            if (CONFIG && CONFIG.API_BASE) {
-                return CONFIG.API_BASE;
-            }
-            // Fallback logic
-            if (typeof window !== 'undefined' && window.location) {
-                const origin = window.location.origin;
-                if (origin.includes('localhost') || origin.includes('vercel.app')) {
-                    return origin;
-                }
-            }
-            // Final fallback
-            return 'https://ok-snap-identifier.vercel.app';
         }
 
-        // Check if we should show a single blog post (from URL query parameter)
+        function getApiBase() {
+            if (CONFIG && CONFIG.API_BASE) return CONFIG.API_BASE;
+            const origin = typeof window !== 'undefined' && window.location && window.location.origin;
+            if (origin && (origin.includes('localhost') || origin.includes('127.0.0.1') || origin.includes('vercel.app'))) {
+                return origin;
+            }
+            return 'https://ok-snap.com';
+        }
+
+        function setBlogHtmlAlternate(slug) {
+            let link = document.querySelector('link[rel="alternate"][data-oksnap-blog-html="1"]');
+            if (!link) {
+                link = document.createElement('link');
+                link.rel = 'alternate';
+                link.type = 'text/html';
+                link.setAttribute('data-oksnap-blog-html', '1');
+                document.head.appendChild(link);
+            }
+            link.href = `${getApiBase()}/api/blog-html/${encodeURIComponent(slug)}`;
+            link.title = 'Plain HTML recipe';
+        }
+
+        function showListError(message) {
+            const errEl = document.getElementById('blogListError');
+            const btn = document.getElementById('blogListRetryBtn');
+            const postsGrid = document.getElementById('blogPosts');
+            blogListLoadFailed = true;
+            if (postsGrid) postsGrid.innerHTML = '';
+            if (errEl) {
+                errEl.textContent = message;
+                errEl.style.display = 'block';
+            }
+            if (btn) btn.style.display = 'inline-block';
+        }
+
+        function hideListError() {
+            const errEl = document.getElementById('blogListError');
+            const btn = document.getElementById('blogListRetryBtn');
+            blogListLoadFailed = false;
+            if (errEl) errEl.style.display = 'none';
+            if (btn) btn.style.display = 'none';
+        }
+
         function checkForBlogPost() {
             const urlParams = new URLSearchParams(window.location.search);
             const slug = urlParams.get('slug');
-            
             if (slug) {
-                loadBlogPost(slug);
+                loadBlogPost(slug, 0);
             } else {
                 loadBlogPosts();
             }
         }
 
-        // Load blog posts list from Supabase
         async function loadBlogPosts() {
             const postsGrid = document.getElementById('blogPosts');
             const blogListing = document.getElementById('blogListing');
             const blogPostView = document.getElementById('blogPostView');
-            
-            // Show listing, hide post view
+            hideListError();
             if (blogListing) blogListing.style.display = 'block';
             if (blogPostView) blogPostView.style.display = 'none';
-            
+            if (postsGrid) postsGrid.innerHTML = '<p class="no-posts" style="text-align:center;">Loading recipes…</p>';
+
+            const apiBase = getApiBase();
+            const blogsPath = `${apiBase.replace(/\/$/, '')}/api/blogs`;
+            let gotEmptyListFromApi = false;
+
             try {
-                const apiBase = getApiBase();
-                const response = await fetch(`${apiBase}/api/blogs`);
-                
+                const response = await fetch(blogsPath, { cache: 'no-store' });
                 if (response.ok) {
                     const blogs = await response.json();
-                    if (Array.isArray(blogs) && blogs.length > 0) {
-                        console.log(`[blog.html] Loaded ${blogs.length} blogs from Supabase`);
-                        renderBlogPosts(blogs);
-                        return;
+                    if (Array.isArray(blogs)) {
+                        gotEmptyListFromApi = true;
+                        if (blogs.length > 0) {
+                            if (postsGrid) postsGrid.innerHTML = '';
+                            renderBlogPosts(blogs);
+                            console.info('[blog.html] Loaded', blogs.length, 'posts from', new URL(blogsPath).origin + '/api/blogs');
+                            return;
+                        }
                     }
+                } else {
+                    let requestId = '';
+                    try {
+                        const errBody = await response.json();
+                        requestId = errBody.requestId || '';
+                    } catch (e) { /* ignore */ }
+                    console.error('[blog.html] List fetch failed', { path: '/api/blogs', status: response.status, requestId });
                 }
             } catch (error) {
-                console.error('[blog.html] Failed to fetch blogs from Supabase:', error);
+                console.error('[blog.html] List fetch error', { path: '/api/blogs', message: error.message });
             }
-            
-            // Fallback: Try recipes-json API
+
             try {
-                const apiBase = getApiBase();
-                const response = await fetch(`${apiBase}/api/recipes-json`);
-                
+                const response = await fetch(`${apiBase.replace(/\/$/, '')}/api/recipes-json`, { cache: 'no-store' });
                 if (response.ok) {
                     const recipes = await response.json();
                     if (Array.isArray(recipes) && recipes.length > 0) {
-                        console.log(`[blog.html] Loaded ${recipes.length} recipes from recipes-json API`);
+                        if (postsGrid) postsGrid.innerHTML = '';
                         renderBlogPosts(recipes);
                         return;
                     }
                 }
             } catch (error) {
-                console.error('[blog.html] Failed to fetch from recipes-json:', error);
+                console.error('[blog.html] recipes-json fallback failed', error);
             }
-            
-            // No blogs found
-            postsGrid.innerHTML = '<p class="no-posts">No blog posts yet. Check back soon!</p>';
+
+            if (gotEmptyListFromApi && postsGrid) {
+                hideListError();
+                postsGrid.innerHTML = '<p class="no-posts">No blog posts yet. Check back soon!</p>';
+                return;
+            }
+
+            if (postsGrid) postsGrid.innerHTML = '';
+            showListError('Could not load the recipe list. Check your connection and try again.');
         }
-        
-        // Load a single blog post from Supabase
-        async function loadBlogPost(slug) {
+
+        function postLoadingMarkup() {
+            return `
+                <div class="blog-post-header" style="text-align:center;padding:2rem;">
+                    <p>Loading recipe…</p>
+                </div>`;
+        }
+
+        async function parseErrorPayload(response) {
+            try {
+                const data = await response.json();
+                return { message: data.message || data.error || '', requestId: data.requestId || '' };
+            } catch (e) {
+                return { message: '', requestId: '' };
+            }
+        }
+
+        async function loadBlogPost(slug, attempt) {
             const blogListing = document.getElementById('blogListing');
             const blogPostView = document.getElementById('blogPostView');
             const blogPostContent = document.getElementById('blogPostContent');
-            
-            // Show post view, hide listing
             if (blogListing) blogListing.style.display = 'none';
             if (blogPostView) blogPostView.style.display = 'block';
-            
+            if (blogPostContent) blogPostContent.innerHTML = postLoadingMarkup();
+
+            const apiBase = getApiBase().replace(/\/$/, '');
+            const path = `/api/blogs/${encodeURIComponent(slug)}`;
+            const url = `${apiBase}${path}`;
+
             try {
-                const apiBase = getApiBase();
-                const response = await fetch(`${apiBase}/api/blogs/${slug}`);
-                
+                const response = await fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' }, cache: 'no-store' });
                 if (response.ok) {
                     const blog = await response.json();
-                    console.log('[blog.html] Loaded blog post from Supabase:', blog.slug);
-                    renderBlogPost(blog);
-                } else if (response.status === 404) {
+                    setBlogHtmlAlternate(slug);
+                    renderBlogPost(blog, slug);
+                    console.info('[blog.html] Loaded post', slug, 'from', new URL(apiBase).origin);
+                    return;
+                }
+                const { message, requestId } = await parseErrorPayload(response);
+                if (response.status === 404) {
+                    if (blogPostContent) {
+                        blogPostContent.innerHTML = `
+                            <div class="blog-post-header">
+                                <h1 class="blog-post-title">Recipe unavailable</h1>
+                                <p>We do not have this recipe, or it was removed.</p>
+                                <p><a href="blog.html" class="btn btn-secondary">Back to Blog</a></p>
+                            </div>`;
+                    }
+                    console.warn('[blog.html] Post not found', { slug, path, requestId });
+                    return;
+                }
+                if (attempt < 2) {
+                    await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+                    return loadBlogPost(slug, attempt + 1);
+                }
+                if (blogPostContent) {
                     blogPostContent.innerHTML = `
                         <div class="blog-post-header">
-                            <h1 class="blog-post-title">Blog Post Not Found</h1>
-                            <p>The blog post you're looking for doesn't exist.</p>
-                            <a href="blog.html" class="btn btn-secondary">Back to Blog</a>
-                        </div>
-                    `;
-                } else {
-                    throw new Error(`Failed to fetch blog: ${response.status}`);
+                            <h1 class="blog-post-title">Recipe unavailable</h1>
+                            <p>The server could not load this recipe right now.</p>
+                            ${requestId ? `<p style="font-size:0.85rem;color:#666;">Reference: ${escapeHtml(requestId)}</p>` : ''}
+                            <p><button type="button" class="btn btn-secondary" id="blogPostRetryBtn">Retry</button></p>
+                            <p><a href="blog.html" class="btn btn-secondary">Back to Blog</a></p>
+                            <p style="font-size:0.9rem;"><a href="${escapeHtml(`${apiBase}/api/blog-html/${encodeURIComponent(slug)}`)}" rel="nofollow">Open plain HTML version</a></p>
+                        </div>`;
+                    const retryBtn = document.getElementById('blogPostRetryBtn');
+                    if (retryBtn) retryBtn.addEventListener('click', () => loadBlogPost(slug, 0));
                 }
+                console.error('[blog.html] Post fetch failed', { path, status: response.status, requestId });
             } catch (error) {
-                console.error('[blog.html] Failed to fetch blog post:', error);
-                blogPostContent.innerHTML = `
-                    <div class="blog-post-header">
-                        <h1 class="blog-post-title">Error Loading Blog Post</h1>
-                        <p>${error.message}</p>
-                        <a href="blog.html" class="btn btn-secondary">Back to Blog</a>
-                    </div>
-                `;
+                if (attempt < 2) {
+                    await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+                    return loadBlogPost(slug, attempt + 1);
+                }
+                if (blogPostContent) {
+                    blogPostContent.innerHTML = `
+                        <div class="blog-post-header">
+                            <h1 class="blog-post-title">Recipe unavailable</h1>
+                            <p>Network error. Check your connection and try again.</p>
+                            <p><button type="button" class="btn btn-secondary" id="blogPostRetryBtn">Retry</button></p>
+                            <p><a href="blog.html" class="btn btn-secondary">Back to Blog</a></p>
+                        </div>`;
+                    const retryBtn = document.getElementById('blogPostRetryBtn');
+                    if (retryBtn) retryBtn.addEventListener('click', () => loadBlogPost(slug, 0));
+                }
+                console.error('[blog.html] Post fetch error', { path, message: error.message });
             }
         }
-        
-        // Render blog posts list
+
         function renderBlogPosts(blogs) {
             const postsGrid = document.getElementById('blogPosts');
+            hideListError();
             const createSlug = (name) => {
                 const normalizedName = String(name || '').trim().toLowerCase();
-                const baseSlug = normalizedName
-                    .replace(/[^a-z0-9]+/g, '-')
-                    .replace(/(^-|-$)/g, '');
-
+                const baseSlug = normalizedName.replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
                 if (baseSlug) return baseSlug;
-
                 let hash = 0;
                 for (let i = 0; i < normalizedName.length; i++) {
                     hash = ((hash << 5) - hash) + normalizedName.charCodeAt(i);
@@ -223,56 +325,64 @@
                 return `recipe-${Math.abs(hash).toString(36) || 'item'}`;
             };
 
-            postsGrid.innerHTML = blogs.map(blog => {
+            postsGrid.innerHTML = blogs.map((blog) => {
                 const slug = blog.slug || createSlug(blog.name);
                 const encodedSlug = encodeURIComponent(slug);
                 const title = blog.title || blog.name || 'Untitled Recipe';
                 const date = blog.createdAt ? new Date(blog.createdAt).toLocaleDateString() : 'Date unknown';
                 const imageUrl = blog.imageUrl || blog.image_url;
-                
+                const safeTitle = escapeHtml(title);
                 return `
                     <article class="post-card">
-                        ${imageUrl ? `<div class="post-image"><img src="${imageUrl}" alt="${title}" loading="lazy"></div>` : ''}
+                        ${imageUrl ? `<div class="post-image"><img src="${escapeHtml(imageUrl)}" alt="${safeTitle}" loading="lazy"></div>` : ''}
                         <div class="post-content">
-                            <h2 class="post-title"><a href="blog.html?slug=${encodedSlug}">${title}</a></h2>
-                            ${blog.nameKorean ? `<p class="post-subtitle">${blog.nameKorean}</p>` : ''}
-                            <p class="post-date">Published: ${date}</p>
+                            <h2 class="post-title"><a href="blog.html?slug=${encodedSlug}">${safeTitle}</a></h2>
+                            ${blog.nameKorean ? `<p class="post-subtitle">${escapeHtml(blog.nameKorean)}</p>` : ''}
+                            <p class="post-date">Published: ${escapeHtml(date)}</p>
                             <a href="blog.html?slug=${encodedSlug}" class="btn btn-secondary">Read More</a>
                         </div>
-                    </article>
-                `;
+                    </article>`;
             }).join('');
         }
-        
-        // Render single blog post
-        function renderBlogPost(blog) {
+
+        function renderBlogPost(blog, slug) {
             const blogPostContent = document.getElementById('blogPostContent');
             const date = blog.createdAt ? new Date(blog.createdAt).toLocaleDateString() : 'Date unknown';
-            
+            const title = blog.title || blog.name || 'Recipe';
+            const plainHtmlUrl = `${getApiBase().replace(/\/$/, '')}/api/blog-html/${encodeURIComponent(slug)}`;
+            const safeTitle = escapeHtml(title);
+            const safeKorean = blog.nameKorean ? escapeHtml(blog.nameKorean) : '';
+            const safeCuisine = blog.cuisine ? escapeHtml(blog.cuisine) : '';
+
             blogPostContent.innerHTML = `
                 <div class="blog-post-header">
-                    <h1 class="blog-post-title">${blog.title || blog.name}${blog.nameKorean ? ` (${blog.nameKorean})` : ''}</h1>
+                    <h1 class="blog-post-title">${safeTitle}${safeKorean ? ` (${safeKorean})` : ''}</h1>
                     <div class="blog-post-meta">
-                        <span>Published: ${date}</span>
-                        ${blog.cuisine ? `<span> • ${blog.cuisine}</span>` : ''}
+                        <span>Published: ${escapeHtml(date)}</span>
+                        ${safeCuisine ? `<span> • ${safeCuisine}</span>` : ''}
                     </div>
+                    <p class="blog-plain-html-link" style="font-size:0.9rem;color:#666;margin-top:0.75rem;">
+                        <a href="${escapeHtml(plainHtmlUrl)}" rel="alternate">Plain HTML version</a> (sharing and archives)
+                    </p>
                 </div>
                 ${blog.imageUrl || blog.image_url ? `
                     <div class="blog-featured-image">
-                        <img src="${blog.imageUrl || blog.image_url}" alt="${blog.title || blog.name}" style="width: 100%; max-width: 800px; height: auto; border-radius: 12px; margin: 2rem auto; display: block; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
-                    </div>
-                ` : ''}
+                        <img src="${escapeHtml(blog.imageUrl || blog.image_url)}" alt="${safeTitle}" style="width: 100%; max-width: 800px; height: auto; border-radius: 12px; margin: 2rem auto; display: block; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+                    </div>` : ''}
                 <div class="blog-post-content">
                     ${blog.content || '<p>Content not available.</p>'}
                 </div>
                 <div class="blog-post-footer" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #eee;">
                     <a href="blog.html" class="btn btn-secondary">← Back to Blog</a>
-                </div>
-            `;
+                </div>`;
         }
-        
-        // Initialize on page load
-        checkForBlogPost();
+
+        document.getElementById('blogListRetryBtn') && document.getElementById('blogListRetryBtn').addEventListener('click', () => loadBlogPosts());
+
+        (async function bootstrap() {
+            await loadConfig();
+            checkForBlogPost();
+        })();
     </script>
 </body>
 </html>
